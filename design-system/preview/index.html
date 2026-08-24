@@ -1,0 +1,425 @@
+<title>TROY Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  /* TROY primitives */
+  --ink-900:#0E1116;--ink-800:#22272F;--ink-700:#3A414D;--ink-600:#565E6C;--ink-500:#767E8C;
+  --ink-400:#A3AAB6;--ink-300:#CDD2DA;--ink-200:#E4E7EC;--ink-100:#F1F3F6;--ink-50:#F7F8FA;--ink-0:#FFFFFF;
+  --navy-900:#08182D;--navy-700:#0F2340;--navy-500:#1B3A63;--navy-100:#DCE5F1;
+  --blue-600:#0062C4;--blue-500:#0071E3;--blue-300:#5AA9F0;--blue-100:#E3F0FD;
+  --volt-500:#D6FF4B;--rose-500:#E5175A;--rose-100:#FDE4EC;--green-500:#12855C;--green-100:#DFF3EA;
+  --amber-500:#B25E00;--amber-100:#FBEBD8;--red-500:#C42B1C;
+  --tier-bronze:#A9714B;--tier-silver:#9AA3AE;--tier-gold:#C9A227;
+
+  /* page semantics */
+  --page:#FBFCFD;--panel:#FFFFFF;--sunken:#F1F3F6;--rail:#0F2340;
+  --fg:#0E1116;--fg-2:#565E6C;--fg-3:#767E8C;--line:#E4E7EC;--line-2:#CDD2DA;
+  --accent:#0071E3;--code-bg:#F1F3F6;--code-fg:#0F2340;
+  --shadow:0 4px 14px -6px rgba(14,17,22,.14);
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --native:"SF Pro Text",-apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --page:#0A0C10;--panel:#13171E;--sunken:#1B212A;--rail:#0B1830;
+  --fg:#F5F7FA;--fg-2:#AEB6C2;--fg-3:#8A93A0;--line:#262D38;--line-2:#333C48;
+  --accent:#5AA9F0;--code-bg:#1B212A;--code-fg:#AECBF2;
+  --shadow:0 10px 28px -12px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --page:#0A0C10;--panel:#13171E;--sunken:#1B212A;--rail:#0B1830;
+  --fg:#F5F7FA;--fg-2:#AEB6C2;--fg-3:#8A93A0;--line:#262D38;--line-2:#333C48;
+  --accent:#5AA9F0;--code-bg:#1B212A;--code-fg:#AECBF2;
+  --shadow:0 10px 28px -12px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--fg);font-family:var(--sans);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{display:grid;grid-template-columns:210px minmax(0,1fr);gap:56px;
+  max-width:1180px;margin:0 auto;padding:56px 28px 120px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr;gap:32px;padding:32px 20px 80px}
+  .rail{position:static!important}}
+
+/* ---- rail ---- */
+.rail{position:sticky;top:56px;align-self:start;display:flex;flex-direction:column;gap:18px}
+.mark{display:flex;align-items:center;gap:8px}
+.wordmark{font-weight:700;letter-spacing:.18em;font-size:19px}
+.badge{font-size:9px;line-height:1.1;letter-spacing:.04em;border:1px solid var(--line-2);
+  border-radius:5px;padding:4px 6px;color:var(--fg-2);text-transform:uppercase}
+.rail nav{display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--line);padding-left:14px}
+.rail a{color:var(--fg-2);text-decoration:none;font-size:13.5px;padding:3px 0}
+.rail a:hover,.rail a:focus-visible{color:var(--accent)}
+.rail .ver{font-family:var(--mono);font-size:11px;color:var(--fg-3)}
+
+/* ---- headings ---- */
+h1{font-size:clamp(34px,5vw,52px);line-height:1.02;letter-spacing:-.03em;font-weight:700;
+  margin:0 0 14px;text-wrap:balance}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.14em;font-weight:600;
+  color:var(--fg-3);margin:0 0 20px}
+h3{font-size:20px;letter-spacing:-.015em;font-weight:600;margin:0 0 6px}
+p{margin:0 0 14px;max-width:66ch;color:var(--fg-2)}
+p.lead{font-size:18.5px;color:var(--fg-2);max-width:62ch}
+section{padding-top:52px;border-top:1px solid var(--line);margin-top:52px}
+section:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.note{font-size:13.5px;color:var(--fg-3);max-width:64ch}
+code,.mono{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);
+  color:var(--code-fg);padding:1px 5px;border-radius:4px}
+
+/* ---- panels & grids ---- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.cols{display:grid;gap:14px}
+.c2{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.c3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+
+/* ---- swatches ---- */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.sw{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--panel)}
+.sw .chip{height:64px}
+.sw .meta{padding:9px 11px;display:flex;flex-direction:column;gap:1px}
+.sw .name{font-size:12.5px;font-weight:600}
+.sw .hex{font-family:var(--mono);font-size:11px;color:var(--fg-3);text-transform:uppercase}
+.role{font-size:11px;color:var(--fg-3);margin-top:2px}
+
+/* ---- tables ---- */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:460px}
+th{text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--fg-3);font-weight:600;padding:0 14px 9px 0;border-bottom:1px solid var(--line)}
+td{padding:11px 14px 11px 0;border-bottom:1px solid var(--line);color:var(--fg-2);vertical-align:baseline}
+td:first-child{color:var(--fg);font-weight:500}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px}
+
+/* ---- type specimens ---- */
+.spec{display:flex;align-items:baseline;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.spec .label{font-family:var(--mono);font-size:11px;color:var(--fg-3);width:88px;flex:none}
+.spec .sample{font-family:var(--native);color:var(--fg)}
+.spec .val{font-family:var(--mono);font-size:11px;color:var(--fg-3);margin-left:auto}
+
+/* ---- phone mockups ---- */
+.phones{display:flex;gap:26px;flex-wrap:wrap}
+.phone{width:302px;flex:none;border-radius:34px;padding:9px;background:var(--line-2);box-shadow:var(--shadow)}
+.screen{border-radius:26px;overflow:hidden;background:#fff;color:#0E1116;
+  font-family:var(--native);font-size:14px;line-height:1.4}
+.cap{font-size:12px;color:var(--fg-3);margin-top:9px;font-family:var(--mono)}
+.s-pad{padding:14px 16px}
+.s-nav{display:flex;align-items:center;justify-content:space-between;padding:11px 16px 9px;
+  border-bottom:1px solid #E4E7EC}
+.s-nav .lg{font-weight:700;letter-spacing:.16em;font-size:13px}
+.s-hero{background:#F7F8FA;height:150px;display:flex;align-items:center;justify-content:center}
+.pill{display:inline-block;border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase}
+.pill.stock{background:#DFF3EA;color:#0E6E4C}
+.pill.store{background:#DCE5F1;color:#0F2340}
+.pill.out{background:#F1F3F6;color:#767E8C}
+.name{font-size:15px;font-weight:600;letter-spacing:-.01em;color:#0E1116;margin:9px 0 2px}
+.sub{font-size:12px;color:#767E8C}
+.was{font-size:12px;color:#767E8C;text-decoration:line-through;font-variant-numeric:tabular-nums}
+.now{font-size:23px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#0E1116}
+.off{background:#FDE4EC;color:#C31350;border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;
+  font-variant-numeric:tabular-nums;margin-left:6px}
+.fin{font-size:12px;color:#0F2340;font-variant-numeric:tabular-nums;margin-top:6px}
+.fin b{font-weight:600}
+.tin{font-size:12px;color:#565E6C;margin-top:2px}
+.btn{display:block;text-align:center;border-radius:999px;padding:13px;font-size:14px;font-weight:600;
+  background:#0071E3;color:#fff;margin-top:14px}
+.btn.sec{background:transparent;color:#0E1116;border:1px solid #CDD2DA;margin-top:8px}
+.varrow{display:flex;gap:7px;margin-top:12px}
+.var{border:1px solid #CDD2DA;border-radius:8px;padding:6px 10px;font-size:12px;
+  font-variant-numeric:tabular-nums;color:#0E1116}
+.var.on{border:2px solid #0071E3;padding:5px 9px;font-weight:600}
+.tabbar{display:flex;border-top:1px solid #E4E7EC;background:#fff}
+.tabbar div{flex:1;text-align:center;font-size:9.5px;color:#767E8C;padding:8px 0 10px}
+.tabbar div.on{color:#0071E3;font-weight:600}
+.dot{display:block;width:16px;height:16px;border-radius:5px;background:#CDD2DA;margin:0 auto 4px}
+.tabbar div.on .dot{background:#0071E3}
+.camp{background:#0F2340;color:#fff;border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.camp .kick{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8FB4E8;font-weight:600}
+.camp h4{font-size:19px;line-height:1.2;letter-spacing:-.02em;margin:7px 0 10px;font-weight:600}
+.camp .volt{background:#D6FF4B;color:#0E1116;padding:0 5px;border-radius:3px}
+.camp .exp{font-size:11px;color:#AEB6C2;margin-top:12px}
+.camp .rule{font-size:11px;color:#8FB4E8;text-decoration:underline}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{border:1px solid #E4E7EC;border-radius:14px;padding:10px;background:#fff}
+.pcard .img{background:#F7F8FA;border-radius:9px;height:76px;margin-bottom:9px}
+.pcard.dim .img{opacity:.55}
+
+/* ---- do / don't ---- */
+.rules{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rule{border:1px solid var(--line);border-left:3px solid var(--green-500);border-radius:0 11px 11px 0;
+  padding:13px 15px;background:var(--panel)}
+.rule.no{border-left-color:var(--red-500)}
+.rule .tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--green-500)}
+.rule.no .tag{color:var(--red-500)}
+.rule p{margin:5px 0 0;font-size:13.5px;color:var(--fg-2)}
+a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.foot{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--fg-3);
+  font-family:var(--mono)}
+</style>
+
+<div class="wrap">
+  <aside class="rail">
+    <div class="mark"><span class="wordmark">TROY</span><span class="badge">Design<br>System</span></div>
+    <nav>
+      <a href="#read">Okuma</a>
+      <a href="#color">Renk</a>
+      <a href="#type">Tipografi</a>
+      <a href="#layout">Uzay &amp; Şekil</a>
+      <a href="#components">Bileşenler</a>
+      <a href="#screens">Ekranlar</a>
+      <a href="#money">Para &amp; Dil</a>
+      <a href="#rules">Kurallar</a>
+    </nav>
+    <span class="ver">v0.1 · 2026-08-24</span>
+  </aside>
+
+  <main>
+    <h1>Apple'ın ürünü.<br>TROY'un hizmeti.</h1>
+    <p class="lead">A design system for the TROY app, built from what troyestore.com actually is:
+      Apple's catalogue wrapped in a Turkish service layer — taksit, DeğişTokuş, mağazalar,
+      teknik servis, TROY CLUB. Product surfaces stay quiet and Apple-adjacent. Service surfaces
+      are where TROY gets a voice of its own.</p>
+
+    <section id="read">
+      <h2>The read</h2>
+      <div class="cols c2">
+        <div class="panel">
+          <h3>What the site gave us</h3>
+          <p class="note">Measured live: <code>SF Pro Text</code> throughout, <code>#0071E3</code>
+          pill buttons at <code>42px</code> radius, <code>#121212</code> text at 75% opacity, grey
+          bands <code>#F2F2F2</code>, 8/16px card radii, a deep blue announcement rail, and a lime
+          highlight behind campaign headlines.</p>
+        </div>
+        <div class="panel">
+          <h3>What it was missing</h3>
+          <p class="note">Visually the site is Apple's system re-hosted. In an app that reads as a
+          knock-off — and it spends nothing on the four things TROY alone owns: financing,
+          trade-in, physical stores and Club. This system keeps Apple's calm on product, and
+          gives TROY navy, volt and density everywhere else.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="color">
+      <h2>Renk — Color</h2>
+      <h3>Brand</h3>
+      <p class="note">Four brand values. Blue is inherited (it is the ecosystem's action colour and
+        fighting it would be vanity). Navy and volt are TROY's own.</p>
+      <div class="swatches" style="margin-top:16px">
+        <div class="sw"><div class="chip" style="background:#0E1116"></div><div class="meta">
+          <span class="name">Ink</span><span class="hex">#0E1116</span><span class="role">Wordmark, primary text</span></div></div>
+        <div class="sw"><div class="chip" style="background:#0F2340"></div><div class="meta">
+          <span class="name">Troy Navy</span><span class="hex">#0F2340</span><span class="role">Service surfaces, Club, finance</span></div></div>
+        <div class="sw"><div class="chip" style="background:#0071E3"></div><div class="meta">
+          <span class="name">Troy Blue</span><span class="hex">#0071E3</span><span class="role">Every primary action</span></div></div>
+        <div class="sw"><div class="chip" style="background:#D6FF4B"></div><div class="meta">
+          <span class="name">Volt</span><span class="hex">#D6FF4B</span><span class="role">One live offer per screen</span></div></div>
+        <div class="sw"><div class="chip" style="background:#E5175A"></div><div class="meta">
+          <span class="name">Deal Rose</span><span class="hex">#E5175A</span><span class="role">İndirim badges only</span></div></div>
+      </div>
+
+      <h3 style="margin-top:30px">Neutrals</h3>
+      <p class="note">Biased a few degrees toward the blue accent — never a pure grey.</p>
+      <div class="swatches" style="margin-top:14px">
+        <div class="sw"><div class="chip" style="background:#22272F"></div><div class="meta"><span class="name">ink 800</span><span class="hex">#22272F</span></div></div>
+        <div class="sw"><div class="chip" style="background:#565E6C"></div><div class="meta"><span class="name">ink 600</span><span class="hex">#565E6C</span></div></div>
+        <div class="sw"><div class="chip" style="background:#A3AAB6"></div><div class="meta"><span class="name">ink 400</span><span class="hex">#A3AAB6</span></div></div>
+        <div class="sw"><div class="chip" style="background:#E4E7EC"></div><div class="meta"><span class="name">ink 200</span><span class="hex">#E4E7EC</span></div></div>
+        <div class="sw"><div class="chip" style="background:#F7F8FA"></div><div class="meta"><span class="name">ink 50</span><span class="hex">#F7F8FA</span></div></div>
+      </div>
+
+      <h3 style="margin-top:30px">Semantic mapping</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Token</th><th>Light</th><th>Dark</th><th>Used for</th></tr>
+        <tr><td>bg.canvas</td><td class="num">#F7F8FA</td><td class="num">#0B0D11</td><td>Screen ground</td></tr>
+        <tr><td>bg.surface</td><td class="num">#FFFFFF</td><td class="num">#14181F</td><td>Cards, sheets</td></tr>
+        <tr><td>bg.brand</td><td class="num">#0071E3</td><td class="num">#0071E3</td><td>Satın Al, primary CTAs</td></tr>
+        <tr><td>bg.highlight</td><td class="num">#D6FF4B</td><td class="num">#D6FF4B</td><td>Live offer, max one</td></tr>
+        <tr><td>finance.accent</td><td class="num">#0F2340</td><td class="num">#8FB4E8</td><td>Taksit lines, DeğişTokuş</td></tr>
+        <tr><td>status.deal</td><td class="num">#E5175A</td><td class="num">#FF5C8A</td><td>-%9 badge</td></tr>
+        <tr><td>status.success</td><td class="num">#12855C</td><td class="num">#3ECF97</td><td>Stokta</td></tr>
+      </table></div>
+      <p class="note" style="margin-top:14px">Club tiers sit outside the semantic set and are used
+        only inside Club surfaces:
+        <span class="mono" style="color:var(--tier-bronze)">#A9714B</span>
+        <span class="mono" style="color:var(--tier-silver)">#9AA3AE</span>
+        <span class="mono" style="color:var(--tier-gold)">#C9A227</span>
+        <span class="mono">#0F2340</span>.</p>
+    </section>
+
+    <section id="type">
+      <h2>Tipografi — Type</h2>
+      <p class="note">The platform UI face (SF Pro on iOS, Roboto on Android). It is what the
+        customer already reads Apple's own product names in, and it carries Turkish diacritics in
+        every shipped weight. Specimens below render in the real stack.</p>
+      <div style="margin-top:18px">
+        <div class="spec"><span class="label">display</span><span class="sample" style="font-size:34px;line-height:1.15;font-weight:600;letter-spacing:-.02em">Yeni iPhone 17 Pro</span><span class="val">34/40 · 600 · -0.6</span></div>
+        <div class="spec"><span class="label">title2</span><span class="sample" style="font-size:22px;font-weight:600;letter-spacing:-.014em">Kampanyalar &amp; taksit</span><span class="val">22/28 · 600</span></div>
+        <div class="spec"><span class="label">headline</span><span class="sample" style="font-size:17px;font-weight:600">Mağazada teslim alın</span><span class="val">17/22 · 600</span></div>
+        <div class="spec"><span class="label">body</span><span class="sample" style="font-size:17px">Seçili bankalara özel vade farksız taksit fırsatı</span><span class="val">17/24 · 400</span></div>
+        <div class="spec"><span class="label">footnote</span><span class="sample" style="font-size:13px;color:var(--fg-2)">DeğişTokuş ile 6.000 ₺ ek destek</span><span class="val">13/18 · 400</span></div>
+        <div class="spec"><span class="label">micro</span><span class="sample" style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Eğitime özel</span><span class="val">11/14 · 600 · caps</span></div>
+        <div class="spec"><span class="label">priceLg</span><span class="sample" style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.012em">108.999,00 ₺</span><span class="val">24/28 · tabular</span></div>
+      </div>
+      <p class="note" style="margin-top:16px">Ğ ğ İ ı Ş ş Ç ç Ö ö Ü ü — checked at 400/500/600/700.
+        Product names never hyphenate; campaign copy may wrap freely.</p>
+    </section>
+
+    <section id="layout">
+      <h2>Uzay &amp; Şekil — Space &amp; shape</h2>
+      <div class="cols c2">
+        <div class="panel">
+          <h3>Space · 4pt base</h3>
+          <div class="tbl-wrap"><table>
+            <tr><th>Token</th><th>pt</th><th>Use</th></tr>
+            <tr><td>space.3</td><td class="num">8</td><td>Inside chips, icon gaps</td></tr>
+            <tr><td>space.5</td><td class="num">16</td><td>Screen gutter, card padding</td></tr>
+            <tr><td>space.7</td><td class="num">24</td><td>Between card groups</td></tr>
+            <tr><td>space.8</td><td class="num">32</td><td>Section rhythm</td></tr>
+          </table></div>
+        </div>
+        <div class="panel">
+          <h3>Radius</h3>
+          <div class="tbl-wrap"><table>
+            <tr><th>Token</th><th>pt</th><th>Use</th></tr>
+            <tr><td>radius.sm</td><td class="num">8</td><td>Chips, inputs, badges</td></tr>
+            <tr><td>radius.lg</td><td class="num">16</td><td>Product &amp; campaign cards</td></tr>
+            <tr><td>radius.2xl</td><td class="num">28</td><td>Sheets</td></tr>
+            <tr><td>radius.pill</td><td class="num">999</td><td>All buttons — inherited from the site</td></tr>
+          </table></div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:14px">Elevation is ink-tinted, never black, and only three
+        steps deep. In dark mode elevation is expressed by lightening the surface plus a hairline —
+        shadows are switched off. Minimum touch target 44pt, no exceptions.</p>
+    </section>
+
+    <section id="components">
+      <h2>Bileşenler — Components</h2>
+      <p class="note">The system's centre of gravity is <strong>PriceBlock</strong>: in this market
+        the decision is made on the monthly figure, so the installment line ships with every price,
+        in a fixed order, at a fixed weight.</p>
+      <div class="tbl-wrap" style="margin-top:16px"><table>
+        <tr><th>Order</th><th>Element</th><th>Token</th><th>Example</th></tr>
+        <tr><td>1</td><td>Struck sticker price</td><td>text.priceWas</td><td class="num">119.999,00 ₺</td></tr>
+        <tr><td>2</td><td>Current price</td><td>type.priceLg</td><td class="num">108.999,00 ₺</td></tr>
+        <tr><td>3</td><td>Discount badge</td><td>status.deal</td><td class="num">-%9</td></tr>
+        <tr><td>4</td><td>Installment</td><td>finance.accent</td><td class="num">9 x 12.111,00 ₺</td></tr>
+        <tr><td>5</td><td>Trade-in top-up</td><td>finance.accent</td><td class="num">+6.000 ₺</td></tr>
+      </table></div>
+      <p class="note" style="margin-top:14px">Around it: ProductCard, CampaignBanner, InstallmentSheet
+        (bank × ay matrix), TradeInEstimator, EducationBadge, StoreRow, AppointmentCard, ClubTierCard,
+        OrderTracker. Tab bar is five: Alışveriş · Kampanyalar · Mağazalar · Troy Club · Hesabım.</p>
+    </section>
+
+    <section id="screens">
+      <h2>Ekranlar — The system assembled</h2>
+      <p class="note">Real content, real tokens, at true 375pt width.</p>
+      <div class="phones" style="margin-top:20px">
+
+        <div>
+          <div class="phone"><div class="screen">
+            <div class="s-nav"><span class="lg">TROY</span><span class="sub">Sepet</span></div>
+            <div class="s-hero"><span class="sub">iPhone 17 Pro · Kozmik Turuncu</span></div>
+            <div class="s-pad">
+              <span class="pill stock">Stokta</span>
+              <div class="name">iPhone 17 Pro 256 GB</div>
+              <div class="sub">Kozmik Turuncu</div>
+              <div class="varrow">
+                <span class="var on">256 GB</span><span class="var">512 GB</span><span class="var">1 TB</span>
+              </div>
+              <div style="margin-top:14px">
+                <div class="was">119.999,00 ₺</div>
+                <div><span class="now">108.999,00 ₺</span><span class="off">-%9</span></div>
+                <div class="fin"><b>9 x 12.111,00 ₺</b> · vade farksız</div>
+                <div class="tin">DeğişTokuş ile 6.000 ₺ ek destek</div>
+              </div>
+              <span class="btn">Satın Al</span>
+              <span class="btn sec">Mağazadan Teslim Al</span>
+            </div>
+            <div class="tabbar">
+              <div class="on"><span class="dot"></span>Alışveriş</div>
+              <div><span class="dot"></span>Kampanya</div>
+              <div><span class="dot"></span>Mağazalar</div>
+              <div><span class="dot"></span>Club</div>
+              <div><span class="dot"></span>Hesabım</div>
+            </div>
+          </div></div>
+          <div class="cap">PDP · product surface, TROY recedes</div>
+        </div>
+
+        <div>
+          <div class="phone"><div class="screen">
+            <div class="s-nav"><span class="lg">Kampanyalar</span><span class="sub">Tümü</span></div>
+            <div class="s-pad">
+              <div class="camp">
+                <div class="kick">Maximum'a özel</div>
+                <h4>Mac modellerinde<br><span class="volt">vade farksız 9 taksit</span></h4>
+                <div class="sub" style="color:#DCE5F1;font-size:12px">Seçili MacBook Air ve MacBook Pro modellerinde geçerlidir.</div>
+                <div class="exp">31 Ağustos'a kadar · <span class="rule">Kampanya koşulları</span></div>
+              </div>
+              <div style="margin-top:14px">
+                <div class="name" style="margin-top:0">Eğitime özel</div>
+                <div class="sub">Öğrenci ve öğretmenlere seçili MacBook modellerinde %12 indirim</div>
+              </div>
+              <div class="grid2" style="margin-top:14px">
+                <div class="pcard"><div class="img"></div><span class="pill store">Mağazada var</span>
+                  <div class="name" style="font-size:13px">MacBook Air 13"</div>
+                  <div class="now" style="font-size:16px">54.999,00 ₺</div>
+                  <div class="fin" style="font-size:11px">9 x 6.111,00 ₺</div></div>
+                <div class="pcard dim"><div class="img"></div><span class="pill out">Tükendi</span>
+                  <div class="name" style="font-size:13px">AirPods Pro 3</div>
+                  <div class="now" style="font-size:16px">9.499,00 ₺</div>
+                  <div class="fin" style="font-size:11px;color:#767E8C">Gelince haber ver</div></div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div><span class="dot"></span>Alışveriş</div>
+              <div class="on"><span class="dot"></span>Kampanya</div>
+              <div><span class="dot"></span>Mağazalar</div>
+              <div><span class="dot"></span>Club</div>
+              <div><span class="dot"></span>Hesabım</div>
+            </div>
+          </div></div>
+          <div class="cap">Kampanyalar · service surface, TROY leads</div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="money">
+      <h2>Para &amp; Dil — Money &amp; language</h2>
+      <div class="cols c2">
+        <div class="panel">
+          <h3>Formatting</h3>
+          <p class="note">Locale <code>tr-TR</code>. Thousands <code>.</code>, decimals <code>,</code>,
+            symbol trailing: <span class="mono">108.999,00 ₺</span>. Percent sign leads the number:
+            <span class="mono">-%9</span>. Everything tabular. Prices are never abbreviated.</p>
+        </div>
+        <div class="panel">
+          <h3>Fixed strings</h3>
+          <p class="note">Satın Al · Gelince Haber Ver · Sepete Ekle · Stokta · Tükendi ·
+            Mağazada var · vade farksız · DeğişTokuş · Eğitime özel · TROY CLUB · Randevu Al.
+            <em>vade farksız</em> is never rendered as "faizsiz".</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="rules">
+      <h2>Kurallar — Review gates</h2>
+      <div class="rules">
+        <div class="rule"><span class="tag">Do</span><p>Cover the logo: a product screen should look like good Apple retail; a service screen should be unmistakably TROY.</p></div>
+        <div class="rule no"><span class="tag">Don't</span><p>Put two volt elements in one viewport. Two offers means no offer.</p></div>
+        <div class="rule"><span class="tag">Do</span><p>Ship the taksit line with every price, at every size, without a tap.</p></div>
+        <div class="rule no"><span class="tag">Don't</span><p>Read a primitive from a component. Semantic tokens only — this blocks review.</p></div>
+        <div class="rule"><span class="tag">Do</span><p>Let stock state change the card's shape — pill, opacity and CTA move together.</p></div>
+        <div class="rule no"><span class="tag">Don't</span><p>Truncate a price or an installment line at 200% Dynamic Type. Reflow instead.</p></div>
+      </div>
+    </section>
+
+    <p class="foot">TROY Design System v0.1 · tokens: color · type · layout · motion ·
+      source of truth in <span class="mono">design-system/tokens/*.json</span></p>
+  </main>
+</div>

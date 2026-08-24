@@ -1,0 +1,30 @@
+{
+  "$description": "Type tokens. Native iOS/Android use the platform UI face; web/RN fallback is a system stack. Turkish diacritics (ı İ ğ Ğ ş Ş ç ö ü) must render in every weight shipped.",
+  "family": {
+    "ui": "SF Pro Text, -apple-system, Roboto, Segoe UI, system-ui, sans-serif",
+    "display": "SF Pro Display, -apple-system, Roboto, Segoe UI, system-ui, sans-serif",
+    "numeric": "SF Pro Text, -apple-system, system-ui, sans-serif"
+  },
+  "weight": { "regular": 400, "medium": 500, "semibold": 600, "bold": 700 },
+  "scale": {
+    "display":  { "size": 34, "line": 40, "weight": 600, "tracking": -0.6, "family": "display" },
+    "title1":   { "size": 28, "line": 34, "weight": 600, "tracking": -0.4, "family": "display" },
+    "title2":   { "size": 22, "line": 28, "weight": 600, "tracking": -0.3, "family": "display" },
+    "title3":   { "size": 20, "line": 26, "weight": 600, "tracking": -0.2, "family": "ui" },
+    "headline": { "size": 17, "line": 22, "weight": 600, "tracking": -0.1, "family": "ui" },
+    "body":     { "size": 17, "line": 24, "weight": 400, "tracking": 0,    "family": "ui" },
+    "callout":  { "size": 16, "line": 22, "weight": 400, "tracking": 0,    "family": "ui" },
+    "subhead":  { "size": 15, "line": 20, "weight": 400, "tracking": 0,    "family": "ui" },
+    "footnote": { "size": 13, "line": 18, "weight": 400, "tracking": 0,    "family": "ui" },
+    "caption":  { "size": 12, "line": 16, "weight": 400, "tracking": 0.1,  "family": "ui" },
+    "micro":    { "size": 11, "line": 14, "weight": 600, "tracking": 0.6,  "family": "ui", "transform": "uppercase" },
+    "priceLg":  { "size": 24, "line": 28, "weight": 600, "tracking": -0.3, "family": "numeric", "numeric": "tabular" },
+    "priceMd":  { "size": 17, "line": 22, "weight": 600, "tracking": -0.1, "family": "numeric", "numeric": "tabular" },
+    "priceSm":  { "size": 14, "line": 18, "weight": 600, "tracking": 0,    "family": "numeric", "numeric": "tabular" }
+  },
+  "rules": [
+    "Dynamic Type / font-scale is respected up to 200%; every layout must reflow, never truncate price or installment text.",
+    "Turkish line breaking: never hyphenate product names (iPhone 17 Pro Max), allow wrap on campaign copy.",
+    "All money and installment figures use tabular numerals."
+  ]
+}

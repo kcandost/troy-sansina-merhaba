@@ -1,0 +1,99 @@
+/* TROY Design System — CSS custom properties
+   Generated shape mirrors design-system/tokens/*.json. Light is the base;
+   dark is redefined at token level only, in both the system-preference and
+   explicit-toggle states. Never declare a component color outside :root. */
+
+:root {
+  /* --- primitives --- */
+  --troy-ink-900:#0E1116; --troy-ink-800:#22272F; --troy-ink-700:#3A414D;
+  --troy-ink-600:#565E6C; --troy-ink-500:#767E8C; --troy-ink-400:#A3AAB6;
+  --troy-ink-300:#CDD2DA; --troy-ink-200:#E4E7EC; --troy-ink-100:#F1F3F6;
+  --troy-ink-50:#F7F8FA;  --troy-ink-0:#FFFFFF;
+  --troy-navy-900:#08182D; --troy-navy-700:#0F2340; --troy-navy-500:#1B3A63;
+  --troy-navy-300:#3C5F8F; --troy-navy-100:#DCE5F1;
+  --troy-blue-700:#0053AC; --troy-blue-600:#0062C4; --troy-blue-500:#0071E3;
+  --troy-blue-300:#5AA9F0; --troy-blue-100:#E3F0FD;
+  --troy-volt-500:#D6FF4B; --troy-volt-300:#E8FF9B; --troy-volt-100:#F4FFD6;
+  --troy-rose-500:#E5175A; --troy-green-500:#12855C; --troy-amber-500:#B25E00; --troy-red-500:#C42B1C;
+  --troy-tier-bronze:#A9714B; --troy-tier-silver:#9AA3AE; --troy-tier-gold:#C9A227; --troy-tier-premium:#0F2340;
+
+  /* --- semantic (light) --- */
+  --bg-canvas:var(--troy-ink-50);
+  --bg-surface:var(--troy-ink-0);
+  --bg-raised:var(--troy-ink-0);
+  --bg-sunken:var(--troy-ink-100);
+  --bg-inverse:var(--troy-navy-700);
+  --bg-brand:var(--troy-blue-500);
+  --bg-brand-pressed:var(--troy-blue-600);
+  --bg-highlight:var(--troy-volt-500);
+  --text-primary:var(--troy-ink-900);
+  --text-secondary:var(--troy-ink-600);
+  --text-tertiary:var(--troy-ink-500);
+  --text-on-brand:var(--troy-ink-0);
+  --text-on-highlight:var(--troy-ink-900);
+  --text-link:var(--troy-blue-500);
+  --text-price:var(--troy-ink-900);
+  --text-price-was:var(--troy-ink-500);
+  --border-subtle:var(--troy-ink-200);
+  --border-strong:var(--troy-ink-300);
+  --border-focus:var(--troy-blue-500);
+  --status-success:var(--troy-green-500); --status-success-bg:#DFF3EA;
+  --status-warning:var(--troy-amber-500); --status-warning-bg:#FBEBD8;
+  --status-danger:var(--troy-red-500);    --status-danger-bg:#FBE3E0;
+  --status-deal:var(--troy-rose-500);     --status-deal-bg:#FDE4EC;
+  --finance-accent:var(--troy-navy-700);  --finance-bg:var(--troy-navy-100);
+
+  /* --- layout --- */
+  --space-1:2px;  --space-2:4px;  --space-3:8px;  --space-4:12px; --space-5:16px;
+  --space-6:20px; --space-7:24px; --space-8:32px; --space-9:40px; --space-10:48px; --space-11:64px;
+  --radius-xs:4px; --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+  --radius-xl:22px; --radius-2xl:28px; --radius-pill:999px;
+  --elev-1:0 1px 2px rgba(14,17,22,.06);
+  --elev-2:0 4px 12px -2px rgba(14,17,22,.10);
+  --elev-3:0 12px 32px -8px rgba(14,17,22,.16);
+
+  /* --- type --- */
+  --font-ui:"SF Pro Text",-apple-system,Roboto,"Segoe UI",system-ui,sans-serif;
+  --font-display:"SF Pro Display",-apple-system,Roboto,"Segoe UI",system-ui,sans-serif;
+
+  /* --- motion --- */
+  --dur-instant:80ms; --dur-fast:160ms; --dur-base:240ms; --dur-slow:360ms; --dur-sheet:460ms;
+  --ease-standard:cubic-bezier(.32,.72,0,1);
+  --ease-decelerate:cubic-bezier(.16,1,.3,1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-canvas:#0B0D11; --bg-surface:#14181F; --bg-raised:#1C222B; --bg-sunken:#0B0D11;
+    --bg-inverse:var(--troy-ink-0); --bg-brand-pressed:var(--troy-blue-300);
+    --text-primary:var(--troy-ink-0); --text-secondary:var(--troy-ink-300);
+    --text-tertiary:var(--troy-ink-400); --text-link:var(--troy-blue-300);
+    --text-price:var(--troy-ink-0); --text-price-was:var(--troy-ink-400);
+    --border-subtle:#2A313C; --border-strong:var(--troy-ink-700); --border-focus:var(--troy-blue-300);
+    --status-success:#3ECF97; --status-success-bg:#0E2A22;
+    --status-warning:#E9A13B; --status-warning-bg:#2C1E0B;
+    --status-danger:#F2685A;  --status-danger-bg:#2E1512;
+    --status-deal:#FF5C8A;    --status-deal-bg:#2E1220;
+    --finance-accent:#8FB4E8; --finance-bg:#111C2C;
+    --elev-1:none; --elev-2:none; --elev-3:0 12px 32px -8px rgba(0,0,0,.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg-canvas:#0B0D11; --bg-surface:#14181F; --bg-raised:#1C222B; --bg-sunken:#0B0D11;
+  --bg-inverse:var(--troy-ink-0); --bg-brand-pressed:var(--troy-blue-300);
+  --text-primary:var(--troy-ink-0); --text-secondary:var(--troy-ink-300);
+  --text-tertiary:var(--troy-ink-400); --text-link:var(--troy-blue-300);
+  --text-price:var(--troy-ink-0); --text-price-was:var(--troy-ink-400);
+  --border-subtle:#2A313C; --border-strong:var(--troy-ink-700); --border-focus:var(--troy-blue-300);
+  --status-success:#3ECF97; --status-success-bg:#0E2A22;
+  --status-warning:#E9A13B; --status-warning-bg:#2C1E0B;
+  --status-danger:#F2685A;  --status-danger-bg:#2E1512;
+  --status-deal:#FF5C8A;    --status-deal-bg:#2E1220;
+  --finance-accent:#8FB4E8; --finance-bg:#111C2C;
+  --elev-1:none; --elev-2:none; --elev-3:0 12px 32px -8px rgba(0,0,0,.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast:1ms; --dur-base:1ms; --dur-slow:1ms; --dur-sheet:1ms; }
+}

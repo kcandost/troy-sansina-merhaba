@@ -1,0 +1,15 @@
+{
+  "duration": { "instant": 80, "fast": 160, "base": 240, "slow": 360, "sheet": 460 },
+  "easing": {
+    "standard": "cubic-bezier(0.32, 0.72, 0, 1)",
+    "decelerate": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "accelerate": "cubic-bezier(0.4, 0, 1, 1)",
+    "spring": { "stiffness": 320, "damping": 32, "mass": 1 }
+  },
+  "usage": [
+    "Sheets (taksit table, DegisTokus flow) rise with duration.sheet + easing.standard.",
+    "Add-to-cart uses a spring on the cart badge only; the button itself does not bounce.",
+    "Campaign / volt highlights never animate on their own; motion is reserved for state changes the user caused.",
+    "prefers-reduced-motion / Reduce Motion collapses every transition to duration.instant with opacity only."
+  ]
+}

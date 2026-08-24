@@ -1,0 +1,16 @@
+{
+  "space": { "0": 0, "1": 2, "2": 4, "3": 8, "4": 12, "5": 16, "6": 20, "7": 24, "8": 32, "9": 40, "10": 48, "11": 64 },
+  "$spaceNote": "4pt base. Screen gutter = space.5 (16). Section rhythm = space.8 (32). Card padding = space.5.",
+  "radius": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 22, "2xl": 28, "pill": 999 },
+  "$radiusNote": "sm(8) for chips and inputs, lg(16) for cards, 2xl(28) for sheets, pill for all primary/secondary buttons — the pill button is inherited from troyestore.com.",
+  "border": { "hairline": 0.5, "thin": 1, "thick": 2 },
+  "elevation": {
+    "0": "none",
+    "1": { "y": 1, "blur": 2, "spread": 0, "color": "rgba(14,17,22,0.06)" },
+    "2": { "y": 4, "blur": 12, "spread": -2, "color": "rgba(14,17,22,0.10)" },
+    "3": { "y": 12, "blur": 32, "spread": -8, "color": "rgba(14,17,22,0.16)" }
+  },
+  "$elevationNote": "Shadows are ink-tinted, never pure black. Dark theme replaces elevation with surface lightening (bg.surface -> bg.raised) plus a hairline border.",
+  "touch": { "minTarget": 44, "tabBarHeight": 49, "navBarHeight": 44, "primaryButtonHeight": 50, "chipHeight": 34 },
+  "grid": { "productColumns": { "compact": 2, "regular": 3, "wide": 4 }, "maxContentWidth": 720 }
+}
