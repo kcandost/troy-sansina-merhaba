@@ -6,7 +6,7 @@
       "y": 0,
       "w": 1194,
       "h": 834,
-      "title": "A · Sessiz Vitrin — mağaza kimliği"
+      "title": "A · Sessiz Vitrin · mağaza kimliği"
     },
     {
       "file": "GlassDepth.dc.html",
@@ -14,7 +14,7 @@
       "y": 0,
       "w": 1194,
       "h": 834,
-      "title": "B · Cam ve Derinlik — kampanya kimliği"
+      "title": "B · Cam ve Derinlik · kampanya kimliği"
     },
     {
       "file": "Stage.dc.html",
@@ -22,7 +22,7 @@
       "y": 0,
       "w": 1194,
       "h": 834,
-      "title": "C · Sahne — mağaza kimliği",
+      "title": "C · Sahne · mağaza kimliği",
       "print": "flow"
     },
     {
@@ -31,7 +31,7 @@
       "y": 0,
       "w": 1194,
       "h": 834,
-      "title": "D · Vitrin Tepsisi — mağaza kimliği"
+      "title": "D · Vitrin Tepsisi · mağaza kimliği"
     },
     {
       "file": "StoreLight.dc.html",
@@ -39,7 +39,7 @@
       "y": 0,
       "w": 1194,
       "h": 834,
-      "title": "E · Mağaza Işığı — kampanya kimliği"
+      "title": "E · Mağaza Işığı · kampanya kimliği"
     }
   ],
   "annotations": [
@@ -48,7 +48,7 @@
       "x": 0,
       "y": -470,
       "w": 460,
-      "text": "A · SESSİZ VİTRİN\nKimlik: troyestore.com (ink + #0071E3)\n\nHIG'in “deference” ilkesi birebir: beyaz zemin, geniş boşluk, tek mavi vurgu. Apple Store uygulamasının yanında açılsa yadırgamaz.\n\nTakas: sakin. Kalabalık bir AVM katında yoldan geçeni durdurmayabilir."
+      "text": "A · SESSİZ VİTRİN\nKimlik: troyestore.com (ink + #0071E3)\n\nHIG'in “deference” ilkesi: beyaz zemin, geniş boşluk, tek mavi vurgu.\n\nİkinci geçiş: kartlarda ürün yüzleri, kazanan kart çevrilerek açılıyor, tek seferlik konfeti, artı yerine gerçek bir buton.\n\nKart görselleri yer tutucu: TROY'un kendi ürün render'ları ile değişecek.\n\nTakas: sakin. Kalabalık bir AVM katında yoldan geçeni durdurmayabilir."
     },
     {
       "id": "dir-2",
@@ -62,7 +62,7 @@
       "x": 2688,
       "y": -470,
       "w": 460,
-      "text": "C · SAHNE\nKimlik: troyestore.com + volt (#D6FF4B)\n\nApple etkinlik sahnesi: siyah zemin, dev tipografi, slot makinesi gibi yavaşlayarak duran makara. Kazanım anı tek bir volt çizgiyle işaretlenir.\n\nTakas: tipografi önde; ürün/kart hissi zayıf. Volt kuralı — ekranda tek bir tane."
+      "text": "C · SAHNE\nKimlik: troyestore.com + volt (#D6FF4B)\n\nApple etkinlik sahnesi: siyah zemin, dev tipografi, slot makinesi gibi yavaşlayarak duran makara. Kazanım anı tek bir volt çizgiyle işaretlenir.\n\nTakas: tipografi önde; ürün/kart hissi zayıf. Volt kuralı · ekranda tek bir tane."
     },
     {
       "id": "dir-4",

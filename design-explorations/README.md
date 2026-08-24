@@ -10,7 +10,7 @@ returns to the invite.
 
 | File | Direction | Identity |
 |---|---|---|
-| `Main.dc.html` | A · Sessiz Vitrin — HIG deference, near-white, one blue | troyestore.com |
+| `Main.dc.html` | A · Sessiz Vitrin, second pass: product card faces, card-flip reveal, confetti | troyestore.com |
 | `GlassDepth.dc.html` | B · Cam ve Derinlik — glass materials, 3D depth | deck (+artısı var) |
 | `Stage.dc.html` | C · Sahne — keynote stage, slot reel, volt accent | troyestore.com |
 | `FinishTray.dc.html` | D · Vitrin Tepsisi — Apple product finishes, Wallet stack | troyestore.com |
@@ -24,4 +24,5 @@ Artboards are 1194×834 — iPad Pro 11" landscape, the orientation in the story
 Type is the platform UI face (SF Pro / Roboto) throughout, which is the honest choice
 for an Apple-idiom brief.
 
-**Placeholder:** the QR artwork is a drawn module grid, not a scannable code.
+**Placeholders:** the QR artwork is a drawn module grid, not a scannable code, and the
+product faces on A's cards are flat geometric stand-ins for TROY's own product renders.

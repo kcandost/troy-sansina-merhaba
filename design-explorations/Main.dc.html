@@ -45,36 +45,102 @@
   }
 
   .stage { background: #F5F5F7; color: #1D1D1F; }
-  .a-glow { position: absolute; left: 50%; top: 46%; width: 1100px; height: 800px; transform: translate(-50%,-50%);
+  .stage ::selection { background: rgba(0,113,227,.18); color: #1D1D1F; }
+  .stage :focus-visible { outline: 3px solid #0071E3; outline-offset: 4px; border-radius: 12px; }
+
+  .a-glow { position: absolute; left: 50%; top: 46%; width: 1160px; height: 840px; transform: translate(-50%,-50%);
             background: radial-gradient(closest-side, #FFFFFF 0%, rgba(255,255,255,0) 72%); z-index: 1; }
-  .a-h1 { font-size: 74px; line-height: 1.05; font-weight: 600; letter-spacing: -.032em; margin: 0; max-width: 880px; text-wrap: balance; }
+  .a-h1 { font-size: 74px; line-height: 1.05; font-weight: 600; letter-spacing: -.032em; margin: 0;
+          max-width: 880px; text-wrap: balance; }
   .a-sub { font-size: 23px; line-height: 1.45; color: #6E6E73; margin: 0; max-width: 560px; }
-  .a-plus { width: 104px; height: 104px; border-radius: 50%; background: #0071E3; display: flex; align-items: center;
-            justify-content: center; box-shadow: 0 12px 30px -10px rgba(0,113,227,.55); animation: aPulse 3.4s ease-in-out infinite; }
-  @keyframes aPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
-  .a-hint { display: flex; align-items: center; gap: 9px; font-size: 15px; color: #86868B; }
-  .a-deck { display: flex; gap: 20px; }
-  .a-card { width: 150px; height: 214px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E3E3E7;
-            box-shadow: 0 8px 24px -12px rgba(0,0,0,.18); transition: transform .7s cubic-bezier(.22,1,.36,1), opacity .5s ease; }
-  .step-shuffle .a-card { animation: aShuffle 1.15s cubic-bezier(.45,0,.25,1) infinite; }
-  .step-shuffle .a-card:nth-child(2) { animation-delay: .09s; }
-  .step-shuffle .a-card:nth-child(3) { animation-delay: .18s; }
-  .step-shuffle .a-card:nth-child(4) { animation-delay: .27s; }
-  .step-shuffle .a-card:nth-child(5) { animation-delay: .36s; }
+  .a-hint { display: flex; align-items: center; gap: 9px; font-size: 15px; color: #6E6E73; }
+
+  .a-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 58px;
+           padding: 0 40px; border: 0; border-radius: 999px; background: #0071E3; color: #FFFFFF;
+           font: inherit; font-size: 19px; font-weight: 600; letter-spacing: -.01em; cursor: pointer;
+           position: relative;
+           transition: transform .16s cubic-bezier(.16,1,.3,1), background .16s ease;
+           box-shadow: 0 12px 26px -12px rgba(29,29,31,.38);
+           animation: aBreathe 3.6s cubic-bezier(.37,0,.63,1) infinite; }
+  @keyframes aBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.024); } }
+  .a-cta:hover { background: #0062C4; transform: translateY(-1px); }
+  .a-cta:active { transform: scale(.985); }
+
+  /* --- deck ------------------------------------------------------------ */
+  .deck { perspective: 2200px; }
+  .step-hello .deck { opacity: 1; }
+  .a-deck { display: flex; gap: 22px; align-items: center; }
+  .a-slot { width: 178px; height: 250px; transform-style: preserve-3d; }
+  .a-card { width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.16,1,.3,1), opacity .45s ease; }
+  .a-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
+            transition: transform .95s cubic-bezier(.16,1,.3,1); }
+  .a-face { position: absolute; inset: 0; border-radius: 16px; background: #FFFFFF;
+            backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            box-shadow: 0 14px 30px -16px rgba(29,29,31,.34);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+  .a-face--value { transform: rotateY(180deg); gap: 0; justify-content: space-between;
+                   padding: 26px 20px 24px; }
+  .a-face--value .a-vmark { opacity: .5; }
+  .a-face--value .a-vbody { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .a-art { width: 104px; height: 112px; display: flex; align-items: center; justify-content: center;
+           color: #1D1D1F; opacity: .82; }
+  .a-name { font-size: 15px; color: #6E6E73; letter-spacing: -.005em; }
+  .a-amount { font-size: 32px; font-weight: 600; letter-spacing: -.025em; color: #0071E3;
+              font-variant-numeric: tabular-nums; }
+  .a-amount-cap { font-size: 13px; color: #6E6E73; }
+  .a-rulechip { width: 44px; height: 2px; border-radius: 1px; background: #0071E3; }
+
+  /* hello: the deck settles into place before it starts moving */
+  .step-hello .a-card { animation: aSettle .9s cubic-bezier(.16,1,.3,1) both; }
+  .step-hello .a-slot:nth-child(2) .a-card { animation-delay: .05s; }
+  .step-hello .a-slot:nth-child(3) .a-card { animation-delay: .1s; }
+  .step-hello .a-slot:nth-child(4) .a-card { animation-delay: .15s; }
+  .step-hello .a-slot:nth-child(5) .a-card { animation-delay: .2s; }
+  @keyframes aSettle { from { transform: translateY(26px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .step-shuffle .a-card { animation: aShuffle 1.05s cubic-bezier(.45,0,.25,1) infinite; }
+  .step-shuffle .a-slot:nth-child(2) .a-card { animation-delay: .08s; }
+  .step-shuffle .a-slot:nth-child(3) .a-card { animation-delay: .16s; }
+  .step-shuffle .a-slot:nth-child(4) .a-card { animation-delay: .24s; }
+  .step-shuffle .a-slot:nth-child(5) .a-card { animation-delay: .32s; }
   @keyframes aShuffle {
-    0%,100% { transform: translateY(0) rotate(0deg); }
-    38% { transform: translateY(-30px) rotate(-2.2deg); }
-    62% { transform: translateY(6px) rotate(1.4deg); }
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    38% { transform: translateY(-34px) rotate(-2.4deg); }
+    64% { transform: translateY(7px) rotate(1.5deg); }
   }
-  .step-reveal .a-card { opacity: 0; transform: scale(.9); }
-  .step-reveal .a-card--win { opacity: 1; transform: scale(1.62); box-shadow: 0 34px 70px -30px rgba(0,0,0,.34); border-color: #D8D8DE; }
-  .a-amount { font-size: 34px; font-weight: 600; letter-spacing: -.02em; color: #0071E3; }
-  .a-mark { color: #C7C7CC; }
-  .step-reveal .a-mark { opacity: 0; }
-  .a-big { font-size: 132px; line-height: .96; font-weight: 600; letter-spacing: -.045em; margin: 0; }
-  .a-qr { display: flex; align-items: center; gap: 56px; background: #FFFFFF; border: 1px solid #E3E3E7;
-          border-radius: 28px; padding: 44px 52px; box-shadow: 0 20px 50px -28px rgba(0,0,0,.22); }
-  .a-qr h2 { font-size: 40px; line-height: 1.14; font-weight: 600; letter-spacing: -.026em; margin: 0; text-align: left; max-width: 380px; }
+
+  .step-reveal .a-card { opacity: 0; transform: translateY(14px) scale(.92); }
+  .step-reveal .a-slot--win .a-card { opacity: 1; transform: scale(1.62); }
+  .step-reveal .a-slot--win .a-flip { transform: rotateY(180deg); }
+  .step-reveal .a-slot--win .a-face { box-shadow: 0 40px 70px -34px rgba(29,29,31,.42); }
+
+  .a-spark { position: absolute; left: 50%; top: 50%; width: 620px; height: 620px; margin: -310px 0 0 -310px;
+             border-radius: 50%; opacity: 0; transition: opacity .6s ease;
+             background: radial-gradient(closest-side, rgba(0,113,227,.16), rgba(0,113,227,0) 70%); }
+  .step-reveal .a-spark { opacity: 1; }
+
+  /* --- confetti: fires once, at the flip ------------------------------- */
+  .confetti { position: absolute; left: 50%; top: 47%; width: 0; height: 0; z-index: 5; pointer-events: none; }
+  .confetti i { position: absolute; display: block; opacity: 0; }
+  .step-reveal .confetti i { animation: aBurst var(--d) cubic-bezier(.16,1,.3,1) var(--t) both; }
+  @keyframes aBurst {
+    0% { transform: translate3d(0,0,0) rotate(0deg) scale(.2); opacity: 0; }
+    14% { opacity: 1; }
+    42% { transform: translate3d(calc(var(--dx) * .62), var(--up), 0) rotate(calc(var(--r) * .45)) scale(1); opacity: 1; }
+    100% { transform: translate3d(var(--dx), var(--fall), 0) rotate(var(--r)) scale(.92); opacity: 0; }
+  }
+
+  /* --- prize + QR ------------------------------------------------------ */
+  .a-big { font-size: 120px; line-height: .96; font-weight: 600; letter-spacing: -.035em; margin: 0;
+           font-variant-numeric: tabular-nums; }
+  .a-rule { width: 190px; height: 3px; border-radius: 2px; background: #0071E3;
+            transform: scaleX(0); transform-origin: center;
+            transition: transform .8s cubic-bezier(.16,1,.3,1) .25s; }
+  .step-prize .a-rule { transform: scaleX(1); }
+  .a-qr { display: flex; align-items: center; gap: 56px; background: #FFFFFF; border-radius: 24px;
+          padding: 44px 52px; box-shadow: 0 26px 54px -30px rgba(29,29,31,.3); }
+  .a-qr h2 { font-size: 40px; line-height: 1.14; font-weight: 600; letter-spacing: -.026em; margin: 0;
+             text-align: left; max-width: 380px; }
   .step-qr .brand { opacity: .4; }
 
   </style>
@@ -84,32 +150,167 @@
   <div class="brand"><div class="lockup" style="display:flex;align-items:center;gap:12px"><svg viewBox="0 0.891 60.17 29.61" width="88" height="43.3" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg><span style="font-size:11px;line-height:1.15;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:#1D1D1F;opacity:.55;border-left:1px solid currentColor;padding-left:12px">Premium<br>Partner</span></div></div>
 
   <div class="deck">
+    <div class="a-spark"></div>
     <div class="a-deck">
-      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
-      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
-      <div class="card a-card a-card--win card--win"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span><span class="amount a-amount">{{ prize }}</span></div>
-      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
-      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
+      <div class="a-slot">
+        <div class="a-card">
+          <div class="a-flip">
+            <div class="a-face a-face--front">
+              <span class="a-art" style="height:78px"><svg viewBox="0 0 46 88" width="100%" height="100%" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="display:block;overflow:visible"><rect x="1" y="1" width="44" height="86" rx="9"/><rect x="4.6" y="4.6" width="36.8" height="78.8" rx="6"/><rect x="16" y="8.4" width="14" height="4.6" rx="2.3"/></svg></span>
+              <span class="a-name">iPhone</span>
+            </div>
+            <div class="a-face a-face--value">
+              <span class="a-vmark"><svg viewBox="0 0.891 60.17 29.61" width="52" height="25.6" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg></span>
+              <span class="a-vbody">
+                <span class="a-amount">{{ prize }}</span>
+                <span class="a-rulechip"></span>
+              </span>
+              <span class="a-amount-cap">avantaj</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="a-slot">
+        <div class="a-card">
+          <div class="a-flip">
+            <div class="a-face a-face--front">
+              <span class="a-art" style="height:78px"><svg viewBox="0 0 66 88" width="100%" height="100%" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="display:block;overflow:visible"><rect x="1" y="1" width="64" height="86" rx="7"/><rect x="5.4" y="5.4" width="55.2" height="77.2" rx="3.4"/><circle cx="33" cy="3.4" r="0.9" stroke="none" fill="currentColor"/></svg></span>
+              <span class="a-name">iPad</span>
+            </div>
+            <div class="a-face a-face--value">
+              <span class="a-vmark"><svg viewBox="0 0.891 60.17 29.61" width="52" height="25.6" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg></span>
+              <span class="a-vbody">
+                <span class="a-amount">{{ prize }}</span>
+                <span class="a-rulechip"></span>
+              </span>
+              <span class="a-amount-cap">avantaj</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="a-slot a-slot--win">
+        <div class="a-card">
+          <div class="a-flip">
+            <div class="a-face a-face--front">
+              <span class="a-art" style="height:92px"><svg viewBox="0 0 96 62" width="100%" height="100%" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="display:block;overflow:visible"><rect x="10" y="1" width="76" height="48" rx="3.4"/><rect x="14" y="5" width="68" height="40" rx="1.6"/><path d="M1 53h94a4 4 0 0 1-4 4H5a4 4 0 0 1-4-4Z"/><path d="M40 53h16"/></svg></span>
+              <span class="a-name">MacBook</span>
+            </div>
+            <div class="a-face a-face--value">
+              <span class="a-vmark"><svg viewBox="0 0.891 60.17 29.61" width="52" height="25.6" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg></span>
+              <span class="a-vbody">
+                <span class="a-amount">{{ prize }}</span>
+                <span class="a-rulechip"></span>
+              </span>
+              <span class="a-amount-cap">avantaj</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="a-slot">
+        <div class="a-card">
+          <div class="a-flip">
+            <div class="a-face a-face--front">
+              <span class="a-art" style="height:74px"><svg viewBox="0 0 52 84" width="100%" height="100%" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="display:block;overflow:visible"><path d="M17 15V6a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v9"/><path d="M17 69v9a5 5 0 0 0 5 5h8a5 5 0 0 0 5-5v-9"/><rect x="9" y="15" width="34" height="54" rx="12"/><rect x="13.6" y="19.6" width="24.8" height="44.8" rx="8.4"/><path d="M43 32v7"/></svg></span>
+              <span class="a-name">Apple Watch</span>
+            </div>
+            <div class="a-face a-face--value">
+              <span class="a-vmark"><svg viewBox="0 0.891 60.17 29.61" width="52" height="25.6" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg></span>
+              <span class="a-vbody">
+                <span class="a-amount">{{ prize }}</span>
+                <span class="a-rulechip"></span>
+              </span>
+              <span class="a-amount-cap">avantaj</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="a-slot">
+        <div class="a-card">
+          <div class="a-flip">
+            <div class="a-face a-face--front">
+              <span class="a-art" style="height:84px"><svg viewBox="0 0 56 80" width="100%" height="100%" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="display:block;overflow:visible"><path d="M14 1c6.1 0 11 4.5 11 10v5c0 4.4-4.9 8-11 8S3 20.4 3 16v-5C3 5.5 7.9 1 14 1Z"/><path d="M9.6 23.4v45.2a4.4 4.4 0 0 0 8.8 0V23.4"/><path d="M42 1c6.1 0 11 4.5 11 10v5c0 4.4-4.9 8-11 8s-11-3.6-11-8v-5c0-5.5 4.9-10 11-10Z"/><path d="M37.6 23.4v45.2a4.4 4.4 0 0 0 8.8 0V23.4"/></svg></span>
+              <span class="a-name">AirPods</span>
+            </div>
+            <div class="a-face a-face--value">
+              <span class="a-vmark"><svg viewBox="0 0.891 60.17 29.61" width="52" height="25.6" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg></span>
+              <span class="a-vbody">
+                <span class="a-amount">{{ prize }}</span>
+                <span class="a-rulechip"></span>
+              </span>
+              <span class="a-amount-cap">avantaj</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <section class="scene s-idle" style="gap:28px">
+  <div class="confetti">
+      <i style="--dx:452.2px;--up:-116.4px;--fall:403.3px;--r:584.4deg;--d:1.7s;--t:0.01s;width:4.2px;height:8.5px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:262.7px;--up:-275.5px;--fall:545.4px;--r:734.8deg;--d:1.89s;--t:0.2s;width:5.6px;height:16.5px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:342.3px;--up:-160.8px;--fall:428.0px;--r:531.1deg;--d:1.52s;--t:0.12s;width:7.5px;height:13.4px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:332.4px;--up:-202.3px;--fall:532.0px;--r:675.7deg;--d:1.71s;--t:0.02s;width:6.6px;height:9.0px;border-radius:1.5px;background:#1D1D1F"></i>
+      <i style="--dx:237.4px;--up:-262.6px;--fall:554.4px;--r:314.3deg;--d:1.81s;--t:0.05s;width:5.9px;height:8.1px;border-radius:1.5px;background:#C7C7CC"></i>
+      <i style="--dx:113.7px;--up:-151.6px;--fall:482.6px;--r:519.1deg;--d:1.64s;--t:0.04s;width:7.1px;height:10.9px;border-radius:50%;background:#C9A227"></i>
+      <i style="--dx:133.2px;--up:-234.0px;--fall:410.4px;--r:489.3deg;--d:1.66s;--t:0.07s;width:7.6px;height:15.6px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:162.1px;--up:-207.4px;--fall:515.1px;--r:745.1deg;--d:1.6s;--t:0.15s;width:6.9px;height:15.3px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:94.7px;--up:-206.5px;--fall:608.5px;--r:302.6deg;--d:2.28s;--t:0.02s;width:5.6px;height:12.5px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:73.0px;--up:-152.3px;--fall:385.4px;--r:554.0deg;--d:2.14s;--t:0.03s;width:6.2px;height:9.6px;border-radius:1.5px;background:#1D1D1F"></i>
+      <i style="--dx:32.4px;--up:-243.5px;--fall:591.5px;--r:337.4deg;--d:1.54s;--t:0.11s;width:5.0px;height:9.9px;border-radius:50%;background:#C7C7CC"></i>
+      <i style="--dx:-64.9px;--up:-189.0px;--fall:472.2px;--r:616.8deg;--d:2.11s;--t:0.21s;width:4.2px;height:16.2px;border-radius:50%;background:#C9A227"></i>
+      <i style="--dx:-90.6px;--up:-279.4px;--fall:432.9px;--r:249.2deg;--d:2.25s;--t:0.16s;width:6.5px;height:8.2px;border-radius:50%;background:#0071E3"></i>
+      <i style="--dx:-70.6px;--up:-191.7px;--fall:646.0px;--r:559.4deg;--d:1.64s;--t:0.02s;width:7.2px;height:16.9px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-231.2px;--up:-96.2px;--fall:351.3px;--r:411.2deg;--d:1.91s;--t:0.02s;width:4.3px;height:11.5px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-304.4px;--up:-192.0px;--fall:603.0px;--r:461.2deg;--d:1.78s;--t:0.12s;width:7.0px;height:11.5px;border-radius:50%;background:#1D1D1F"></i>
+      <i style="--dx:-235.5px;--up:-90.8px;--fall:447.4px;--r:471.4deg;--d:1.6s;--t:0.04s;width:6.4px;height:9.2px;border-radius:50%;background:#C7C7CC"></i>
+      <i style="--dx:-332.8px;--up:-143.7px;--fall:455.4px;--r:458.3deg;--d:1.55s;--t:0.03s;width:6.7px;height:13.0px;border-radius:1.5px;background:#C9A227"></i>
+      <i style="--dx:-345.9px;--up:-262.0px;--fall:361.4px;--r:539.4deg;--d:1.56s;--t:0.09s;width:5.4px;height:13.5px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-342.5px;--up:-149.5px;--fall:537.3px;--r:292.4deg;--d:1.5s;--t:0.1s;width:5.2px;height:14.1px;border-radius:50%;background:#0071E3"></i>
+      <i style="--dx:-319.8px;--up:-261.5px;--fall:369.8px;--r:487.7deg;--d:2.14s;--t:0.09s;width:7.3px;height:12.7px;border-radius:50%;background:#0071E3"></i>
+      <i style="--dx:-382.3px;--up:-144.6px;--fall:540.3px;--r:335.7deg;--d:1.58s;--t:0.19s;width:7.8px;height:8.1px;border-radius:50%;background:#1D1D1F"></i>
+      <i style="--dx:-440.8px;--up:-217.7px;--fall:320.0px;--r:603.0deg;--d:1.59s;--t:0.17s;width:6.2px;height:11.9px;border-radius:1.5px;background:#C7C7CC"></i>
+      <i style="--dx:-342.1px;--up:-220.8px;--fall:565.6px;--r:352.8deg;--d:1.63s;--t:0.14s;width:8.7px;height:15.3px;border-radius:1.5px;background:#C9A227"></i>
+      <i style="--dx:-241.7px;--up:-237.3px;--fall:560.5px;--r:313.5deg;--d:2.17s;--t:0.2s;width:4.3px;height:11.7px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-262.4px;--up:-205.8px;--fall:578.2px;--r:629.7deg;--d:2.02s;--t:0.18s;width:8.2px;height:10.4px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-239.4px;--up:-191.8px;--fall:606.1px;--r:707.3deg;--d:1.6s;--t:0.21s;width:7.8px;height:15.1px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-168.3px;--up:-250.2px;--fall:519.2px;--r:490.8deg;--d:2.2s;--t:0.18s;width:5.1px;height:8.5px;border-radius:50%;background:#1D1D1F"></i>
+      <i style="--dx:-205.3px;--up:-165.2px;--fall:355.6px;--r:748.7deg;--d:2.21s;--t:0.14s;width:4.1px;height:11.7px;border-radius:1.5px;background:#C7C7CC"></i>
+      <i style="--dx:-118.5px;--up:-278.7px;--fall:531.9px;--r:695.3deg;--d:1.95s;--t:0.2s;width:7.5px;height:14.9px;border-radius:50%;background:#C9A227"></i>
+      <i style="--dx:-40.4px;--up:-130.6px;--fall:591.7px;--r:346.2deg;--d:2.08s;--t:0.09s;width:6.0px;height:13.0px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-152.7px;--up:-247.1px;--fall:588.7px;--r:391.2deg;--d:2.3s;--t:0.22s;width:6.9px;height:16.0px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:-79.3px;--up:-179.7px;--fall:649.2px;--r:799.2deg;--d:1.82s;--t:0.05s;width:7.7px;height:14.2px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:81.4px;--up:-200.7px;--fall:622.3px;--r:701.1deg;--d:2.11s;--t:0.13s;width:4.5px;height:13.7px;border-radius:50%;background:#1D1D1F"></i>
+      <i style="--dx:9.6px;--up:-255.6px;--fall:543.4px;--r:279.2deg;--d:2.05s;--t:0.16s;width:5.2px;height:11.3px;border-radius:50%;background:#C7C7CC"></i>
+      <i style="--dx:175.5px;--up:-177.7px;--fall:451.2px;--r:657.2deg;--d:1.66s;--t:0.2s;width:8.6px;height:10.5px;border-radius:50%;background:#C9A227"></i>
+      <i style="--dx:137.2px;--up:-141.0px;--fall:493.6px;--r:289.5deg;--d:1.87s;--t:0.16s;width:7.5px;height:12.4px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:239.1px;--up:-91.7px;--fall:600.0px;--r:657.9deg;--d:2.07s;--t:0.02s;width:8.5px;height:9.8px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:341.5px;--up:-172.5px;--fall:512.7px;--r:301.1deg;--d:2.07s;--t:0.09s;width:8.7px;height:16.2px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:205.3px;--up:-207.4px;--fall:336.5px;--r:406.1deg;--d:2.23s;--t:0.05s;width:7.1px;height:12.1px;border-radius:50%;background:#1D1D1F"></i>
+      <i style="--dx:243.3px;--up:-204.2px;--fall:589.5px;--r:228.7deg;--d:1.98s;--t:0.11s;width:8.3px;height:9.1px;border-radius:1.5px;background:#C7C7CC"></i>
+      <i style="--dx:387.1px;--up:-253.1px;--fall:625.9px;--r:299.9deg;--d:2.16s;--t:0.04s;width:4.4px;height:16.4px;border-radius:1.5px;background:#C9A227"></i>
+      <i style="--dx:398.7px;--up:-140.3px;--fall:504.3px;--r:343.6deg;--d:1.59s;--t:0.03s;width:6.5px;height:12.7px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:224.0px;--up:-255.0px;--fall:402.1px;--r:676.4deg;--d:1.6s;--t:0.01s;width:7.3px;height:16.9px;border-radius:50%;background:#0071E3"></i>
+      <i style="--dx:355.7px;--up:-129.7px;--fall:463.6px;--r:308.6deg;--d:1.83s;--t:0.16s;width:4.0px;height:10.2px;border-radius:1.5px;background:#0071E3"></i>
+      <i style="--dx:232.1px;--up:-186.8px;--fall:460.0px;--r:438.8deg;--d:1.99s;--t:0.1s;width:8.6px;height:14.0px;border-radius:50%;background:#1D1D1F"></i>
+  </div>
+
+  <section class="scene s-idle" style="gap:30px">
     <h1 class="a-h1">Bugünkü şansına <span style="color:#0071E3">merhaba</span> demek ister misin?</h1>
     <p class="a-sub">Bir dokunuşla Troy'dan ne kazanacağını öğren.</p>
-    <div class="a-plus"><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style="display:block"><path d="M20.0 4V36 M4 20.0 H36" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <button type="button" class="a-cta" onClick="{{ onTap }}">Şansını Dene</button>
     <div class="a-hint"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 9V4.75a1.25 1.25 0 0 1 2.5 0V10m0-1.25a1.25 1.25 0 0 1 2.5 0V10m0-.75a1.25 1.25 0 0 1 2.5 0v3.5A4.25 4.25 0 0 1 10.75 17h-1a4.25 4.25 0 0 1-4.25-4.25v-3l-1.2 1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Ekrana dokun ve oyuna başla!</span></div>
   </section>
 
-  <section class="scene s-hello">
-    <h1 class="a-h1" style="font-size:96px">Şansına <span style="color:#0071E3">merhaba!</span></h1>
+  <section class="scene s-hello" style="justify-content:flex-start;padding-top:104px">
+    <h1 class="a-h1" style="font-size:88px">Şansına <span style="color:#0071E3">merhaba!</span></h1>
     <p class="a-sub">Avantajını seçmeye hazır ol…</p>
   </section>
 
-  <section class="scene s-shuffle" style="justify-content:flex-end;padding-bottom:120px">
+  <section class="scene s-shuffle" style="justify-content:flex-end;padding-bottom:168px">
     <p class="a-sub" style="font-size:21px">Avantajın seçiliyor…</p>
   </section>
 
-  <section class="scene s-reveal" style="justify-content:flex-end;padding-bottom:104px">
+  <section class="scene s-reveal" style="justify-content:flex-end;padding-bottom:88px">
     <p style="font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0">Tebrikler!</p>
     <p class="a-sub" style="font-size:20px">Avantajın hazır.</p>
   </section>
@@ -117,7 +318,8 @@
   <section class="scene s-prize" style="gap:14px">
     <p class="a-sub" style="font-size:26px;color:#1D1D1F">Tebrikler!</p>
     <p class="a-big">{{ prize }}</p>
-    <p class="a-h1" style="font-size:44px;color:#6E6E73;font-weight:500">avantajına <span style="color:#0071E3">merhaba!</span></p>
+    <div class="a-rule"></div>
+    <p class="a-h1" style="font-size:42px;color:#6E6E73;font-weight:500">avantajına <span style="color:#0071E3">merhaba!</span></p>
   </section>
 
   <section class="scene s-qr">
