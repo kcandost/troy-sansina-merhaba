@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: currentColor; } a:hover { color: currentColor; }
+  .stage {
+    position: relative; width: 1194px; height: 834px; overflow: hidden; cursor: pointer;
+    font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .brand { position: absolute; top: 44px; left: 0; right: 0; display: flex; justify-content: center;
+           z-index: 5; transition: opacity .6s ease; }
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; gap: 20px; text-align: center;
+           padding: 128px 104px 96px; opacity: 0; visibility: hidden;
+           transition: opacity .55s ease, transform .55s cubic-bezier(.22,1,.36,1); z-index: 4; }
+  .step-idle .s-idle, .step-hello .s-hello, .step-shuffle .s-shuffle,
+  .step-reveal .s-reveal, .step-prize .s-prize, .step-qr .s-qr { opacity: 1; visibility: visible; }
+  .deck { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+          z-index: 3; opacity: 0; transition: opacity .5s ease; pointer-events: none; }
+  .step-shuffle .deck, .step-reveal .deck { opacity: 1; }
+  .card { position: relative; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; gap: 14px; }
+  .card .amount { opacity: 0; transition: opacity .4s ease .35s; font-variant-numeric: tabular-nums; }
+  .step-reveal .card--win .amount { opacity: 1; }
+  .restart { position: absolute; bottom: 48px; left: 0; right: 0; display: flex; justify-content: center;
+             z-index: 6; opacity: 0; visibility: hidden; transition: opacity .5s ease; }
+  .step-qr .restart { opacity: 1; visibility: visible; }
+  .restart button { font: inherit; min-height: 52px; padding: 0 30px; border-radius: 26px;
+                    border: 0; cursor: pointer; font-size: 17px; font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) {
+    .stage *, .stage *::before, .stage *::after {
+      animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+
+  .stage { background: linear-gradient(158deg,#0A62FF 0%, #2E93FF 54%, #57B0FF 100%); color: #FFFFFF; }
+  .e-wash { position: absolute; inset: 0; z-index: 1; background: #F7FAFF; opacity: 0; transition: opacity .6s ease; }
+  .step-idle .e-wash, .step-prize .e-wash, .step-qr .e-wash { opacity: 1; }
+  .e-marks { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .e-marks span { position: absolute; opacity: .16; }
+  .e-marks span:nth-child(1) { top: 96px; left: 128px; }
+  .e-marks span:nth-child(2) { top: 210px; right: 168px; }
+  .e-marks span:nth-child(3) { bottom: 150px; left: 210px; }
+  .e-marks span:nth-child(4) { bottom: 96px; right: 120px; }
+  .step-idle .e-marks span, .step-prize .e-marks span, .step-qr .e-marks span { opacity: .1; }
+  .brand { transition: opacity .5s ease; }
+  .brand-ink { opacity: 0; }
+  .step-idle .brand-ink, .step-prize .brand-ink, .step-qr .brand-ink { opacity: 1; }
+  .step-idle .brand-white, .step-prize .brand-white, .step-qr .brand-white { opacity: 0; }
+  .e-h1 { font-size: 82px; line-height: 1.05; font-weight: 700; letter-spacing: -.035em; margin: 0; max-width: 900px; text-wrap: balance; }
+  .e-sub { font-size: 25px; line-height: 1.4; margin: 0; max-width: 580px; }
+  .e-plus { width: 132px; height: 132px; border-radius: 50%; background: #0A62FF; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 18px 40px -14px rgba(10,98,255,.6); animation: ePop 2.2s cubic-bezier(.3,1.4,.5,1) infinite; }
+  @keyframes ePop { 0%,72%,100% { transform: scale(1); } 82% { transform: scale(1.08); } }
+  .e-deck { display: flex; gap: 22px; align-items: center; }
+  .e-card { width: 158px; height: 232px; border-radius: 22px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 22px 40px -18px rgba(4,32,86,.55); transition: transform .6s cubic-bezier(.2,1.3,.4,1), opacity .4s ease; }
+  .e-k1 { background: linear-gradient(160deg,#F1F3F6,#C9CFD8); }
+  .e-k2 { background: linear-gradient(160deg,#FFC93F,#E39A05); }
+  .e-k3 { background: linear-gradient(160deg,#9FD2FF,#63AEFF); }
+  .e-k4 { background: linear-gradient(160deg,#26292F,#0D0F12); }
+  .e-k5 { background: linear-gradient(160deg,#2F86FF,#0A52DC); }
+  .step-shuffle .e-card { animation: eShuffle .62s cubic-bezier(.4,0,.3,1) infinite; }
+  .step-shuffle .e-card:nth-child(2) { animation-delay: .07s; }
+  .step-shuffle .e-card:nth-child(3) { animation-delay: .14s; }
+  .step-shuffle .e-card:nth-child(4) { animation-delay: .21s; }
+  .step-shuffle .e-card:nth-child(5) { animation-delay: .28s; }
+  @keyframes eShuffle {
+    0%,100% { transform: translateY(0) scale(1); }
+    45% { transform: translateY(-42px) scale(1.05); }
+    75% { transform: translateY(8px) scale(.98); }
+  }
+  .step-reveal .e-card { opacity: 0; transform: scale(.86); }
+  .step-reveal .e-card--win { opacity: 1; transform: scale(1.72); box-shadow: 0 50px 80px -34px rgba(4,32,86,.6); }
+  .e-rays { position: absolute; width: 900px; height: 900px; border-radius: 50%; z-index: -1; opacity: 0;
+            background: conic-gradient(from 0deg, rgba(255,255,255,.34) 0deg 6deg, rgba(255,255,255,0) 6deg 22deg);
+            transition: opacity .6s ease; }
+  .step-reveal .e-rays { opacity: 1; animation: eSpin 22s linear infinite; }
+  @keyframes eSpin { to { transform: rotate(360deg); } }
+  .e-amount { font-size: 40px; font-weight: 700; letter-spacing: -.03em; color: #4A2E00; }
+  .step-reveal .e-mark { opacity: 0; }
+  .e-big { font-size: 156px; line-height: .92; font-weight: 700; letter-spacing: -.05em; margin: 0;
+           color: #0A62FF; font-variant-numeric: tabular-nums; }
+  .e-badge { width: 92px; height: 92px; border-radius: 50%; background: #0A62FF; display: flex; align-items: center;
+             justify-content: center; box-shadow: 0 14px 30px -12px rgba(10,98,255,.6); }
+  .e-qr { display: flex; align-items: center; gap: 60px; }
+  .e-qr h2 { font-size: 46px; line-height: 1.16; font-weight: 700; letter-spacing: -.03em; margin: 0; text-align: left; max-width: 400px; color: #0B1B33; }
+  .e-qrcard { position: relative; background: #FFFFFF; border-radius: 26px; padding: 26px;
+              box-shadow: 0 30px 56px -30px rgba(4,32,86,.4); }
+
+  </style>
+</helmet>
+<div class="stage step-{{ step }}" onClick="{{ onTap }}">
+  <div class="e-wash"></div>
+  <div class="e-marks">
+    <span><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" style="display:block"><path d="M26.0 4V48 M4 26.0 H48" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/></svg></span>
+    <span><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="display:block"><path d="M17.0 4V30 M4 17.0 H30" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></span>
+    <span><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style="display:block"><path d="M20.0 4V36 M4 20.0 H36" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/></svg></span>
+    <span><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true" style="display:block"><path d="M14.0 4V24 M4 14.0 H24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/></svg></span>
+  </div>
+  <div class="brand brand-white"><div class="lockup" style="display:flex;align-items:flex-start;gap:5px"><svg viewBox="0 0.891 60.17 29.61" width="96" height="47.2" role="img" aria-label="TROY" style="display:block;fill:#FFFFFF"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg><span style="display:flex;align-items:flex-start;gap:2px;padding-top:2px"><span style="font-size:13px;font-weight:600;line-height:1;color:#FFFFFF">+</span><span style="font-size:10.5px;font-weight:600;line-height:1.12;letter-spacing:.01em;color:#FFFFFF">art&#305;s&#305;<br>var</span></span></div></div>
+  <div class="brand brand-ink"><div class="lockup" style="display:flex;align-items:flex-start;gap:5px"><svg viewBox="0 0.891 60.17 29.61" width="96" height="47.2" role="img" aria-label="TROY" style="display:block;fill:#0B1B33"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg><span style="display:flex;align-items:flex-start;gap:2px;padding-top:2px"><span style="font-size:13px;font-weight:600;line-height:1;color:#0B1B33">+</span><span style="font-size:10.5px;font-weight:600;line-height:1.12;letter-spacing:.01em;color:#0B1B33">art&#305;s&#305;<br>var</span></span></div></div>
+
+  <div class="deck">
+    <div class="e-rays"></div>
+    <div class="e-deck">
+      <div class="card e-card e-k1"><span class="e-mark"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="display:block"><path d="M17.0 4V30 M4 17.0 H30" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></span></div>
+      <div class="card e-card e-k2 e-card--win card--win"><span class="e-mark"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="display:block"><path d="M17.0 4V30 M4 17.0 H30" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></span><span class="amount e-amount">{{ prize }}</span></div>
+      <div class="card e-card e-k3"><span class="e-mark"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="display:block"><path d="M17.0 4V30 M4 17.0 H30" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></span></div>
+      <div class="card e-card e-k4"><span class="e-mark"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="display:block"><path d="M17.0 4V30 M4 17.0 H30" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></span></div>
+      <div class="card e-card e-k5"><span class="e-mark"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="display:block"><path d="M17.0 4V30 M4 17.0 H30" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></span></div>
+    </div>
+  </div>
+
+  <section class="scene s-idle" style="gap:30px">
+    <h1 class="e-h1" style="color:#0B1B33">Bugünkü şansına <span style="color:#0A62FF">merhaba</span> demek ister misin?</h1>
+    <p class="e-sub" style="color:#4A5A72">Bir dokunuşla Troy'dan ne kazanacağını öğren.</p>
+    <div class="e-plus"><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" style="display:block"><path d="M26.0 4V48 M4 26.0 H48" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/></svg></div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:17px;font-weight:500;color:#4A5A72"><svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 9V4.75a1.25 1.25 0 0 1 2.5 0V10m0-1.25a1.25 1.25 0 0 1 2.5 0V10m0-.75a1.25 1.25 0 0 1 2.5 0v3.5A4.25 4.25 0 0 1 10.75 17h-1a4.25 4.25 0 0 1-4.25-4.25v-3l-1.2 1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Ekrana dokun ve oyuna başla!</span></div>
+  </section>
+
+  <section class="scene s-hello">
+    <h1 class="e-h1" style="font-size:112px">Şansına<br>merhaba!</h1>
+    <p class="e-sub" style="color:rgba(255,255,255,.82)">Avantajını seçmeye hazır ol…</p>
+  </section>
+
+  <section class="scene s-shuffle" style="justify-content:flex-end;padding-bottom:104px">
+    <p class="e-sub" style="font-size:23px;color:rgba(255,255,255,.86)">Avantajın seçiliyor…</p>
+  </section>
+
+  <section class="scene s-reveal" style="justify-content:flex-end;padding-bottom:88px">
+    <p style="font-size:36px;font-weight:700;letter-spacing:-.03em;margin:0">Tebrikler!</p>
+    <p class="e-sub" style="font-size:22px;color:rgba(255,255,255,.82)">Avantajın hazır.</p>
+  </section>
+
+  <section class="scene s-prize" style="gap:18px">
+    <p style="font-size:44px;font-weight:700;letter-spacing:-.03em;margin:0;color:#0B1B33">Tebrikler!</p>
+    <div style="display:flex;align-items:center;gap:26px">
+      <p class="e-big">{{ prize }}</p>
+      <div class="e-badge"><svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true" style="display:block"><path d="M19.0 4V34 M4 19.0 H34" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></div>
+    </div>
+    <p class="e-h1" style="font-size:52px;color:#0B1B33">avantajına merhaba!</p>
+  </section>
+
+  <section class="scene s-qr">
+    <div class="e-qr">
+      <h2>QR'ı okut,<br><span style="color:#4A5A72;font-weight:500">kodunu al ve Troy mağazasında kullan.</span></h2>
+      <div class="e-qrcard"><svg width="208" height="208" viewBox="0 0 25 25" shape-rendering="crispEdges" role="img" aria-label="QR kod (yerle&#351;tirme g&#246;rseli)" style="display:block"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM9 0h1v1h-1zM11 0h1v1h-1zM13 0h1v1h-1zM14 0h1v1h-1zM16 0h1v1h-1zM18 0h1v1h-1zM19 0h1v1h-1zM20 0h1v1h-1zM21 0h1v1h-1zM22 0h1v1h-1zM23 0h1v1h-1zM24 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM9 1h1v1h-1zM12 1h1v1h-1zM13 1h1v1h-1zM14 1h1v1h-1zM16 1h1v1h-1zM18 1h1v1h-1zM24 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM14 2h1v1h-1zM18 2h1v1h-1zM20 2h1v1h-1zM21 2h1v1h-1zM22 2h1v1h-1zM24 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM13 3h1v1h-1zM18 3h1v1h-1zM20 3h1v1h-1zM21 3h1v1h-1zM22 3h1v1h-1zM24 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM20 4h1v1h-1zM21 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM14 5h1v1h-1zM18 5h1v1h-1zM24 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM20 6h1v1h-1zM21 6h1v1h-1zM22 6h1v1h-1zM23 6h1v1h-1zM24 6h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM15 7h1v1h-1zM1 8h1v1h-1zM6 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM10 8h1v1h-1zM11 8h1v1h-1zM13 8h1v1h-1zM14 8h1v1h-1zM15 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM19 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM5 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM15 9h1v1h-1zM16 9h1v1h-1zM20 9h1v1h-1zM23 9h1v1h-1zM0 10h1v1h-1zM1 10h1v1h-1zM2 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM10 10h1v1h-1zM11 10h1v1h-1zM13 10h1v1h-1zM14 10h1v1h-1zM15 10h1v1h-1zM16 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM0 11h1v1h-1zM2 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM11 11h1v1h-1zM16 11h1v1h-1zM18 11h1v1h-1zM23 11h1v1h-1zM2 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM13 12h1v1h-1zM19 12h1v1h-1zM20 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM0 13h1v1h-1zM1 13h1v1h-1zM2 13h1v1h-1zM3 13h1v1h-1zM4 13h1v1h-1zM9 13h1v1h-1zM12 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM24 13h1v1h-1zM2 14h1v1h-1zM6 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM11 14h1v1h-1zM16 14h1v1h-1zM17 14h1v1h-1zM18 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM0 15h1v1h-1zM2 15h1v1h-1zM3 15h1v1h-1zM4 15h1v1h-1zM7 15h1v1h-1zM11 15h1v1h-1zM12 15h1v1h-1zM13 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM0 16h1v1h-1zM1 16h1v1h-1zM2 16h1v1h-1zM4 16h1v1h-1zM5 16h1v1h-1zM6 16h1v1h-1zM7 16h1v1h-1zM8 16h1v1h-1zM12 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM10 17h1v1h-1zM11 17h1v1h-1zM13 17h1v1h-1zM17 17h1v1h-1zM19 17h1v1h-1zM20 17h1v1h-1zM22 17h1v1h-1zM0 18h1v1h-1zM1 18h1v1h-1zM2 18h1v1h-1zM3 18h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM11 18h1v1h-1zM13 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM18 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM0 19h1v1h-1zM6 19h1v1h-1zM12 19h1v1h-1zM13 19h1v1h-1zM16 19h1v1h-1zM20 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM0 20h1v1h-1zM2 20h1v1h-1zM3 20h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM9 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM20 20h1v1h-1zM0 21h1v1h-1zM2 21h1v1h-1zM3 21h1v1h-1zM4 21h1v1h-1zM6 21h1v1h-1zM8 21h1v1h-1zM9 21h1v1h-1zM12 21h1v1h-1zM14 21h1v1h-1zM15 21h1v1h-1zM16 21h1v1h-1zM20 21h1v1h-1zM22 21h1v1h-1zM23 21h1v1h-1zM0 22h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM4 22h1v1h-1zM6 22h1v1h-1zM10 22h1v1h-1zM14 22h1v1h-1zM18 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM10 23h1v1h-1zM13 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM0 24h1v1h-1zM1 24h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM11 24h1v1h-1zM17 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM24 24h1v1h-1z" fill="#0B1B33"/></svg>
+        <div style="position:absolute;right:-18px;bottom:-18px" class="e-badge"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" style="display:block"><path d="M16.0 4V28 M4 16.0 H28" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="restart">
+    <button type="button" onClick="{{ onReset }}" style="background:#0A62FF;color:#FFFFFF">Yeniden oyna</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"prize":{"editor":"text","default":"750 TL"},"speed":{"editor":"range","default":1,"min":0.5,"max":2,"step":0.1,"unit":"x","section":"Motion"},"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 'idle' };
+    this.timers = [];
+  }
+  componentDidMount() {
+    this.schedule('hello', 2600);
+  }
+  componentWillUnmount() {
+    this.clear();
+  }
+  clear() {
+    (this.timers || []).forEach(function (t) { clearTimeout(t); });
+    this.timers = [];
+  }
+  pace() {
+    var s = Number(this.props.speed);
+    return (isFinite(s) && s > 0) ? s : 1;
+  }
+  schedule(step, ms) {
+    var self = this;
+    this.timers.push(setTimeout(function () { self.go(step); }, ms / self.pace()));
+  }
+  go(step) {
+    this.setState({ step: step });
+    if (step === 'idle') { this.schedule('hello', 2600); }
+    else if (step === 'hello') { this.schedule('shuffle', 1700); }
+    else if (step === 'shuffle') { this.schedule('reveal', 2600); }
+    else if (step === 'reveal') { this.schedule('prize', 2100); }
+    else if (step === 'prize') { this.schedule('qr', 2800); }
+    else if (step === 'qr') { this.schedule('idle', 7000); }
+  }
+  renderVals() {
+    var self = this;
+    var step = (this.state && this.state.step) || 'idle';
+    return {
+      step: step,
+      prize: this.props.prize || '750 TL',
+      onTap: function () {
+        self.clear();
+        if (step === 'idle') { self.go('hello'); } else { self.go('idle'); }
+      },
+      onReset: function (e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        self.clear();
+        self.go('idle');
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

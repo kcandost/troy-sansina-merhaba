@@ -1,0 +1,190 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: currentColor; } a:hover { color: currentColor; }
+  .stage {
+    position: relative; width: 1194px; height: 834px; overflow: hidden; cursor: pointer;
+    font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .brand { position: absolute; top: 44px; left: 0; right: 0; display: flex; justify-content: center;
+           z-index: 5; transition: opacity .6s ease; }
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; gap: 20px; text-align: center;
+           padding: 128px 104px 96px; opacity: 0; visibility: hidden;
+           transition: opacity .55s ease, transform .55s cubic-bezier(.22,1,.36,1); z-index: 4; }
+  .step-idle .s-idle, .step-hello .s-hello, .step-shuffle .s-shuffle,
+  .step-reveal .s-reveal, .step-prize .s-prize, .step-qr .s-qr { opacity: 1; visibility: visible; }
+  .deck { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+          z-index: 3; opacity: 0; transition: opacity .5s ease; pointer-events: none; }
+  .step-shuffle .deck, .step-reveal .deck { opacity: 1; }
+  .card { position: relative; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; gap: 14px; }
+  .card .amount { opacity: 0; transition: opacity .4s ease .35s; font-variant-numeric: tabular-nums; }
+  .step-reveal .card--win .amount { opacity: 1; }
+  .restart { position: absolute; bottom: 48px; left: 0; right: 0; display: flex; justify-content: center;
+             z-index: 6; opacity: 0; visibility: hidden; transition: opacity .5s ease; }
+  .step-qr .restart { opacity: 1; visibility: visible; }
+  .restart button { font: inherit; min-height: 52px; padding: 0 30px; border-radius: 26px;
+                    border: 0; cursor: pointer; font-size: 17px; font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) {
+    .stage *, .stage *::before, .stage *::after {
+      animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+
+  .stage { background: #F5F5F7; color: #1D1D1F; }
+  .a-glow { position: absolute; left: 50%; top: 46%; width: 1100px; height: 800px; transform: translate(-50%,-50%);
+            background: radial-gradient(closest-side, #FFFFFF 0%, rgba(255,255,255,0) 72%); z-index: 1; }
+  .a-h1 { font-size: 74px; line-height: 1.05; font-weight: 600; letter-spacing: -.032em; margin: 0; max-width: 880px; text-wrap: balance; }
+  .a-sub { font-size: 23px; line-height: 1.45; color: #6E6E73; margin: 0; max-width: 560px; }
+  .a-plus { width: 104px; height: 104px; border-radius: 50%; background: #0071E3; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 12px 30px -10px rgba(0,113,227,.55); animation: aPulse 3.4s ease-in-out infinite; }
+  @keyframes aPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+  .a-hint { display: flex; align-items: center; gap: 9px; font-size: 15px; color: #86868B; }
+  .a-deck { display: flex; gap: 20px; }
+  .a-card { width: 150px; height: 214px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E3E3E7;
+            box-shadow: 0 8px 24px -12px rgba(0,0,0,.18); transition: transform .7s cubic-bezier(.22,1,.36,1), opacity .5s ease; }
+  .step-shuffle .a-card { animation: aShuffle 1.15s cubic-bezier(.45,0,.25,1) infinite; }
+  .step-shuffle .a-card:nth-child(2) { animation-delay: .09s; }
+  .step-shuffle .a-card:nth-child(3) { animation-delay: .18s; }
+  .step-shuffle .a-card:nth-child(4) { animation-delay: .27s; }
+  .step-shuffle .a-card:nth-child(5) { animation-delay: .36s; }
+  @keyframes aShuffle {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    38% { transform: translateY(-30px) rotate(-2.2deg); }
+    62% { transform: translateY(6px) rotate(1.4deg); }
+  }
+  .step-reveal .a-card { opacity: 0; transform: scale(.9); }
+  .step-reveal .a-card--win { opacity: 1; transform: scale(1.62); box-shadow: 0 34px 70px -30px rgba(0,0,0,.34); border-color: #D8D8DE; }
+  .a-amount { font-size: 34px; font-weight: 600; letter-spacing: -.02em; color: #0071E3; }
+  .a-mark { color: #C7C7CC; }
+  .step-reveal .a-mark { opacity: 0; }
+  .a-big { font-size: 132px; line-height: .96; font-weight: 600; letter-spacing: -.045em; margin: 0; }
+  .a-qr { display: flex; align-items: center; gap: 56px; background: #FFFFFF; border: 1px solid #E3E3E7;
+          border-radius: 28px; padding: 44px 52px; box-shadow: 0 20px 50px -28px rgba(0,0,0,.22); }
+  .a-qr h2 { font-size: 40px; line-height: 1.14; font-weight: 600; letter-spacing: -.026em; margin: 0; text-align: left; max-width: 380px; }
+  .step-qr .brand { opacity: .4; }
+
+  </style>
+</helmet>
+<div class="stage step-{{ step }}" onClick="{{ onTap }}">
+  <div class="a-glow"></div>
+  <div class="brand"><div class="lockup" style="display:flex;align-items:center;gap:12px"><svg viewBox="0 0.891 60.17 29.61" width="88" height="43.3" role="img" aria-label="TROY" style="display:block;fill:#1D1D1F"><path d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></svg><span style="font-size:11px;line-height:1.15;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:#1D1D1F;opacity:.55;border-left:1px solid currentColor;padding-left:12px">Premium<br>Partner</span></div></div>
+
+  <div class="deck">
+    <div class="a-deck">
+      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
+      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
+      <div class="card a-card a-card--win card--win"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span><span class="amount a-amount">{{ prize }}</span></div>
+      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
+      <div class="card a-card"><span class="a-mark"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="display:block"><path d="M15.0 4V26 M4 15.0 H26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></div>
+    </div>
+  </div>
+
+  <section class="scene s-idle" style="gap:28px">
+    <h1 class="a-h1">Bugünkü şansına <span style="color:#0071E3">merhaba</span> demek ister misin?</h1>
+    <p class="a-sub">Bir dokunuşla Troy'dan ne kazanacağını öğren.</p>
+    <div class="a-plus"><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style="display:block"><path d="M20.0 4V36 M4 20.0 H36" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div class="a-hint"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 9V4.75a1.25 1.25 0 0 1 2.5 0V10m0-1.25a1.25 1.25 0 0 1 2.5 0V10m0-.75a1.25 1.25 0 0 1 2.5 0v3.5A4.25 4.25 0 0 1 10.75 17h-1a4.25 4.25 0 0 1-4.25-4.25v-3l-1.2 1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Ekrana dokun ve oyuna başla!</span></div>
+  </section>
+
+  <section class="scene s-hello">
+    <h1 class="a-h1" style="font-size:96px">Şansına <span style="color:#0071E3">merhaba!</span></h1>
+    <p class="a-sub">Avantajını seçmeye hazır ol…</p>
+  </section>
+
+  <section class="scene s-shuffle" style="justify-content:flex-end;padding-bottom:120px">
+    <p class="a-sub" style="font-size:21px">Avantajın seçiliyor…</p>
+  </section>
+
+  <section class="scene s-reveal" style="justify-content:flex-end;padding-bottom:104px">
+    <p style="font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0">Tebrikler!</p>
+    <p class="a-sub" style="font-size:20px">Avantajın hazır.</p>
+  </section>
+
+  <section class="scene s-prize" style="gap:14px">
+    <p class="a-sub" style="font-size:26px;color:#1D1D1F">Tebrikler!</p>
+    <p class="a-big">{{ prize }}</p>
+    <p class="a-h1" style="font-size:44px;color:#6E6E73;font-weight:500">avantajına <span style="color:#0071E3">merhaba!</span></p>
+  </section>
+
+  <section class="scene s-qr">
+    <div class="a-qr">
+      <h2>QR'ı okut,<br><span style="color:#6E6E73;font-weight:500">kodunu al ve Troy mağazasında kullan.</span></h2>
+      <div style="background:#FFFFFF;padding:8px;border-radius:12px"><svg width="200" height="200" viewBox="0 0 25 25" shape-rendering="crispEdges" role="img" aria-label="QR kod (yerle&#351;tirme g&#246;rseli)" style="display:block"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM9 0h1v1h-1zM11 0h1v1h-1zM13 0h1v1h-1zM14 0h1v1h-1zM16 0h1v1h-1zM18 0h1v1h-1zM19 0h1v1h-1zM20 0h1v1h-1zM21 0h1v1h-1zM22 0h1v1h-1zM23 0h1v1h-1zM24 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM9 1h1v1h-1zM12 1h1v1h-1zM13 1h1v1h-1zM14 1h1v1h-1zM16 1h1v1h-1zM18 1h1v1h-1zM24 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM14 2h1v1h-1zM18 2h1v1h-1zM20 2h1v1h-1zM21 2h1v1h-1zM22 2h1v1h-1zM24 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM13 3h1v1h-1zM18 3h1v1h-1zM20 3h1v1h-1zM21 3h1v1h-1zM22 3h1v1h-1zM24 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM20 4h1v1h-1zM21 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM14 5h1v1h-1zM18 5h1v1h-1zM24 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM20 6h1v1h-1zM21 6h1v1h-1zM22 6h1v1h-1zM23 6h1v1h-1zM24 6h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM15 7h1v1h-1zM1 8h1v1h-1zM6 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM10 8h1v1h-1zM11 8h1v1h-1zM13 8h1v1h-1zM14 8h1v1h-1zM15 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM19 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM5 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM15 9h1v1h-1zM16 9h1v1h-1zM20 9h1v1h-1zM23 9h1v1h-1zM0 10h1v1h-1zM1 10h1v1h-1zM2 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM10 10h1v1h-1zM11 10h1v1h-1zM13 10h1v1h-1zM14 10h1v1h-1zM15 10h1v1h-1zM16 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM0 11h1v1h-1zM2 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM11 11h1v1h-1zM16 11h1v1h-1zM18 11h1v1h-1zM23 11h1v1h-1zM2 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM13 12h1v1h-1zM19 12h1v1h-1zM20 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM0 13h1v1h-1zM1 13h1v1h-1zM2 13h1v1h-1zM3 13h1v1h-1zM4 13h1v1h-1zM9 13h1v1h-1zM12 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM24 13h1v1h-1zM2 14h1v1h-1zM6 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM11 14h1v1h-1zM16 14h1v1h-1zM17 14h1v1h-1zM18 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM0 15h1v1h-1zM2 15h1v1h-1zM3 15h1v1h-1zM4 15h1v1h-1zM7 15h1v1h-1zM11 15h1v1h-1zM12 15h1v1h-1zM13 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM0 16h1v1h-1zM1 16h1v1h-1zM2 16h1v1h-1zM4 16h1v1h-1zM5 16h1v1h-1zM6 16h1v1h-1zM7 16h1v1h-1zM8 16h1v1h-1zM12 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM10 17h1v1h-1zM11 17h1v1h-1zM13 17h1v1h-1zM17 17h1v1h-1zM19 17h1v1h-1zM20 17h1v1h-1zM22 17h1v1h-1zM0 18h1v1h-1zM1 18h1v1h-1zM2 18h1v1h-1zM3 18h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM11 18h1v1h-1zM13 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM18 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM0 19h1v1h-1zM6 19h1v1h-1zM12 19h1v1h-1zM13 19h1v1h-1zM16 19h1v1h-1zM20 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM0 20h1v1h-1zM2 20h1v1h-1zM3 20h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM9 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM20 20h1v1h-1zM0 21h1v1h-1zM2 21h1v1h-1zM3 21h1v1h-1zM4 21h1v1h-1zM6 21h1v1h-1zM8 21h1v1h-1zM9 21h1v1h-1zM12 21h1v1h-1zM14 21h1v1h-1zM15 21h1v1h-1zM16 21h1v1h-1zM20 21h1v1h-1zM22 21h1v1h-1zM23 21h1v1h-1zM0 22h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM4 22h1v1h-1zM6 22h1v1h-1zM10 22h1v1h-1zM14 22h1v1h-1zM18 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM10 23h1v1h-1zM13 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM0 24h1v1h-1zM1 24h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM11 24h1v1h-1zM17 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM24 24h1v1h-1z" fill="#1D1D1F"/></svg></div>
+    </div>
+  </section>
+
+  <div class="restart">
+    <button type="button" onClick="{{ onReset }}" style="background:#0071E3;color:#FFFFFF">Yeniden oyna</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"prize":{"editor":"text","default":"750 TL"},"speed":{"editor":"range","default":1,"min":0.5,"max":2,"step":0.1,"unit":"x","section":"Motion"},"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 'idle' };
+    this.timers = [];
+  }
+  componentDidMount() {
+    this.schedule('hello', 2600);
+  }
+  componentWillUnmount() {
+    this.clear();
+  }
+  clear() {
+    (this.timers || []).forEach(function (t) { clearTimeout(t); });
+    this.timers = [];
+  }
+  pace() {
+    var s = Number(this.props.speed);
+    return (isFinite(s) && s > 0) ? s : 1;
+  }
+  schedule(step, ms) {
+    var self = this;
+    this.timers.push(setTimeout(function () { self.go(step); }, ms / self.pace()));
+  }
+  go(step) {
+    this.setState({ step: step });
+    if (step === 'idle') { this.schedule('hello', 2600); }
+    else if (step === 'hello') { this.schedule('shuffle', 1700); }
+    else if (step === 'shuffle') { this.schedule('reveal', 2600); }
+    else if (step === 'reveal') { this.schedule('prize', 2100); }
+    else if (step === 'prize') { this.schedule('qr', 2800); }
+    else if (step === 'qr') { this.schedule('idle', 7000); }
+  }
+  renderVals() {
+    var self = this;
+    var step = (this.state && this.state.step) || 'idle';
+    return {
+      step: step,
+      prize: this.props.prize || '750 TL',
+      onTap: function () {
+        self.clear();
+        if (step === 'idle') { self.go('hello'); } else { self.go('idle'); }
+      },
+      onReset: function (e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        self.clear();
+        self.go('idle');
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
