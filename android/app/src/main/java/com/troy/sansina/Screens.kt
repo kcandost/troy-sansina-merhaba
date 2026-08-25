@@ -65,105 +65,6 @@ fun WorldBackground(theme: SansinaTheme, phase: Phase, modifier: Modifier = Modi
     }
 }
 
-// ───────────────────────── Cards ─────────────────────────
-
-@Composable
-fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, big: Boolean, modifier: Modifier = Modifier) {
-    val rot by animateFloatAsState(if (faceUp) 180f else 0f, tween(620, easing = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)), label = "flip")
-    val scale by animateFloatAsState(if (big) 1.58f else 1f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow), label = "s")
-    val shape = RoundedCornerShape(16.dp)
-    Box(
-        modifier
-            .size(146.dp, 206.dp)
-            .graphicsLayer { rotationY = rot; cameraDistance = 12f * density; scaleX = scale; scaleY = scale }
-    ) {
-        if (rot <= 90f) {
-            Box(Modifier.fillMaxSize().shadow(14.dp, shape, ambientColor = Color(0x66000000), spotColor = Color(0x66000000)).background(theme.productCardBg, shape).border(1.dp, theme.productCardBorder, shape)) {
-                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    ProductFace(card.product, theme.productInk, Modifier.size(90.dp))
-                    Spacer(Modifier.height(14.dp))
-                    Text(card.product.label, color = theme.productInk.copy(alpha = 0.6f), fontSize = 13.sp)
-                }
-            }
-        } else {
-            val p = card.tier.palette
-            val premium = card.tier == Tier.PREMIUM
-            Box(
-                Modifier.fillMaxSize().graphicsLayer { rotationY = 180f }
-                    .shadow(if (premium) 18.dp else 16.dp, shape, ambientColor = Color(0x8C0C1018), spotColor = Color(0x8C0C1018))
-                    .background(p.bg, shape).border(1.dp, p.border, shape)
-            ) {
-                // sheen
-                Box(Modifier.fillMaxSize().clip(shape).background(Brush.linearGradient(listOf(Color.White.copy(p.sheen), Color.Transparent), Offset(0f, 0f), Offset(280f, 400f))))
-                if (theme.brushed) Box(Modifier.fillMaxSize().clip(shape).background(Brush.linearGradient(listOf(Color(0x4DFFFFFF), Color.Transparent, Color(0x1F000000)), Offset(0f, 0f), Offset(200f, 600f))))
-                if (premium) Box(Modifier.fillMaxSize().padding(5.dp).border(1.dp, Color(0x24C9A227), RoundedCornerShape(12.dp)))
-                Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(card.promo.label.removeSuffix(" TL"), color = p.text, fontSize = 34.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.4).sp, lineHeight = 34.sp, softWrap = false)
-                            Spacer(Modifier.width(5.dp))
-                            Text("TL", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, softWrap = false, modifier = Modifier.padding(bottom = 4.dp))
-                        }
-                        Box(Modifier.padding(top = 12.dp).size(34.dp, 2.dp).background(p.rule, RoundedCornerShape(1.dp)))
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                        Text("avantaj", color = p.cap, fontSize = 11.sp, letterSpacing = 0.3.sp)
-                        if (premium) Wordmark(GoldLight.copy(alpha = 0.72f), size = 14, tag = false)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Card row with deal / flip / shuffle / reveal choreography driven by [GameState]. */
-@Composable
-fun Deck(state: GameState, theme: SansinaTheme, modifier: Modifier = Modifier) {
-    val phase = state.phase
-    val n = state.cards.size
-    val spacing = if (n <= 5) 168f else 150f
-    Box(modifier.fillMaxWidth().height(340.dp), contentAlignment = Alignment.Center) {
-        state.cards.forEachIndexed { i, card ->
-            val dealt = phase.ordinal > Phase.DEAL.ordinal || (phase == Phase.DEAL && i < state.dealtCount)
-            val faceUp = phase.ordinal > Phase.FLIP.ordinal || (phase == Phase.FLIP && i < state.flippedCount)
-            val isWinner = i == state.winner
-            val picked = phase.ordinal >= Phase.PICK.ordinal
-            val visible = dealt && (!picked || isWinner)
-
-            // shuffle target positions
-            val home = (i - (n - 1) / 2f) * spacing
-            val (tx, ty, rz) = when (state.shuffleStep) {
-                1 -> Triple(home * 1.15f, -20f * kotlin.math.abs(i - (n - 1) / 2f), (i - (n - 1) / 2f) * 9f)          // fan
-                2 -> Triple(if (i < n / 2 + 1) -200f else 200f, i * -8f, 0f)  // split
-                3 -> Triple(if (i < n / 2 + 1) 180f else -180f, 0f, if (i < n / 2 + 1) -4f else 4f)             // cross
-                4 -> Triple(0f, i * -3f, (i - (n - 1) / 2f) * 2f)                                           // collapse
-                5 -> Triple(if (i % 2 == 0) -70f else 70f, i * -3f, 0f)                          // cut
-                6 -> Triple(home, 0f, 0f)                                                        // re-deal
-                else -> if (picked && isWinner) Triple(0f, -8f, 0f) else Triple(home, 0f, 0f)
-            }
-            val ax by animateFloatAsState(tx, tween(440, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f)), label = "x")
-            val ay by animateFloatAsState(ty, tween(440, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f)), label = "y")
-            val ar by animateFloatAsState(rz, tween(440), label = "r")
-            val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(if (dealt) 400 else 0), label = "a")
-            val dealY by animateFloatAsState(if (dealt) 0f else -330f, tween(660, easing = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)), label = "dy")
-            val dealS by animateFloatAsState(if (dealt) 1f else 0.9f, tween(660), label = "ds")
-
-            val revealed = picked && isWinner && state.revealed
-            GameCard(
-                card, theme, faceUp = faceUp && !(picked && isWinner && !state.revealed) || (picked && isWinner && state.revealed),
-                big = revealed,
-                modifier = Modifier.graphicsLayer {
-                    translationX = ax * density
-                    translationY = (ay + dealY) * density
-                    rotationZ = ar
-                    this.alpha = alpha
-                    scaleX = dealS; scaleY = dealS
-                }
-            )
-        }
-    }
-}
-
 // ───────────────────────── Text helpers ─────────────────────────
 
 @Composable
@@ -202,14 +103,20 @@ fun Cta(theme: SansinaTheme, text: String, onClick: () -> Unit) {
 // ───────────────────────── Screens ─────────────────────────
 
 @Composable
-fun InviteScreen(theme: SansinaTheme, onStart: () -> Unit) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 96.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Headline(theme, Phase.INVITE, "Bugünkü şansına ", "merhaba", " demek ister misin?", theme.h1Size, Modifier.widthIn(max = 760.dp))
-        Spacer(Modifier.height(18.dp))
-        Caption("Bir dokunuşla Troy'dan ne kazanacağını öğren.", theme.secondary(Phase.INVITE), 21)
-        Spacer(Modifier.height(34.dp))
-        Cta(theme, "Şansını Dene", onStart)
+fun InviteText(theme: SansinaTheme, visible: Boolean, onStart: () -> Unit) {
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(1100), label = "inv")
+    val scale by animateFloatAsState(if (visible) 1f else 0.94f, tween(1100), label = "invs")
+    if (alpha == 0f) return
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 220.dp).graphicsLayer { this.alpha = alpha; scaleX = scale; scaleY = scale },
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
+    ) {
+        Headline(theme, Phase.INVITE, "Bugünkü şansına ", "merhaba", " demek ister misin?", (theme.h1Size * 0.78f).toInt(), Modifier.widthIn(max = 640.dp))
+        Spacer(Modifier.height(14.dp))
+        Caption("Bir dokunuşla Troy'dan ne kazanacağını öğren.", theme.secondary(Phase.INVITE), 19)
         Spacer(Modifier.height(26.dp))
+        Cta(theme, "Şansını Dene", onStart)
+        Spacer(Modifier.height(20.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Canvas(Modifier.size(18.dp)) {
                 val c = theme.secondary(Phase.INVITE)
@@ -222,29 +129,22 @@ fun InviteScreen(theme: SansinaTheme, onStart: () -> Unit) {
     }
 }
 
+/** Invite + the whole card choreography, on one surface so the cards never remount. */
 @Composable
-fun HelloScreen(theme: SansinaTheme) {
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        val scale = remember { Animatable(0.9f) }
-        LaunchedEffect(Unit) { scale.animateTo(1f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow)) }
-        Box(Modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }) {
-            Headline(theme, Phase.MERHABA, if (theme.id == "A") "Şansına " else "Şansına\n", "merhaba!", "", theme.helloSize, accentOn = theme.helloAccent)
-        }
-        Spacer(Modifier.height(16.dp))
-        Caption("Avantajını seçmeye hazır ol…", theme.secondary(Phase.MERHABA), 21)
-    }
-}
-
-@Composable
-fun DeckScreen(state: GameState, theme: SansinaTheme) {
+fun StageScreen(state: GameState, theme: SansinaTheme, onStart: () -> Unit) {
     val phase = state.phase
     Box(Modifier.fillMaxSize()) {
-        Deck(state, theme, Modifier.align(Alignment.Center).offset(y = (-10).dp))
-        Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Stage(state, theme, Modifier.fillMaxSize())
+        InviteText(theme, visible = phase == Phase.INVITE, onStart = onStart)
+        val helloAlpha by animateFloatAsState(if (phase == Phase.FADE) 1f else 0f, tween(if (phase == Phase.FADE) 900 else 400), label = "hello")
+        if (helloAlpha > 0f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = helloAlpha }, contentAlignment = Alignment.Center) {
+            Headline(theme, Phase.FADE, "Şansına ", "merhaba!", "", theme.helloSize.coerceAtMost(72), accentOn = theme.helloAccent)
+        }
+        Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             AnimatedContent(targetState = phase, label = "cap", transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }) { p ->
                 when (p) {
-                    Phase.DEAL -> Caption("Avantajını seçmeye hazır ol…", theme.secondary(p), 21)
-                    Phase.FLIP -> Caption("250 TL'den 1.500 TL'ye kadar", theme.secondary(p), 21)
+                    Phase.FILL -> Caption("Avantajını seçmeye hazır ol…", theme.secondary(p), 21)
+                    Phase.FLIP -> Caption("${state.config.promos.minOf { it.amount }.let { Promo(it, 0).label }}'den ${state.config.promos.maxOf { it.amount }.let { Promo(it, 0).label }}'ye kadar", theme.secondary(p), 21)
                     Phase.SHUFFLE -> Caption("Avantajın seçiliyor…", theme.secondary(p), 21)
                     Phase.PICK -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Caption("Tebrikler!", theme.primary(p), if (theme.id == "E") 36 else 30, FontWeight.SemiBold)

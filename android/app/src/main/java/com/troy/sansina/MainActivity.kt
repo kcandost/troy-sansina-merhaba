@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
 private const val PREFS = "sansina"
 private const val KEY_THEME = "theme"
 private const val KEY_PROMOS = "promos"
+private const val KEY_CARDS = "cards"
 
 @Composable
 fun SansinaApp() {
@@ -52,7 +53,8 @@ fun SansinaApp() {
     val stats = remember { PromoStats(ctx).also { it.load(config) } }
     var gate by remember { mutableStateOf(false) }       // PIN prompt showing
     var settingsOpen by remember { mutableStateOf(false) }
-    val state = remember { GameState(config) { stats.record(it) } }
+    var cardCount by remember { mutableStateOf(prefs.getInt(KEY_CARDS, PromoConfig.DEFAULT_CARDS)) }
+    val state = remember { GameState(ctx, config, cardCount) { stats.record(it) } }
     val scope = rememberCoroutineScope()
     val phase = state.phase
 
@@ -74,16 +76,12 @@ fun SansinaApp() {
             targetState = phase,
             transitionSpec = { fadeIn(tween(380)) togetherWith fadeOut(tween(220)) },
             label = "phase",
-            contentKey = { p ->
-                when (p) { Phase.DEAL, Phase.FLIP, Phase.SHUFFLE, Phase.PICK -> "deck"; else -> p.name }
-            }
+            contentKey = { p -> if (p.ordinal <= Phase.PICK.ordinal) "stage" else p.name }
         ) { p ->
             when (p) {
-                Phase.INVITE -> InviteScreen(theme, onStart = ::start)
-                Phase.MERHABA -> HelloScreen(theme)
-                Phase.DEAL, Phase.FLIP, Phase.SHUFFLE, Phase.PICK -> DeckScreen(state, theme)
                 Phase.PRIZE -> PrizeScreen(state, theme)
                 Phase.QR -> QrScreen(state, theme, onRestart = { state.reset() })
+                else -> StageScreen(state, theme, onStart = ::start)
             }
         }
 
@@ -96,7 +94,12 @@ fun SansinaApp() {
         }
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
-                theme = theme, config = config, stats = stats,
+                theme = theme, config = config, stats = stats, cardCount = cardCount,
+                onCardCount = { c ->
+                    cardCount = c
+                    prefs.edit().putInt(KEY_CARDS, c).apply()
+                    state.applyConfig(config, c)
+                },
                 onTheme = { t -> theme = t; prefs.edit().putString(KEY_THEME, t.id).apply() },
                 onConfig = { c ->
                     config = c

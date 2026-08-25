@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -91,6 +92,8 @@ fun SettingsScreen(
     theme: SansinaTheme,
     config: PromoConfig,
     stats: PromoStats,
+    cardCount: Int,
+    onCardCount: (Int) -> Unit,
     onTheme: (SansinaTheme) -> Unit,
     onConfig: (PromoConfig) -> Unit,
     onClose: () -> Unit,
@@ -119,7 +122,7 @@ fun SettingsScreen(
             }
             Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp)) {
                 when (category) {
-                    Category.THEME -> ThemeCategory(theme, config, onTheme)
+                    Category.THEME -> ThemeCategory(theme, config, cardCount, onCardCount, onTheme)
                     Category.PROMO -> PromoCategory(config, stats, onConfig)
                 }
             }
@@ -128,7 +131,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, onTheme: (SansinaTheme) -> Unit) {
+private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, cardCount: Int, onCardCount: (Int) -> Unit, onTheme: (SansinaTheme) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
         Column(Modifier.weight(1f)) {
             Section("Tema", "Beş tasarım yönünden birini seç.") {
@@ -156,25 +159,40 @@ private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, onTheme: (Sa
         Column(Modifier.weight(1f)) {
             Section("Önizleme", "Seçili temanın davet ve kart ekranı.") {
                 var previewDeck by remember { mutableStateOf(false) }
-                ThemePreview(theme, config, previewDeck, Modifier.fillMaxWidth())
+                ThemePreview(theme, config, cardCount, previewDeck, Modifier.fillMaxWidth())
                 Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SmallButton("Davet", if (!previewDeck) Blue else Ink50, if (!previewDeck) Color.White else Ink) { previewDeck = false }
                     SmallButton("Kartlar", if (previewDeck) Blue else Ink50, if (previewDeck) Color.White else Ink) { previewDeck = true }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Section("Ekrandaki kartlar", "Merkezin etrafında dönen ürün kartı sayısı (${PromoConfig.MIN_CARDS}–${PromoConfig.MAX_CARDS}). Kategoriler dengeli dağıtılır.") {
+                var draft by remember(cardCount) { mutableStateOf(cardCount) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SmallButton("−", Ink50, Ink, enabled = draft > PromoConfig.MIN_CARDS) { draft-- }
+                    Text("$draft", color = Ink, fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(56.dp), textAlign = TextAlign.Center)
+                    SmallButton("+", Ink50, Ink, enabled = draft < PromoConfig.MAX_CARDS) { draft++ }
+                    Spacer(Modifier.weight(1f))
+                    val can = draft != cardCount
+                    SmallButton("Uygula", if (can) Blue else Ink200, if (can) Color.White else Ink600, enabled = can) { onCardCount(draft) }
                 }
             }
         }
     }
 }
 
-/** The real screens rendered at tablet size and scaled into a small window. */
+/** The real stage rendered at tablet size and scaled into a small window. */
 @Composable
-private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, deck: Boolean, modifier: Modifier) {
+private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, cardCount: Int, deck: Boolean, modifier: Modifier) {
     val fullW = 1280.dp; val fullH = 800.dp
+    val ctx = LocalContext.current
     BoxWithConstraints(modifier.aspectRatio(fullW / fullH).clip(RoundedCornerShape(16.dp)).border(1.dp, Ink200, RoundedCornerShape(16.dp))) {
         val scale = maxWidth / fullW
-        val phase = if (deck) Phase.FLIP else Phase.INVITE
-        val preview = remember(config, deck) {
-            GameState(config) {}.apply { if (deck) { this.phase = Phase.FLIP; dealtCount = cards.size; flippedCount = cards.size } }
+        val preview = remember(config, cardCount, deck) {
+            GameState(ctx, config, cardCount) {}.apply {
+                slots = cards.indices.toList()
+                if (deck) { phase = Phase.FLIP; flipped = cards.indices.toSet() }
+            }
         }
         Box(
             Modifier.requiredSize(fullW, fullH).graphicsLayer {
@@ -182,9 +200,9 @@ private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, deck: Boolean
                 transformOrigin = TransformOrigin(0.5f, 0.5f)
             }
         ) {
-            WorldBackground(theme, phase)
-            if (deck) DeckScreen(preview, theme) else InviteScreen(theme) {}
-            BrandLockup(theme, phase, Modifier.align(Alignment.TopCenter).padding(top = 36.dp))
+            WorldBackground(theme, preview.phase)
+            StageScreen(preview, theme) {}
+            BrandLockup(theme, preview.phase, Modifier.align(Alignment.TopCenter).padding(top = 36.dp))
         }
     }
 }

@@ -57,46 +57,6 @@ fun DrawScope.sparkle(center: Offset, r: Float, color: Color) {
     drawPath(p, color)
 }
 
-/** Flat geometric product stand-in (placeholder for TROY's product renders). */
-@Composable
-fun ProductFace(product: Product, ink: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val w = size.width; val h = size.height
-        val c = Offset(w / 2, h / 2)
-        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.03f)
-        when (product) {
-            Product.IPHONE -> {
-                val pw = w * 0.34f; val ph = h * 0.58f
-                drawRoundRect(ink, Offset(c.x - pw / 2, c.y - ph / 2), Size(pw, ph), androidx.compose.ui.geometry.CornerRadius(pw * 0.18f), style = stroke)
-                drawRoundRect(ink, Offset(c.x - pw * 0.18f, c.y - ph / 2 + ph * 0.05f), Size(pw * 0.36f, ph * 0.05f), androidx.compose.ui.geometry.CornerRadius(ph * 0.03f))
-            }
-            Product.IPAD -> {
-                val pw = w * 0.56f; val ph = h * 0.58f
-                drawRoundRect(ink, Offset(c.x - pw / 2, c.y - ph / 2), Size(pw, ph), androidx.compose.ui.geometry.CornerRadius(pw * 0.08f), style = stroke)
-                drawCircle(ink, w * 0.018f, Offset(c.x, c.y - ph / 2 + ph * 0.06f))
-            }
-            Product.MACBOOK -> {
-                val pw = w * 0.62f; val ph = h * 0.40f
-                drawRoundRect(ink, Offset(c.x - pw / 2, c.y - ph / 2 - h * 0.04f), Size(pw, ph), androidx.compose.ui.geometry.CornerRadius(pw * 0.05f), style = stroke)
-                drawRoundRect(ink, Offset(c.x - pw * 0.6f, c.y + ph / 2 - h * 0.04f), Size(pw * 1.2f, h * 0.035f), androidx.compose.ui.geometry.CornerRadius(h * 0.02f))
-            }
-            Product.WATCH -> {
-                val pw = w * 0.30f; val ph = h * 0.36f
-                drawRoundRect(ink, Offset(c.x - pw / 2, c.y - ph / 2), Size(pw, ph), androidx.compose.ui.geometry.CornerRadius(pw * 0.28f), style = stroke)
-                drawRoundRect(ink, Offset(c.x - pw * 0.3f, c.y - ph / 2 - h * 0.14f), Size(pw * 0.6f, h * 0.14f), androidx.compose.ui.geometry.CornerRadius(pw * 0.1f), style = stroke)
-                drawRoundRect(ink, Offset(c.x - pw * 0.3f, c.y + ph / 2), Size(pw * 0.6f, h * 0.14f), androidx.compose.ui.geometry.CornerRadius(pw * 0.1f), style = stroke)
-                drawRoundRect(ink, Offset(c.x + pw / 2, c.y - ph * 0.12f), Size(w * 0.025f, ph * 0.18f), androidx.compose.ui.geometry.CornerRadius(w * 0.01f))
-            }
-            Product.AIRPODS -> {
-                val pw = w * 0.5f; val ph = h * 0.38f
-                drawRoundRect(ink, Offset(c.x - pw / 2, c.y - ph / 2), Size(pw, ph), androidx.compose.ui.geometry.CornerRadius(pw * 0.16f), style = stroke)
-                drawLine(ink, Offset(c.x - pw / 2, c.y - ph * 0.05f), Offset(c.x + pw / 2, c.y - ph * 0.05f), strokeWidth = w * 0.03f)
-                drawCircle(ink, w * 0.02f, Offset(c.x, c.y + ph * 0.18f))
-            }
-        }
-    }
-}
-
 /** Drawn module grid; placeholder for a scannable QR. */
 @Composable
 fun QrGrid(dark: Color, light: Color, modifier: Modifier = Modifier) {
