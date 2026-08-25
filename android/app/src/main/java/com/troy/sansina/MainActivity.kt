@@ -41,18 +41,24 @@ class MainActivity : ComponentActivity() {
 
 private const val PREFS = "sansina"
 private const val KEY_THEME = "theme"
+private const val KEY_PROMOS = "promos"
 
 @Composable
 fun SansinaApp() {
     val ctx = LocalContext.current
     val prefs = remember { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
     var theme by remember { mutableStateOf(AllThemes.firstOrNull { it.id == prefs.getString(KEY_THEME, "A") } ?: ThemeA) }
-    var pickerOpen by remember { mutableStateOf(false) }
-    val state = remember { GameState() }
+    var config by remember { mutableStateOf(PromoConfig.parse(prefs.getString(KEY_PROMOS, null)).let { if (it.isValid) it else PromoConfig.DEFAULT }) }
+    val stats = remember { PromoStats(ctx).also { it.load(config) } }
+    var gate by remember { mutableStateOf(false) }       // PIN prompt showing
+    var settingsOpen by remember { mutableStateOf(false) }
+    val state = remember { GameState(config) { stats.record(it) } }
     val scope = rememberCoroutineScope()
     val phase = state.phase
 
     fun start() { scope.launch { state.play() } }
+
+    androidx.activity.compose.BackHandler { if (phase != Phase.INVITE) state.reset() }
 
     Box(Modifier.fillMaxSize()) {
         WorldBackground(theme, phase)
@@ -83,17 +89,22 @@ fun SansinaApp() {
 
         BrandLockup(theme, phase, Modifier.align(Alignment.TopCenter).systemBarsPadding().padding(top = 36.dp))
 
-        SettingsButton(theme, phase, onClick = { pickerOpen = true }, modifier = Modifier.align(Alignment.TopStart).systemBarsPadding().padding(start = 24.dp, top = 24.dp))
+        SettingsButton(theme, phase, onClick = { gate = true }, modifier = Modifier.align(Alignment.TopStart).systemBarsPadding().padding(start = 24.dp, top = 24.dp))
 
-        AnimatedVisibility(pickerOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
-            ThemePicker(
-                current = theme,
-                onPick = { t ->
-                    theme = t
-                    prefs.edit().putString(KEY_THEME, t.id).apply()
-                    pickerOpen = false
+        AnimatedVisibility(gate, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
+            PinGate(onUnlock = { gate = false; settingsOpen = true; state.reset() }, onCancel = { gate = false })
+        }
+        AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
+            SettingsScreen(
+                theme = theme, config = config, stats = stats,
+                onTheme = { t -> theme = t; prefs.edit().putString(KEY_THEME, t.id).apply() },
+                onConfig = { c ->
+                    config = c
+                    prefs.edit().putString(KEY_PROMOS, c.serialize()).apply()
+                    stats.reset(c)
+                    state.applyConfig(c)
                 },
-                onDismiss = { pickerOpen = false }
+                onClose = { settingsOpen = false }
             )
         }
     }

@@ -100,7 +100,7 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, big: Boolean, mod
                 Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text(card.tier.label.removeSuffix(" TL"), color = p.text, fontSize = 34.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.4).sp, lineHeight = 34.sp, softWrap = false)
+                            Text(card.promo.label.removeSuffix(" TL"), color = p.text, fontSize = 34.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.4).sp, lineHeight = 34.sp, softWrap = false)
                             Spacer(Modifier.width(5.dp))
                             Text("TL", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, softWrap = false, modifier = Modifier.padding(bottom = 4.dp))
                         }
@@ -120,7 +120,8 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, big: Boolean, mod
 @Composable
 fun Deck(state: GameState, theme: SansinaTheme, modifier: Modifier = Modifier) {
     val phase = state.phase
-    val spacing = 168f
+    val n = state.cards.size
+    val spacing = if (n <= 5) 168f else 150f
     Box(modifier.fillMaxWidth().height(340.dp), contentAlignment = Alignment.Center) {
         state.cards.forEachIndexed { i, card ->
             val dealt = phase.ordinal > Phase.DEAL.ordinal || (phase == Phase.DEAL && i < state.dealtCount)
@@ -130,12 +131,12 @@ fun Deck(state: GameState, theme: SansinaTheme, modifier: Modifier = Modifier) {
             val visible = dealt && (!picked || isWinner)
 
             // shuffle target positions
-            val home = (i - 2) * spacing
+            val home = (i - (n - 1) / 2f) * spacing
             val (tx, ty, rz) = when (state.shuffleStep) {
-                1 -> Triple(home * 1.15f, -20f * kotlin.math.abs(i - 2), (i - 2) * 9f)          // fan
-                2 -> Triple(if (i < 3) -200f else 200f, if (i < 3) i * -8f else (i - 3) * -8f, 0f)  // split
-                3 -> Triple(if (i < 3) 180f else -180f, 0f, if (i < 3) -4f else 4f)             // cross
-                4 -> Triple(0f, i * -3f, (i - 2) * 2f)                                           // collapse
+                1 -> Triple(home * 1.15f, -20f * kotlin.math.abs(i - (n - 1) / 2f), (i - (n - 1) / 2f) * 9f)          // fan
+                2 -> Triple(if (i < n / 2 + 1) -200f else 200f, i * -8f, 0f)  // split
+                3 -> Triple(if (i < n / 2 + 1) 180f else -180f, 0f, if (i < n / 2 + 1) -4f else 4f)             // cross
+                4 -> Triple(0f, i * -3f, (i - (n - 1) / 2f) * 2f)                                           // collapse
                 5 -> Triple(if (i % 2 == 0) -70f else 70f, i * -3f, 0f)                          // cut
                 6 -> Triple(home, 0f, 0f)                                                        // re-deal
                 else -> if (picked && isWinner) Triple(0f, -8f, 0f) else Triple(home, 0f, 0f)
@@ -260,7 +261,7 @@ fun DeckScreen(state: GameState, theme: SansinaTheme) {
 @Composable
 fun PrizeScreen(state: GameState, theme: SansinaTheme) {
     val p = Phase.PRIZE
-    val prize = state.winningCard.tier
+    val prize = state.winningCard.promo
     val big = if (theme.id == "E") theme.accent else theme.primary(p)
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         if (theme.id == "C") {
@@ -285,7 +286,7 @@ fun PrizeScreen(state: GameState, theme: SansinaTheme) {
 @Composable
 fun QrScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
     val p = Phase.QR
-    val prize = state.winningCard.tier
+    val prize = state.winningCard.promo
     Box(Modifier.fillMaxSize()) {
         Box(Modifier.align(Alignment.Center)) {
             when (theme.qrStyle) {
@@ -371,36 +372,3 @@ fun SettingsButton(theme: SansinaTheme, phase: Phase, onClick: () -> Unit, modif
     }
 }
 
-@Composable
-fun ThemePicker(current: SansinaTheme, onPick: (SansinaTheme) -> Unit, onDismiss: () -> Unit) {
-    Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss)) {
-        Column(
-            Modifier.align(Alignment.TopStart).padding(start = 24.dp, top = 80.dp).width(380.dp)
-                .shadow(30.dp, RoundedCornerShape(24.dp)).background(Color.White, RoundedCornerShape(24.dp))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-                .padding(20.dp)
-        ) {
-            Text("Tema", color = Color(0xFF0E1116), fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Text("Beş tasarım yönünden birini seç.", color = Color(0xFF565E6C), fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp, bottom = 14.dp))
-            AllThemes.forEach { t ->
-                val selected = t.id == current.id
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(14.dp))
-                        .background(if (selected) Color(0xFFE3F0FD) else Color(0xFFF7F8FA))
-                        .border(1.dp, if (selected) Color(0xFF0071E3) else Color(0xFFE4E7EC), RoundedCornerShape(14.dp))
-                        .clickable { onPick(t) }.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(t.bg).border(1.dp, Color(0x1A000000), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                        Text(t.letter, color = t.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                    }
-                    Column(Modifier.padding(start = 14.dp).weight(1f)) {
-                        Text(t.name, color = Color(0xFF0E1116), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                        Text(t.subtitle, color = Color(0xFF565E6C), fontSize = 12.sp)
-                    }
-                    if (selected) Box(Modifier.size(10.dp).background(Color(0xFF0071E3), CircleShape))
-                }
-            }
-        }
-    }
-}
