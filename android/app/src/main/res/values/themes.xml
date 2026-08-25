@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.Sansina" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F7F8FA</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>
