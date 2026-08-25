@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -82,6 +84,8 @@ fun PinGate(onUnlock: () -> Unit, onCancel: () -> Unit) {
 
 // ───────────────────────── Settings page ─────────────────────────
 
+private enum class Category(val label: String, val hint: String) { THEME("Tema", "Görünüm ve önizleme"), PROMO("Promo", "Kollar ve pano") }
+
 @Composable
 fun SettingsScreen(
     theme: SansinaTheme,
@@ -91,113 +95,176 @@ fun SettingsScreen(
     onConfig: (PromoConfig) -> Unit,
     onClose: () -> Unit,
 ) {
-    var draft by remember(config) { mutableStateOf(config.promos) }
     BackHandler(onBack = onClose)
-    val draftCfg = PromoConfig(draft)
-    val dirty = draft != config.promos
+    var category by remember { mutableStateOf(Category.THEME) }
 
     Column(Modifier.fillMaxSize().background(Ink50)) {
         Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 32.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Ayarlar", color = Ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             SmallButton("Kapat", Ink50, Ink, onClick = onClose)
         }
-        Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            // Left: themes + levers
-            Column(Modifier.weight(1.2f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                Section("Tema", "Beş tasarım yönünden birini seç.") {
-                    AllThemes.forEach { t ->
-                        val selected = t.id == theme.id
-                        Row(
-                            Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(14.dp))
-                                .background(if (selected) Blue100 else Ink50)
-                                .border(1.dp, if (selected) Blue else Ink200, RoundedCornerShape(14.dp))
-                                .clickable { onTheme(t) }.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(t.bg).border(1.dp, Color(0x1A000000), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                                Text(t.letter, color = t.accent, fontSize = 18.sp, fontWeight = FontWeight.Black)
-                            }
-                            Column(Modifier.padding(start = 14.dp).weight(1f)) {
-                                Text(t.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                                Text(t.subtitle, color = Ink600, fontSize = 12.sp)
-                            }
-                            if (selected) Box(Modifier.size(10.dp).background(Blue, CircleShape))
-                        }
-                    }
-                }
-
-                Section("Promosyon kolları", "İndirim tutarları ve çıkma yüzdeleri. Yüzdeler toplamı 100 olmalı. Kaydedince pano sıfırlanır.") {
-                    Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-                        Text("Tutar (TL)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                        Text("Yüzde (%)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                        Spacer(Modifier.width(44.dp))
-                    }
-                    draft.forEachIndexed { i, p ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            NumberField(p.amount, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(amount = v) } }
-                            NumberField(p.weight, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(weight = v) } }
-                            Box(
-                                Modifier.size(36.dp).clip(CircleShape).background(if (draft.size > PromoConfig.MIN_PROMOS) Color(0xFFFBE3E0) else Ink50)
-                                    .clickable(enabled = draft.size > PromoConfig.MIN_PROMOS) { draft = draft.toMutableList().also { it.removeAt(i) } },
-                                contentAlignment = Alignment.Center
-                            ) { Text("−", color = if (draft.size > PromoConfig.MIN_PROMOS) Red else Ink200, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
-                        }
-                    }
-                    Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        if (draft.size < PromoConfig.MAX_PROMOS) SmallButton("+ Promosyon ekle", Ink50, Ink) {
-                            draft = draft + Promo((draft.maxOfOrNull { it.amount } ?: 0) + 250, 0)
-                        }
-                        Spacer(Modifier.weight(1f))
-                        val ok = draftCfg.totalWeight == 100
-                        Text("Toplam: ${draftCfg.totalWeight}%", color = if (ok) Green else Red, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                    if (draftCfg.totalWeight != 100) Text("Yüzdeler 100'e tamamlanmalı (${100 - draftCfg.totalWeight} fark).", color = Red, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-                    else if (draft.map { it.amount }.distinct().size != draft.size) Text("Tutarlar birbirinden farklı olmalı.", color = Red, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-                    Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        val canSave = dirty && draftCfg.isValid && draft.map { it.amount }.distinct().size == draft.size
-                        SmallButton("Kaydet ve panoyu sıfırla", if (canSave) Blue else Ink200, if (canSave) Color.White else Ink600, enabled = canSave) { onConfig(draftCfg) }
-                        if (dirty) SmallButton("Geri al", Ink50, Ink) { draft = config.promos }
+        Row(Modifier.fillMaxSize()) {
+            // Left rail
+            Column(Modifier.width(240.dp).fillMaxHeight().background(Color.White).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Category.entries.forEach { c ->
+                    val sel = c == category
+                    Column(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (sel) Blue100 else Color.Transparent)
+                            .clickable { category = c }.padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text(c.label, color = if (sel) Blue else Ink, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(c.hint, color = Ink600, fontSize = 12.sp)
                     }
                 }
             }
+            Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp)) {
+                when (category) {
+                    Category.THEME -> ThemeCategory(theme, config, onTheme)
+                    Category.PROMO -> PromoCategory(config, stats, onConfig)
+                }
+            }
+        }
+    }
+}
 
-            // Right: dashboard
-            Column(Modifier.weight(1f)) {
-                Section("Pano", "Her indirimin kaç kez gösterildiği ve gerçekleşen yüzdeler. Kollar değişince sıfırlanır.") {
-                    val total = stats.total
-                    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-                        Text("$total", color = Ink, fontSize = 44.sp, fontWeight = FontWeight.Bold, lineHeight = 44.sp)
-                        Text("  oyun", color = Ink600, fontSize = 15.sp, modifier = Modifier.padding(bottom = 6.dp))
+@Composable
+private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, onTheme: (SansinaTheme) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+        Column(Modifier.weight(1f)) {
+            Section("Tema", "Beş tasarım yönünden birini seç.") {
+                AllThemes.forEach { t ->
+                    val selected = t.id == theme.id
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(14.dp))
+                            .background(if (selected) Blue100 else Ink50)
+                            .border(1.dp, if (selected) Blue else Ink200, RoundedCornerShape(14.dp))
+                            .clickable { onTheme(t) }.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(t.bg).border(1.dp, Color(0x1A000000), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                            Text(t.letter, color = t.accent, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                        }
+                        Column(Modifier.padding(start = 14.dp).weight(1f)) {
+                            Text(t.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(t.subtitle, color = Ink600, fontSize = 12.sp)
+                        }
+                        if (selected) Box(Modifier.size(10.dp).background(Blue, CircleShape))
                     }
-                    Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-                        Text("İndirim", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1.1f))
-                        Text("Adet", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End)
-                        Text("Gerçekleşen", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(0.9f), textAlign = TextAlign.End)
-                        Text("Hedef", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(0.7f), textAlign = TextAlign.End)
+                }
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            Section("Önizleme", "Seçili temanın davet ve kart ekranı.") {
+                var previewDeck by remember { mutableStateOf(false) }
+                ThemePreview(theme, config, previewDeck, Modifier.fillMaxWidth())
+                Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SmallButton("Davet", if (!previewDeck) Blue else Ink50, if (!previewDeck) Color.White else Ink) { previewDeck = false }
+                    SmallButton("Kartlar", if (previewDeck) Blue else Ink50, if (previewDeck) Color.White else Ink) { previewDeck = true }
+                }
+            }
+        }
+    }
+}
+
+/** The real screens rendered at tablet size and scaled into a small window. */
+@Composable
+private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, deck: Boolean, modifier: Modifier) {
+    val fullW = 1280.dp; val fullH = 800.dp
+    BoxWithConstraints(modifier.aspectRatio(fullW / fullH).clip(RoundedCornerShape(16.dp)).border(1.dp, Ink200, RoundedCornerShape(16.dp))) {
+        val scale = maxWidth / fullW
+        val phase = if (deck) Phase.FLIP else Phase.INVITE
+        val preview = remember(config, deck) {
+            GameState(config) {}.apply { if (deck) { this.phase = Phase.FLIP; dealtCount = cards.size; flippedCount = cards.size } }
+        }
+        Box(
+            Modifier.requiredSize(fullW, fullH).graphicsLayer {
+                scaleX = scale; scaleY = scale
+                transformOrigin = TransformOrigin(0.5f, 0.5f)
+            }
+        ) {
+            WorldBackground(theme, phase)
+            if (deck) DeckScreen(preview, theme) else InviteScreen(theme) {}
+            BrandLockup(theme, phase, Modifier.align(Alignment.TopCenter).padding(top = 36.dp))
+        }
+    }
+}
+
+@Composable
+private fun PromoCategory(config: PromoConfig, stats: PromoStats, onConfig: (PromoConfig) -> Unit) {
+    var draft by remember(config) { mutableStateOf(config.promos) }
+    val draftCfg = PromoConfig(draft)
+    val dirty = draft != config.promos
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+        Column(Modifier.weight(1.1f)) {
+            Section("Promosyon kolları", "İndirim tutarları ve çıkma yüzdeleri. Yüzdeler toplamı 100 olmalı. Kaydedince pano sıfırlanır.") {
+                Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+                    Text("Tutar (TL)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    Text("Yüzde (%)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    Spacer(Modifier.width(44.dp))
+                }
+                draft.forEachIndexed { i, p ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NumberField(p.amount, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(amount = v) } }
+                        NumberField(p.weight, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(weight = v) } }
+                        Box(
+                            Modifier.size(36.dp).clip(CircleShape).background(if (draft.size > PromoConfig.MIN_PROMOS) Color(0xFFFBE3E0) else Ink50)
+                                .clickable(enabled = draft.size > PromoConfig.MIN_PROMOS) { draft = draft.toMutableList().also { it.removeAt(i) } },
+                            contentAlignment = Alignment.Center
+                        ) { Text("−", color = if (draft.size > PromoConfig.MIN_PROMOS) Red else Ink200, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
                     }
-                    config.ladder().forEach { (p, tier) ->
-                        val c = stats.counts[p.amount] ?: 0
-                        val pct = if (total == 0) 0f else c * 100f / total
-                        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Row(Modifier.weight(1.1f), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.size(14.dp).clip(RoundedCornerShape(4.dp)).background(tier.palette.bg).border(1.dp, tier.palette.border, RoundedCornerShape(4.dp)))
-                                    Text(p.label, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
-                                }
-                                Text("$c", color = Ink, fontSize = 15.sp, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End)
-                                Text("%.1f%%".format(pct), color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(0.9f), textAlign = TextAlign.End)
-                                Text("${p.weight}%", color = Ink600, fontSize = 15.sp, modifier = Modifier.weight(0.7f), textAlign = TextAlign.End)
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (draft.size < PromoConfig.MAX_PROMOS) SmallButton("+ Promosyon ekle", Ink50, Ink) {
+                        draft = draft + Promo((draft.maxOfOrNull { it.amount } ?: 0) + 250, 0)
+                    }
+                    Spacer(Modifier.weight(1f))
+                    val ok = draftCfg.totalWeight == 100
+                    Text("Toplam: ${draftCfg.totalWeight}%", color = if (ok) Green else Red, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                if (draftCfg.totalWeight != 100) Text("Yüzdeler 100'e tamamlanmalı (${100 - draftCfg.totalWeight} fark).", color = Red, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                else if (draft.map { it.amount }.distinct().size != draft.size) Text("Tutarlar birbirinden farklı olmalı.", color = Red, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val canSave = dirty && draftCfg.isValid && draft.map { it.amount }.distinct().size == draft.size
+                    SmallButton("Kaydet ve panoyu sıfırla", if (canSave) Blue else Ink200, if (canSave) Color.White else Ink600, enabled = canSave) { onConfig(draftCfg) }
+                    if (dirty) SmallButton("Geri al", Ink50, Ink) { draft = config.promos }
+                }
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            Section("Pano", "Her indirimin kaç kez gösterildiği ve gerçekleşen yüzdeler. Kollar değişince sıfırlanır.") {
+                val total = stats.total
+                Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
+                    Text("$total", color = Ink, fontSize = 44.sp, fontWeight = FontWeight.Bold, lineHeight = 44.sp)
+                    Text("  oyun", color = Ink600, fontSize = 15.sp, modifier = Modifier.padding(bottom = 6.dp))
+                }
+                Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+                    Text("İndirim", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1.1f))
+                    Text("Adet", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End)
+                    Text("Gerçekleşen", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(0.9f), textAlign = TextAlign.End)
+                    Text("Hedef", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(0.7f), textAlign = TextAlign.End)
+                }
+                config.ladder().forEach { (p, tier) ->
+                    val c = stats.counts[p.amount] ?: 0
+                    val pct = if (total == 0) 0f else c * 100f / total
+                    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Row(Modifier.weight(1.1f), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(14.dp).clip(RoundedCornerShape(4.dp)).background(tier.palette.bg).border(1.dp, tier.palette.border, RoundedCornerShape(4.dp)))
+                                Text(p.label, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
                             }
-                            Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Ink200)) {
-                                Box(Modifier.fillMaxWidth(p.weight / 100f).fillMaxHeight().background(Color(0xFFCDD2DA)))
-                                Box(Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().background(Blue, RoundedCornerShape(4.dp)))
-                            }
+                            Text("$c", color = Ink, fontSize = 15.sp, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End)
+                            Text("%.1f%%".format(pct), color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(0.9f), textAlign = TextAlign.End)
+                            Text("${p.weight}%", color = Ink600, fontSize = 15.sp, modifier = Modifier.weight(0.7f), textAlign = TextAlign.End)
+                        }
+                        Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Ink200)) {
+                            Box(Modifier.fillMaxWidth(p.weight / 100f).fillMaxHeight().background(Color(0xFFCDD2DA)))
+                            Box(Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().background(Blue, RoundedCornerShape(4.dp)))
                         }
                     }
-                    Text("Mavi: gerçekleşen · Gri: hedef", color = Ink600, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
-                    Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.End) {
-                        SmallButton("Panoyu sıfırla", Color(0xFFFBE3E0), Red) { stats.reset(config) }
-                    }
+                }
+                Text("Mavi: gerçekleşen · Gri: hedef", color = Ink600, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
+                Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.End) {
+                    SmallButton("Panoyu sıfırla", Color(0xFFFBE3E0), Red) { stats.reset(config) }
                 }
             }
         }
