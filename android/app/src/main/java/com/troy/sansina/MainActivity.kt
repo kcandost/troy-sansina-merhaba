@@ -43,6 +43,7 @@ private const val PREFS = "sansina"
 private const val KEY_THEME = "theme"
 private const val KEY_PROMOS = "promos"
 private const val KEY_CARDS = "cards"
+private const val KEY_IDLE = "idle_seconds"
 
 @Composable
 fun SansinaApp() {
@@ -53,12 +54,18 @@ fun SansinaApp() {
     val stats = remember { PromoStats(ctx).also { it.load(config) } }
     var gate by remember { mutableStateOf(false) }       // PIN prompt showing
     var settingsOpen by remember { mutableStateOf(false) }
+    var idleSeconds by remember { mutableStateOf(prefs.getInt(KEY_IDLE, 15)) }
     var cardCount by remember { mutableStateOf(prefs.getInt(KEY_CARDS, PromoConfig.DEFAULT_CARDS)) }
     val state = remember { GameState(ctx, config, cardCount) { stats.record(it) } }
     val scope = rememberCoroutineScope()
     val phase = state.phase
 
     fun start() { scope.launch { state.play() } }
+
+    // Nobody touched the QR page: go back to the invite after the configured idle time.
+    LaunchedEffect(phase, idleSeconds, settingsOpen) {
+        if (phase == Phase.QR && !settingsOpen) { kotlinx.coroutines.delay(idleSeconds * 1000L); state.reset() }
+    }
 
     androidx.activity.compose.BackHandler { if (phase != Phase.INVITE) state.reset() }
 
@@ -94,7 +101,8 @@ fun SansinaApp() {
         }
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
-                theme = theme, config = config, stats = stats, cardCount = cardCount,
+                theme = theme, config = config, stats = stats, cardCount = cardCount, idleSeconds = idleSeconds,
+                onIdleSeconds = { v -> idleSeconds = v; prefs.edit().putInt(KEY_IDLE, v).apply() },
                 onCardCount = { c ->
                     cardCount = c
                     prefs.edit().putInt(KEY_CARDS, c).apply()

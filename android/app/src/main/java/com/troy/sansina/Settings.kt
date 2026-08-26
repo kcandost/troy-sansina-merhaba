@@ -85,7 +85,7 @@ fun PinGate(onUnlock: () -> Unit, onCancel: () -> Unit) {
 
 // ───────────────────────── Settings page ─────────────────────────
 
-private enum class Category(val label: String, val hint: String) { THEME("Tema", "Görünüm ve önizleme"), PROMO("Promo", "Kollar ve pano") }
+private enum class Category(val label: String, val hint: String) { THEME("Tema", "Görünüm ve davranış"), PROMO("Promo", "Kollar ve pano") }
 
 @Composable
 fun SettingsScreen(
@@ -94,6 +94,8 @@ fun SettingsScreen(
     stats: PromoStats,
     cardCount: Int,
     onCardCount: (Int) -> Unit,
+    idleSeconds: Int,
+    onIdleSeconds: (Int) -> Unit,
     onTheme: (SansinaTheme) -> Unit,
     onConfig: (PromoConfig) -> Unit,
     onClose: () -> Unit,
@@ -122,7 +124,7 @@ fun SettingsScreen(
             }
             Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp)) {
                 when (category) {
-                    Category.THEME -> ThemeCategory(theme, config, cardCount, onCardCount, onTheme)
+                    Category.THEME -> ThemeCategory(theme, config, cardCount, onCardCount, idleSeconds, onIdleSeconds, onTheme)
                     Category.PROMO -> PromoCategory(config, stats, onConfig)
                 }
             }
@@ -131,7 +133,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, cardCount: Int, onCardCount: (Int) -> Unit, onTheme: (SansinaTheme) -> Unit) {
+private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, cardCount: Int, onCardCount: (Int) -> Unit, idleSeconds: Int, onIdleSeconds: (Int) -> Unit, onTheme: (SansinaTheme) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
         Column(Modifier.weight(1f)) {
             Section("Tema", "Beş tasarım yönünden birini seç.") {
@@ -175,6 +177,18 @@ private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, cardCount: I
                     Spacer(Modifier.weight(1f))
                     val can = draft != cardCount
                     SmallButton("Uygula", if (can) Blue else Ink200, if (can) Color.White else Ink600, enabled = can) { onCardCount(draft) }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Section("Otomatik dönüş", "QR ekranında kimse dokunmazsa bu süre sonunda ana ekrana döner.") {
+                var draft by remember(idleSeconds) { mutableStateOf(idleSeconds) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SmallButton("−5", Ink50, Ink, enabled = draft > 5) { draft = (draft - 5).coerceAtLeast(5) }
+                    Text("$draft sn", color = Ink, fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(96.dp), textAlign = TextAlign.Center)
+                    SmallButton("+5", Ink50, Ink, enabled = draft < 300) { draft = (draft + 5).coerceAtMost(300) }
+                    Spacer(Modifier.weight(1f))
+                    val can = draft != idleSeconds
+                    SmallButton("Uygula", if (can) Blue else Ink200, if (can) Color.White else Ink600, enabled = can) { onIdleSeconds(draft) }
                 }
             }
         }
