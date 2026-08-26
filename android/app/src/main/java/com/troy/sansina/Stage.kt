@@ -58,19 +58,10 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, modifier: Modifie
                 Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color.White.copy(p.sheen), Color.Transparent), Offset(0f, 0f), Offset(200f, 300f))))
                 if (theme.brushed) Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0x4DFFFFFF), Color.Transparent, Color(0x1F000000)), Offset(0f, 0f), Offset(140f, 420f))))
                 if (premium) Box(Modifier.fillMaxSize().padding(4.dp).border(1.dp, Color(0x24C9A227), RoundedCornerShape(9.dp)))
-                Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(card.promo.label.removeSuffix(" TL"), color = p.text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.8).sp, lineHeight = 22.sp, softWrap = false)
-                            Spacer(Modifier.width(3.dp))
-                            Text("TL", color = p.text, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, softWrap = false, modifier = Modifier.padding(bottom = 3.dp))
-                        }
-                        Box(Modifier.padding(top = 7.dp).size(22.dp, 2.dp).background(p.rule, RoundedCornerShape(1.dp)))
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                        Text("avantaj", color = p.cap, fontSize = 8.sp)
-                        if (premium) Wordmark(GoldLight.copy(alpha = 0.72f), size = 9, tag = false)
-                    }
+                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Text(card.promo.label.removeSuffix(" TL"), color = p.text, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp, lineHeight = 26.sp, softWrap = false)
+                    Spacer(Modifier.width(4.dp))
+                    Text("TL", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, softWrap = false, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
