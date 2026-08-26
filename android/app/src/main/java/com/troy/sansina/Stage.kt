@@ -143,7 +143,7 @@ fun Stage(state: GameState, theme: SansinaTheme, modifier: Modifier = Modifier) 
             val x = o.x * ow + gx * (1 - ow)
             val y = o.y * ow + gy * (1 - ow)
             val s = (o.scale * ow + gs * (1 - ow)) * loserScale
-            val faceUp = (i in state.flipped) && !(picked && isWinner && !state.revealed) || (picked && isWinner && state.revealed)
+            val faceUp = i in state.flipped
 
             GameCard(
                 card, theme, faceUp = faceUp,

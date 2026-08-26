@@ -209,6 +209,8 @@ fun QrScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
                     }
                     Row(cardMod, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(56.dp)) {
                         Column(Modifier.widthIn(max = 380.dp)) {
+                            PrizeChip(theme, prize)
+                            Spacer(Modifier.height(14.dp))
                             Text("QR'ı okut,", color = theme.primary(p), fontSize = if (theme.id == "E") 46.sp else 40.sp, lineHeight = 48.sp, fontWeight = theme.headlineWeight, letterSpacing = (-1).sp)
                             Text("kodunu al ve Troy mağazasında kullan.", color = theme.secondary(p), fontSize = if (theme.id == "E") 46.sp else 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Medium, letterSpacing = (-1).sp)
                         }
@@ -231,6 +233,24 @@ fun QrScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) { Text("Yeniden oyna", color = theme.buttonText, fontSize = 17.sp, fontWeight = FontWeight.SemiBold) }
         }
+    }
+}
+
+/** Small reminder of the won discount on the QR page. */
+@Composable
+fun PrizeChip(theme: SansinaTheme, prize: Promo) {
+    val p = Phase.QR
+    val bg = when (theme.id) { "B" -> Color(0x26FFFFFF); "C" -> theme.accent; else -> theme.primary(p).copy(alpha = 0.08f) }
+    val fg = when (theme.id) { "C" -> Color(0xFF0E1116); else -> theme.primary(p) }
+    Row(
+        Modifier.background(bg, RoundedCornerShape(999.dp)).then(if (theme.id == "B") Modifier.border(1.dp, Color(0x3DFFFFFF), RoundedCornerShape(999.dp)) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(10.dp).background(if (theme.id == "C") fg else theme.accent, androidx.compose.foundation.shape.CircleShape))
+        Spacer(Modifier.width(10.dp))
+        Text("Kazandığın avantaj: ", color = fg.copy(alpha = 0.75f), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        Text(prize.label, color = fg, fontSize = 16.sp, fontWeight = FontWeight.Bold)
     }
 }
 
