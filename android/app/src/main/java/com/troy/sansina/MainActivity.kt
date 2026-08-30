@@ -61,8 +61,19 @@ fun SansinaApp() {
     var idleSeconds by remember { mutableStateOf(prefs.getInt(KEY_IDLE, DEFAULT_IDLE_SECONDS)) }
     var cardBack by remember { mutableStateOf(runCatching { CardBack.valueOf(prefs.getString(KEY_CARD_BACK, null)!!) }.getOrDefault(CardBack.TROY)) }
     val state = remember { GameState(ctx, config) { stats.record(it) } }
+    val voice = remember { Voice(ctx) }
     val scope = rememberCoroutineScope()
     val phase = state.phase
+
+    // Robot voice: invite on idle (cooldown inside Voice), win line on the reveal.
+    LaunchedEffect(phase, settingsOpen) {
+        if (settingsOpen) { voice.stop(); return@LaunchedEffect }
+        when (phase) {
+            Phase.INVITE -> { delay(600); voice.invite() }
+            Phase.REVEAL -> voice.win()
+            else -> Unit
+        }
+    }
 
     fun start() { scope.launch { state.startSelection() } }
     fun pick(i: Int) { scope.launch { state.pick(i) } }
