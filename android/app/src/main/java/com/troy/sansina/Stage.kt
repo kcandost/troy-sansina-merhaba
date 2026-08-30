@@ -56,7 +56,25 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, back: CardBack = 
             ) {
                 when (back) {
                     CardBack.PRODUCT -> bmp?.let { Image(it, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit) }
-                    CardBack.TROY -> Wordmark(theme.productInk, size = 22, tag = theme.brandTag)
+                    CardBack.TROY -> {
+                        // Figma "Kart": inner white frame (364×509 on 400×545) + small ARTI plus marks + white logo.
+                        if (theme.id == "F") {
+                            Box(Modifier.fillMaxSize().padding(4.dp).border(0.8.dp, Color(0xB3FFFFFF), RoundedCornerShape(9.dp)))
+                            androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                                val pw = Color(0x7AFFFFFF)
+                                fun arti(cx: Float, cy: Float, r: Float) {
+                                    val t = r * 0.30f
+                                    drawRoundRect(pw, Offset(cx - t / 2, cy - r), androidx.compose.ui.geometry.Size(t, r * 2), androidx.compose.ui.geometry.CornerRadius(t / 2))
+                                    drawRoundRect(pw, Offset(cx - r, cy - t / 2), androidx.compose.ui.geometry.Size(r * 2, t), androidx.compose.ui.geometry.CornerRadius(t / 2))
+                                }
+                                arti(size.width * 0.2f, size.height * 0.16f, size.width * 0.045f)
+                                arti(size.width * 0.84f, size.height * 0.3f, size.width * 0.03f)
+                                arti(size.width * 0.78f, size.height * 0.82f, size.width * 0.05f)
+                                arti(size.width * 0.18f, size.height * 0.78f, size.width * 0.028f)
+                            }
+                        }
+                        Wordmark(theme.productInk, size = 22, tag = theme.brandTag)
+                    }
                 }
                 if (shine) {
                     val s = sweep.value

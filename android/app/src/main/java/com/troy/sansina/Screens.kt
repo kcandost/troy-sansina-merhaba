@@ -37,6 +37,8 @@ fun WorldBackground(theme: SansinaTheme, phase: Phase, modifier: Modifier = Modi
     val washed = theme.isWashed(phase)
     val bg by animateColorAsState(if (washed) theme.washBg else theme.bg, tween(600), label = "bg")
     val drift = rememberInfiniteTransition(label = "drift").animateFloat(0f, 1f, infiniteRepeatable(tween(22000, easing = LinearEasing), RepeatMode.Reverse), label = "d")
+    // Figma frame 5 "CERCEVE": white border frame around the idle screen only.
+    val frameA by animateFloatAsState(if (theme.decor == Decor.TROY_SKY && phase == Phase.INVITE) 1f else 0f, tween(600), label = "cerceve")
     Canvas(modifier.fillMaxSize()) {
         val w = size.width; val h = size.height
         val d = drift.value
@@ -68,16 +70,26 @@ fun WorldBackground(theme: SansinaTheme, phase: Phase, modifier: Modifier = Modi
                 drawRect(Color(0xFF4DC0DF))
                 drawRect(Brush.radialGradient(listOf(Color(0xFFC4F2FF), Color(0xFF4DC0DF)), Offset(w * 0.5f + dx, h * 0.42f + dy), w * 0.72f))
                 drawOval(Brush.radialGradient(listOf(Color(0x2EFBFDFE), Color(0x00FBFDFE)), Offset(w * 0.5f + dx, h * 0.35f + dy), w * 0.55f), Offset(w * 0.5f - w * 0.55f + dx, h * 0.35f - h * 0.5f + dy), Size(w * 1.1f, h))
-                // Big soft outline "+" marks from the Troy pattern.
-                val plus = Color(0x2EFFFFFF)
-                fun cross(cx: Float, cy: Float, r: Float, sw: Float) {
-                    drawLine(plus, Offset(cx - r, cy), Offset(cx + r, cy), strokeWidth = sw)
-                    drawLine(plus, Offset(cx, cy - r), Offset(cx, cy + r), strokeWidth = sw)
+                // Figma "ARTI": filled white plus marks scattered on the world (sizes 67–139 px on 1920).
+                val plus = Color(0x8CFFFFFF)
+                fun arti(cx: Float, cy: Float, r: Float) {
+                    val t = r * 0.30f
+                    drawRoundRect(plus, Offset(cx - t / 2, cy - r), Size(t, r * 2), androidx.compose.ui.geometry.CornerRadius(t / 2))
+                    drawRoundRect(plus, Offset(cx - r, cy - t / 2), Size(r * 2, t), androidx.compose.ui.geometry.CornerRadius(t / 2))
                 }
-                cross(w * 0.08f + dx, h * 0.14f + dy, w * 0.03f, 10f)
-                cross(w * 0.93f - dx, h * 0.2f - dy, w * 0.022f, 8f)
-                cross(w * 0.85f + dx, h * 0.82f + dy, w * 0.035f, 10f)
-                cross(w * 0.12f - dx, h * 0.86f - dy, w * 0.02f, 8f)
+                arti(w * 0.08f + dx, h * 0.14f + dy, w * 0.028f)
+                arti(w * 0.93f - dx, h * 0.2f - dy, w * 0.02f)
+                arti(w * 0.85f + dx, h * 0.82f + dy, w * 0.032f)
+                arti(w * 0.12f - dx, h * 0.86f - dy, w * 0.018f)
+                // CERCEVE: 1770×1050 on 1920×1200, r50, 6 px white stroke — idle only.
+                if (frameA > 0f) {
+                    val fw = w * (1770f / 1920f); val fh = h * (1050f / 1200f)
+                    drawRoundRect(
+                        Color.White.copy(alpha = frameA), Offset((w - fw) / 2, (h - fh) / 2), Size(fw, fh),
+                        androidx.compose.ui.geometry.CornerRadius(w * (50f / 1920f)),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = w * (6f / 1920f))
+                    )
+                }
             }
         }
         // Faint Troy sparkles that breathe with the drift.
