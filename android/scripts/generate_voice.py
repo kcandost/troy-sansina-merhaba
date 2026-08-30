@@ -48,7 +48,9 @@ def main():
         body = json.dumps({
             "text": text,
             "model_id": MODEL_ID,
-            "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+            # Excited but premium: lower stability = livelier delivery, style adds
+            # energy, high similarity + speaker boost keep it clean and on-brand.
+            "voice_settings": {"stability": 0.32, "similarity_boost": 0.8, "style": 0.45, "use_speaker_boost": True},
         })
         r = subprocess.run([
             "curl", "-sS", "-f", "-o", str(out),
