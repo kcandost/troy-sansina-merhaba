@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class ButtonShape { PILL, SQUARE }
-enum class Decor { QUIET_GLOW, GLASS_FIELD, SPOTLIGHT, TRAY_LIGHT, STORE_WASH }
+enum class Decor { QUIET_GLOW, GLASS_FIELD, SPOTLIGHT, TRAY_LIGHT, STORE_WASH, TROY_SKY }
 enum class QrStyle { PLAIN_CARD, GLASS_CARD, BARE_PLATE, BOARDING_PASS, SHADOW_BOX }
 
 /** One of the five worlds. The tier ladder is shared (see [TierPalette]). */
@@ -120,4 +120,16 @@ val ThemeE = SansinaTheme(
     washBg = Color(0xFFF7FAFF), washTextPrimary = Color(0xFF0B1B33), washTextSecondary = Color(0xFF4A5A72),
 )
 
-val AllThemes = listOf(ThemeA, ThemeB, ThemeC, ThemeD, ThemeE)
+/** F — the final campaign look from the agency designs (brand/reference/troy-final-screens.jpeg). */
+val ThemeF = SansinaTheme(
+    id = "F", letter = "F", name = "Troy Mavi", subtitle = "Final kampanya tasarımı (ajans)",
+    bg = Color(0xFF8FD6EF), textPrimary = Color.White, textSecondary = Color(0xF0FFFFFF), accent = Color.White,
+    headlineWeight = FontWeight.Bold, h1Size = 58, helloSize = 84, bigSize = 116,
+    buttonBg = Color.White, buttonText = Color(0xFF1FA8DC), buttonShape = ButtonShape.PILL, buttonHeight = 58.dp, glassButton = false,
+    productCardBg = Color(0xFF9FDCF2), productCardBorder = Color(0xB3FFFFFF), productInk = Color.White,
+    brushed = false, decor = Decor.TROY_SKY, qrStyle = QrStyle.PLAIN_CARD, qrModule = Color(0xFF0B1B33),
+    confetti = listOf(Color.White, Color(0xFF7CCDEA), Color(0xFF3AA8D8), Color(0xFFB3E6F5), Color(0xFF0A62FF)),
+    brandTag = true, helloAccent = false,
+)
+
+val AllThemes = listOf(ThemeF, ThemeA, ThemeB, ThemeC, ThemeD, ThemeE)

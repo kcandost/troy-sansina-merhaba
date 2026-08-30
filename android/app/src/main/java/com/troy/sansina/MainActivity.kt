@@ -53,7 +53,7 @@ const val DEFAULT_IDLE_SECONDS = 18
 fun SansinaApp() {
     val ctx = LocalContext.current
     val prefs = remember { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
-    var theme by remember { mutableStateOf(AllThemes.firstOrNull { it.id == prefs.getString(KEY_THEME, "A") } ?: ThemeA) }
+    var theme by remember { mutableStateOf(AllThemes.firstOrNull { it.id == prefs.getString(KEY_THEME, "F") } ?: ThemeF) }
     var config by remember { mutableStateOf(PromoConfig.parse(prefs.getString(KEY_PROMOS, null)).let { if (it.isValid) it else PromoConfig.DEFAULT }) }
     val stats = remember { PromoStats(ctx).also { it.load(config) } }
     var gate by remember { mutableStateOf(false) }       // PIN prompt showing

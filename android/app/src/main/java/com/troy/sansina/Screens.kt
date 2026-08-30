@@ -63,6 +63,21 @@ fun WorldBackground(theme: SansinaTheme, phase: Phase, modifier: Modifier = Modi
                 drawRect(Brush.verticalGradient(listOf(Color(0x00171614), Color(0x14171614)), h * 0.75f, h), Offset(0f, h * 0.75f), Size(w, h * 0.25f))
             }
             Decor.STORE_WASH -> Unit
+            Decor.TROY_SKY -> {
+                // Final campaign world: light Troy blue with a soft diagonal light streak.
+                drawRect(Brush.linearGradient(listOf(Color(0xFF7CCDEA), Color(0xFF9BDCF3), Color(0xFFBDE9F8)), Offset(0f, h), Offset(w, 0f)))
+                drawOval(Brush.radialGradient(listOf(Color(0x66FFFFFF), Color(0x00FFFFFF)), Offset(w * 0.5f + dx, h * 0.35f + dy), w * 0.55f), Offset(w * 0.5f - w * 0.55f + dx, h * 0.35f - h * 0.5f + dy), Size(w * 1.1f, h))
+                // Big soft outline "+" marks from the Troy pattern.
+                val plus = Color(0x2EFFFFFF)
+                fun cross(cx: Float, cy: Float, r: Float, sw: Float) {
+                    drawLine(plus, Offset(cx - r, cy), Offset(cx + r, cy), strokeWidth = sw)
+                    drawLine(plus, Offset(cx, cy - r), Offset(cx, cy + r), strokeWidth = sw)
+                }
+                cross(w * 0.08f + dx, h * 0.14f + dy, w * 0.03f, 10f)
+                cross(w * 0.93f - dx, h * 0.2f - dy, w * 0.022f, 8f)
+                cross(w * 0.85f + dx, h * 0.82f + dy, w * 0.035f, 10f)
+                cross(w * 0.12f - dx, h * 0.86f - dy, w * 0.02f, 8f)
+            }
         }
         // Faint Troy sparkles that breathe with the drift.
         val sp = theme.primary(phase).copy(alpha = 0.05f + 0.04f * d)
@@ -170,7 +185,11 @@ fun StageScreen(state: GameState, theme: SansinaTheme, cardBack: CardBack, onSta
             ) { k ->
                 val size = (theme.h1Size * 0.62f).toInt()
                 when (k) {
-                    1 -> Headline(theme, phase, "Bir dokunuşla ", "şansını", " keşfet!", size)
+                    1 -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Headline(theme, phase, "Bir dokunuşla ", "şansını", " keşfet!", size)
+                        Spacer(Modifier.height(8.dp))
+                        Caption("Kartlardan birini seç, Troy'dan kazanacağın avantajı öğren.", theme.secondary(phase), 19)
+                    }
                     2 -> Caption("Avantajın seçiliyor…", theme.secondary(phase), 24)
                     3 -> Headline(theme, phase, "Hemen çevir, ", "avantajını", " gör!", size)
                     else -> Spacer(Modifier.height(1.dp))
@@ -213,32 +232,26 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize()) {
-        Row(Modifier.align(Alignment.Center).padding(horizontal = 64.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(72.dp)) {
-            // Prize block
-            Column(Modifier.weight(1.1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                if (theme.id == "C") {
-                    Box(Modifier.background(theme.accent, RoundedCornerShape(8.dp)).padding(horizontal = 14.dp, vertical = 8.dp)) {
-                        Text("TEBRİKLER!", color = Color(0xFF0E1116), fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
-                    }
-                } else Caption("Tebrikler!", theme.primary(p), if (theme.id == "E") 40 else 26, if (theme.id == "E") FontWeight.Bold else FontWeight.Normal)
-                Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.graphicsLayer { scaleX = amount.value; scaleY = amount.value; alpha = ((amount.value - 0.6f) / 0.3f).coerceIn(0f, 1f) }) {
-                    Text(prize.label.removeSuffix(" TL"), color = big, fontSize = theme.bigSize.sp, lineHeight = (theme.bigSize * 0.96f).sp, fontWeight = theme.headlineWeight, letterSpacing = (-theme.bigSize * 0.04f).sp)
-                    Spacer(Modifier.width(10.dp))
-                    Text("TL", color = big, fontSize = (theme.bigSize * 0.36f).sp, fontWeight = theme.headlineWeight, modifier = Modifier.padding(bottom = (theme.bigSize * 0.14f).dp))
-                }
-                if (theme.id == "A") Box(Modifier.padding(top = 8.dp).size(190.dp, 3.dp).background(theme.accent, RoundedCornerShape(2.dp)))
-                Spacer(Modifier.height(10.dp))
-                Box(Modifier.graphicsLayer { alpha = hello.value; translationY = (1 - hello.value) * 18f * density }) {
-                    Headline(theme, p, "avantajına ", "merhaba!", "", if (theme.id == "C" || theme.id == "E") 44 else 36, accentOn = theme.id != "E")
-                }
+        // Final design (TROY_ROSYLAB 8–11): amount → "Avantajına merhaba" → copy → QR, one centred column.
+        Column(Modifier.align(Alignment.Center).padding(horizontal = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.graphicsLayer { scaleX = amount.value; scaleY = amount.value; alpha = ((amount.value - 0.6f) / 0.3f).coerceIn(0f, 1f) }) {
+                val sz = (theme.bigSize * 0.82f)
+                Text(prize.label.removeSuffix(" TL"), color = big, fontSize = sz.sp, lineHeight = (sz * 0.96f).sp, fontWeight = theme.headlineWeight, letterSpacing = (-sz * 0.04f).sp)
+                Spacer(Modifier.width(10.dp))
+                Text("TL", color = big, fontSize = (sz * 0.36f).sp, fontWeight = theme.headlineWeight, modifier = Modifier.padding(bottom = (sz * 0.14f).dp))
             }
-            // QR block: static code, only a faint pulsing frame around it.
-            Column(Modifier.weight(1f).graphicsLayer { alpha = qr.value; translationY = (1 - qr.value) * 14f * density }, horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(6.dp))
+            Box(Modifier.graphicsLayer { alpha = hello.value; translationY = (1 - hello.value) * 18f * density }) {
+                Headline(theme, p, "Avantajına ", "merhaba", "", if (theme.id == "C" || theme.id == "E") 44 else 38, accentOn = theme.id != "E" && theme.id != "F")
+            }
+            Spacer(Modifier.height(18.dp))
+            Column(Modifier.graphicsLayer { alpha = qr.value; translationY = (1 - qr.value) * 14f * density }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "Troy mağazalarında kullanabileceğin avantajı kazandın.\nQR'ı okut ve avantajın tadını çıkar.",
+                    color = theme.secondary(p), fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 520.dp)
+                )
+                Spacer(Modifier.height(20.dp))
                 QrPlate(theme)
-                Spacer(Modifier.height(22.dp))
-                Text("QR'ı okut,", color = theme.primary(p), fontSize = 30.sp, lineHeight = 34.sp, fontWeight = theme.headlineWeight, letterSpacing = (-0.8).sp, textAlign = TextAlign.Center)
-                Text("kodunu al ve Troy mağazasında kullan.", color = theme.secondary(p), fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 360.dp))
             }
         }
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 36.dp).graphicsLayer { alpha = qr.value }) {
@@ -257,7 +270,7 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
 @Composable
 private fun QrPlate(theme: SansinaTheme) {
     val pulse = rememberInfiniteTransition(label = "qrf").animateFloat(0f, 1f, infiniteRepeatable(tween(1600, easing = EaseInOut), RepeatMode.Reverse), label = "qp")
-    val radius = 26.dp
+    val radius = 22.dp
     val frameColor = if (theme.id == "E" || theme.id == "A" || theme.id == "D") theme.accent else Color.White
     Box(contentAlignment = Alignment.Center) {
         Box(
@@ -270,7 +283,7 @@ private fun QrPlate(theme: SansinaTheme) {
             QrStyle.BOARDING_PASS -> Modifier.shadow(24.dp, RoundedCornerShape(radius), ambientColor = Color(0x66171614), spotColor = Color(0x66171614)).background(Color.White, RoundedCornerShape(radius)).border(1.dp, Color(0xFFE4C79C), RoundedCornerShape(radius)).padding(22.dp)
             else -> Modifier.shadow(24.dp, RoundedCornerShape(radius), ambientColor = Color(0x4D060A12), spotColor = Color(0x4D060A12)).background(Color.White, RoundedCornerShape(radius)).padding(22.dp)
         }
-        Box(Modifier.padding(10.dp).then(plate)) { QrGrid(theme.qrModule, Color.White, Modifier.size(212.dp)) }
+        Box(Modifier.padding(10.dp).then(plate)) { QrGrid(theme.qrModule, Color.White, Modifier.size(164.dp)) }
     }
 }
 

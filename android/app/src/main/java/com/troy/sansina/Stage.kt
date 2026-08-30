@@ -151,7 +151,12 @@ fun Stage(state: GameState, theme: SansinaTheme, cardBack: CardBack, onPick: (In
             val targetX = if (centred && isWinner) 0f else (slot - (n - 1) / 2f) * gap
             val targetY = if (centred && isWinner) 0f else 16f
             val targetS = if (centred && isWinner) centreScale else rowScale
-            val jitter = if (phase == Phase.SHUFFLE && !collapsed) ((i * 37 + state.shuffleStep * 91) % 9 - 4).toFloat() else 0f
+            // Slight fan while selecting (like the agency's card row), jitter while shuffling.
+            val jitter = when {
+                phase == Phase.SHUFFLE && !collapsed -> ((i * 37 + state.shuffleStep * 91) % 9 - 4).toFloat()
+                selecting -> (slot - (n - 1) / 2f) * 3.2f
+                else -> 0f
+            }
 
             val moveSpec: AnimationSpec<Float> = if (phase == Phase.SHUFFLE && !collapsed) spring(0.78f, Spring.StiffnessMedium) else tween(Timing.COLLAPSE.toInt(), easing = SoftOut)
             val gx by animateFloatAsState(targetX, moveSpec, label = "gx")
