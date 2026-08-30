@@ -156,10 +156,10 @@ fun InviteText(theme: SansinaTheme, visible: Boolean, onStart: () -> Unit) {
 
 /** Invite + the card choreography (2–4), on one surface so the cards never remount. */
 @Composable
-fun StageScreen(state: GameState, theme: SansinaTheme, onStart: () -> Unit, onPick: (Int) -> Unit, onFlip: () -> Unit) {
+fun StageScreen(state: GameState, theme: SansinaTheme, cardBack: CardBack, onStart: () -> Unit, onPick: (Int) -> Unit, onFlip: () -> Unit) {
     val phase = state.phase
     Box(Modifier.fillMaxSize()) {
-        Stage(state, theme, onPick, onFlip, Modifier.fillMaxSize().padding(top = 60.dp))
+        Stage(state, theme, cardBack, onPick, onFlip, Modifier.fillMaxSize().padding(top = 60.dp))
         InviteText(theme, visible = phase == Phase.INVITE, onStart = onStart)
 
         // Headline for the current step, above the cards.

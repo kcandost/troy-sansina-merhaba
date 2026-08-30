@@ -44,6 +44,7 @@ private const val PREFS = "sansina"
 private const val KEY_THEME = "theme"
 private const val KEY_PROMOS = "promos"
 private const val KEY_IDLE = "idle_seconds"
+private const val KEY_CARD_BACK = "card_back"
 
 /** How long the QR screen stays before returning to the invite (spec: 15–20 s). */
 const val DEFAULT_IDLE_SECONDS = 18
@@ -58,6 +59,7 @@ fun SansinaApp() {
     var gate by remember { mutableStateOf(false) }       // PIN prompt showing
     var settingsOpen by remember { mutableStateOf(false) }
     var idleSeconds by remember { mutableStateOf(prefs.getInt(KEY_IDLE, DEFAULT_IDLE_SECONDS)) }
+    var cardBack by remember { mutableStateOf(runCatching { CardBack.valueOf(prefs.getString(KEY_CARD_BACK, null)!!) }.getOrDefault(CardBack.TROY)) }
     val state = remember { GameState(ctx, config) { stats.record(it) } }
     val scope = rememberCoroutineScope()
     val phase = state.phase
@@ -97,7 +99,7 @@ fun SansinaApp() {
         ) { p ->
             when (p) {
                 Phase.RESULT -> ResultScreen(state, theme, onRestart = { state.reset() })
-                else -> StageScreen(state, theme, onStart = ::start, onPick = ::pick, onFlip = ::flip)
+                else -> StageScreen(state, theme, cardBack, onStart = ::start, onPick = ::pick, onFlip = ::flip)
             }
         }
 
@@ -110,8 +112,9 @@ fun SansinaApp() {
         }
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
-                theme = theme, config = config, stats = stats, idleSeconds = idleSeconds,
+                theme = theme, config = config, stats = stats, idleSeconds = idleSeconds, cardBack = cardBack,
                 onIdleSeconds = { v -> idleSeconds = v; prefs.edit().putInt(KEY_IDLE, v).apply() },
+                onCardBack = { b -> cardBack = b; prefs.edit().putString(KEY_CARD_BACK, b.name).apply() },
                 onTheme = { t -> theme = t; prefs.edit().putString(KEY_THEME, t.id).apply() },
                 onConfig = { c ->
                     config = c

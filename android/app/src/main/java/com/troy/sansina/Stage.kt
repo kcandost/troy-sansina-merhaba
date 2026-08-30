@@ -36,11 +36,13 @@ val SoftOut = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
  * [shine] sweeps a soft highlight across the back so the card reads as touchable.
  */
 @Composable
-fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, shine: Boolean = false, modifier: Modifier = Modifier) {
+fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, back: CardBack = CardBack.TROY, shine: Boolean = false, modifier: Modifier = Modifier) {
     val rot by animateFloatAsState(if (faceUp) 180f else 0f, tween(Timing.FLIP.toInt(), easing = SoftOut), label = "flip")
     val shape = RoundedCornerShape(12.dp)
     val ctx = LocalContext.current
-    val bmp by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, card.product.file) { value = Catalogue.bitmap(ctx, card.product.file) }
+    val bmp by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, card.product.file, back) {
+        value = if (back == CardBack.PRODUCT) Catalogue.bitmap(ctx, card.product.file) else null
+    }
     val sweep = rememberInfiniteTransition(label = "sheen").animateFloat(-1.2f, 2.2f, infiniteRepeatable(tween(2600, easing = LinearEasing)), label = "sw")
     Box(modifier.size(CARD_W.dp, CARD_H.dp).graphicsLayer { rotationY = rot; cameraDistance = 12f * density }) {
         if (rot <= 90f) {
@@ -49,7 +51,10 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, shine: Boolean = 
                     .background(theme.productCardBg, shape).border(1.dp, theme.productCardBorder, shape).clip(shape),
                 contentAlignment = Alignment.Center
             ) {
-                bmp?.let { Image(it, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit) }
+                when (back) {
+                    CardBack.PRODUCT -> bmp?.let { Image(it, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit) }
+                    CardBack.TROY -> Wordmark(theme.productInk, size = 22, tag = theme.brandTag)
+                }
                 if (shine) {
                     val s = sweep.value
                     Box(
@@ -122,7 +127,7 @@ private suspend fun delay(ms: Long) = kotlinx.coroutines.delay(ms)
  * Positions are dp offsets from the centre of the stage.
  */
 @Composable
-fun Stage(state: GameState, theme: SansinaTheme, onPick: (Int) -> Unit, onFlip: () -> Unit, modifier: Modifier = Modifier) {
+fun Stage(state: GameState, theme: SansinaTheme, cardBack: CardBack, onPick: (Int) -> Unit, onFlip: () -> Unit, modifier: Modifier = Modifier) {
     val phase = state.phase
     val n = state.cards.size
     val selecting = phase == Phase.SELECT
@@ -162,7 +167,7 @@ fun Stage(state: GameState, theme: SansinaTheme, onPick: (Int) -> Unit, onFlip: 
             val tappable = (selecting && i in state.entered) || (phase == Phase.READY && isWinner)
 
             GameCard(
-                card, theme, faceUp = faceUp, shine = selecting,
+                card, theme, faceUp = faceUp, back = cardBack, shine = selecting,
                 modifier = Modifier.align(Alignment.Center).graphicsLayer {
                     translationX = gx * density
                     translationY = (gy + 40f * (1 - enter)) * density

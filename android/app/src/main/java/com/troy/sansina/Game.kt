@@ -27,6 +27,12 @@ enum class Phase { INVITE, SELECT, SHUFFLE, READY, REVEAL, RESULT }
 /** Number of cards offered on the selection screen. */
 const val CARD_COUNT = 4
 
+/** What the face-down side of a card shows. */
+enum class CardBack(val label: String, val hint: String) {
+    TROY("TROY", "Tüm kartlar TROY logosu taşır"),
+    PRODUCT("Ürün", "Her kartta bir ürün fotoğrafı")
+}
+
 /** Colour ladder: material gets richer as value climbs. */
 enum class Tier { ALUMINIUM, BRONZE, SILVER, GOLD, PREMIUM }
 

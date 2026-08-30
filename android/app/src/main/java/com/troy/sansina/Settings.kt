@@ -93,7 +93,9 @@ fun SettingsScreen(
     config: PromoConfig,
     stats: PromoStats,
     idleSeconds: Int,
+    cardBack: CardBack,
     onIdleSeconds: (Int) -> Unit,
+    onCardBack: (CardBack) -> Unit,
     onTheme: (SansinaTheme) -> Unit,
     onConfig: (PromoConfig) -> Unit,
     onClose: () -> Unit,
@@ -122,7 +124,7 @@ fun SettingsScreen(
             }
             Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp)) {
                 when (category) {
-                    Category.THEME -> ThemeCategory(theme, config, idleSeconds, onIdleSeconds, onTheme)
+                    Category.THEME -> ThemeCategory(theme, config, idleSeconds, cardBack, onIdleSeconds, onCardBack, onTheme)
                     Category.PROMO -> PromoCategory(config, stats, onConfig)
                 }
             }
@@ -131,7 +133,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, idleSeconds: Int, onIdleSeconds: (Int) -> Unit, onTheme: (SansinaTheme) -> Unit) {
+private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, idleSeconds: Int, cardBack: CardBack, onIdleSeconds: (Int) -> Unit, onCardBack: (CardBack) -> Unit, onTheme: (SansinaTheme) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
         Column(Modifier.weight(1f)) {
             Section("Tema", "Beş tasarım yönünden birini seç.") {
@@ -159,10 +161,25 @@ private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, idleSeconds:
         Column(Modifier.weight(1f)) {
             Section("Önizleme", "Seçili temanın davet ve kart ekranı.") {
                 var previewDeck by remember { mutableStateOf(false) }
-                ThemePreview(theme, config, previewDeck, Modifier.fillMaxWidth())
+                ThemePreview(theme, config, cardBack, previewDeck, Modifier.fillMaxWidth())
                 Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SmallButton("Davet", if (!previewDeck) Blue else Ink50, if (!previewDeck) Color.White else Ink) { previewDeck = false }
                     SmallButton("Kartlar", if (previewDeck) Blue else Ink50, if (previewDeck) Color.White else Ink) { previewDeck = true }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Section("Kart yüzü", "Seçim ekranında kartların kapalı yüzünde ne görünsün?") {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CardBack.entries.forEach { b ->
+                        val sel = b == cardBack
+                        Column(
+                            Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(if (sel) Blue100 else Ink50)
+                                .border(1.dp, if (sel) Blue else Ink200, RoundedCornerShape(14.dp)).clickable { onCardBack(b) }.padding(14.dp)
+                        ) {
+                            Text(b.label, color = if (sel) Blue else Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(b.hint, color = Ink600, fontSize = 12.sp)
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -183,7 +200,7 @@ private fun ThemeCategory(theme: SansinaTheme, config: PromoConfig, idleSeconds:
 
 /** The real stage rendered at tablet size and scaled into a small window. */
 @Composable
-private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, deck: Boolean, modifier: Modifier) {
+private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, cardBack: CardBack, deck: Boolean, modifier: Modifier) {
     val fullW = 1280.dp; val fullH = 800.dp
     val ctx = LocalContext.current
     BoxWithConstraints(modifier.aspectRatio(fullW / fullH).clip(RoundedCornerShape(16.dp)).border(1.dp, Ink200, RoundedCornerShape(16.dp))) {
@@ -200,7 +217,7 @@ private fun ThemePreview(theme: SansinaTheme, config: PromoConfig, deck: Boolean
             }
         ) {
             WorldBackground(theme, preview.phase)
-            StageScreen(preview, theme, onStart = {}, onPick = {}, onFlip = {})
+            StageScreen(preview, theme, cardBack, onStart = {}, onPick = {}, onFlip = {})
             BrandLockup(theme, preview.phase, Modifier.align(Alignment.TopCenter).padding(top = 36.dp))
         }
     }
