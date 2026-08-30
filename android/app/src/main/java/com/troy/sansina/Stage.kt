@@ -46,9 +46,12 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, back: CardBack = 
     val sweep = rememberInfiniteTransition(label = "sheen").animateFloat(-1.2f, 2.2f, infiniteRepeatable(tween(2600, easing = LinearEasing)), label = "sw")
     Box(modifier.size(CARD_W.dp, CARD_H.dp).graphicsLayer { rotationY = rot; cameraDistance = 12f * density }) {
         if (rot <= 90f) {
+            val backFill = if (theme.id == "F")
+                Modifier.background(Brush.radialGradient(listOf(Color(0xFFC4F2FF), Color(0xFF4DC0DF)), Offset(CARD_W * 1.5f, CARD_H * 1.2f), CARD_W * 3.4f), shape)
+            else Modifier.background(theme.productCardBg, shape).border(1.dp, theme.productCardBorder, shape)
             Box(
                 Modifier.fillMaxSize().shadow(10.dp, shape, ambientColor = Color(0x59000000), spotColor = Color(0x59000000))
-                    .background(theme.productCardBg, shape).border(1.dp, theme.productCardBorder, shape).clip(shape),
+                    .then(backFill).clip(shape),
                 contentAlignment = Alignment.Center
             ) {
                 when (back) {

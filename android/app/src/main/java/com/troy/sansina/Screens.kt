@@ -64,9 +64,10 @@ fun WorldBackground(theme: SansinaTheme, phase: Phase, modifier: Modifier = Modi
             }
             Decor.STORE_WASH -> Unit
             Decor.TROY_SKY -> {
-                // Final campaign world: light Troy blue with a soft diagonal light streak.
-                drawRect(Brush.linearGradient(listOf(Color(0xFF7CCDEA), Color(0xFF9BDCF3), Color(0xFFBDE9F8)), Offset(0f, h), Offset(w, 0f)))
-                drawOval(Brush.radialGradient(listOf(Color(0x66FFFFFF), Color(0x00FFFFFF)), Offset(w * 0.5f + dx, h * 0.35f + dy), w * 0.55f), Offset(w * 0.5f - w * 0.55f + dx, h * 0.35f - h * 0.5f + dy), Size(w * 1.1f, h))
+                // Figma: base TROY BLUE #4DC0DF with a radial #C4F2FF → #4DC0DF wash.
+                drawRect(Color(0xFF4DC0DF))
+                drawRect(Brush.radialGradient(listOf(Color(0xFFC4F2FF), Color(0xFF4DC0DF)), Offset(w * 0.5f + dx, h * 0.42f + dy), w * 0.72f))
+                drawOval(Brush.radialGradient(listOf(Color(0x2EFBFDFE), Color(0x00FBFDFE)), Offset(w * 0.5f + dx, h * 0.35f + dy), w * 0.55f), Offset(w * 0.5f - w * 0.55f + dx, h * 0.35f - h * 0.5f + dy), Size(w * 1.1f, h))
                 // Big soft outline "+" marks from the Troy pattern.
                 val plus = Color(0x2EFFFFFF)
                 fun cross(cx: Float, cy: Float, r: Float, sw: Float) {
@@ -147,11 +148,18 @@ fun InviteText(theme: SansinaTheme, visible: Boolean, onStart: () -> Unit) {
         Modifier.fillMaxSize().graphicsLayer { this.alpha = alpha; scaleX = scale; scaleY = scale },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
     ) {
+        // Figma frame 5: "Bugünkü şansına" (90px black) / "merhaba" (140px white, soft shadow) / "demek ister misin?" (60px).
         style("Bugünkü şansına", primary, Modifier)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            style("merhaba", theme.accent, Modifier.graphicsLayer { scaleX = breathe; scaleY = breathe })
-            style(" demek ister misin?", primary, Modifier)
-        }
+        Text(
+            "merhaba", color = theme.accent, fontSize = (fs * 1.5f).sp, lineHeight = (fs * 1.6f).sp,
+            fontWeight = theme.headlineWeight, letterSpacing = (-fs * 0.045f).sp, softWrap = false,
+            style = androidx.compose.ui.text.TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color(0x40000000), Offset(3f, 3f), 14f)),
+            modifier = Modifier.graphicsLayer { scaleX = breathe; scaleY = breathe }
+        )
+        Text(
+            "demek ister misin?", color = primary, fontSize = (fs * 0.67f).sp, lineHeight = (fs * 0.72f).sp,
+            fontWeight = FontWeight.SemiBold, letterSpacing = (-fs * 0.02f).sp, softWrap = false
+        )
         Spacer(Modifier.height(14.dp))
         Caption("Bir dokunuşla Troy'dan ne kazanacağını öğren.", theme.secondary(p), 19)
         Spacer(Modifier.height(26.dp))
@@ -217,7 +225,8 @@ fun StageScreen(state: GameState, theme: SansinaTheme, cardBack: CardBack, onSta
 fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
     val p = Phase.RESULT
     val prize = state.winningCard.promo
-    val big = if (theme.id == "E") theme.accent else theme.primary(p)
+    // Figma: amounts are TROY BLUE with a white outline stroke.
+    val big = when (theme.id) { "E" -> theme.accent; "F" -> Color(0xFF4DC0DF); else -> theme.primary(p) }
 
     val amount = remember { Animatable(0.6f) }
     val hello = remember { Animatable(0f) }
@@ -236,9 +245,24 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
         Column(Modifier.align(Alignment.Center).padding(horizontal = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.graphicsLayer { scaleX = amount.value; scaleY = amount.value; alpha = ((amount.value - 0.6f) / 0.3f).coerceIn(0f, 1f) }) {
                 val sz = (theme.bigSize * 0.82f)
-                Text(prize.label.removeSuffix(" TL"), color = big, fontSize = sz.sp, lineHeight = (sz * 0.96f).sp, fontWeight = theme.headlineWeight, letterSpacing = (-sz * 0.04f).sp)
+                val outline = if (theme.id == "F") androidx.compose.ui.text.TextStyle(
+                    shadow = androidx.compose.ui.graphics.Shadow(Color(0x40000000), Offset(4f, 4f), 18f)
+                ) else androidx.compose.ui.text.TextStyle.Default
+                Box {
+                    if (theme.id == "F") Text(
+                        prize.label.removeSuffix(" TL"), color = Color.White, fontSize = sz.sp, lineHeight = (sz * 0.96f).sp, fontWeight = theme.headlineWeight, letterSpacing = (-sz * 0.04f).sp,
+                        style = androidx.compose.ui.text.TextStyle(drawStyle = androidx.compose.ui.graphics.drawscope.Stroke(width = 16f, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+                    )
+                    Text(prize.label.removeSuffix(" TL"), color = big, fontSize = sz.sp, lineHeight = (sz * 0.96f).sp, fontWeight = theme.headlineWeight, letterSpacing = (-sz * 0.04f).sp, style = outline)
+                }
                 Spacer(Modifier.width(10.dp))
-                Text("TL", color = big, fontSize = (sz * 0.36f).sp, fontWeight = theme.headlineWeight, modifier = Modifier.padding(bottom = (sz * 0.14f).dp))
+                Box {
+                    if (theme.id == "F") Text(
+                        "TL", color = Color.White, fontSize = (sz * 0.36f).sp, fontWeight = theme.headlineWeight, modifier = Modifier.padding(bottom = (sz * 0.14f).dp),
+                        style = androidx.compose.ui.text.TextStyle(drawStyle = androidx.compose.ui.graphics.drawscope.Stroke(width = 10f, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+                    )
+                    Text("TL", color = big, fontSize = (sz * 0.36f).sp, fontWeight = theme.headlineWeight, modifier = Modifier.padding(bottom = (sz * 0.14f).dp))
+                }
             }
             Spacer(Modifier.height(6.dp))
             Box(Modifier.graphicsLayer { alpha = hello.value; translationY = (1 - hello.value) * 18f * density }) {
@@ -277,7 +301,11 @@ private fun QrPlate(theme: SansinaTheme) {
             Modifier.matchParentSize().graphicsLayer { val s = 1f + 0.035f * pulse.value; scaleX = s; scaleY = s; alpha = 0.25f + 0.45f * pulse.value }
                 .border(2.dp, frameColor, RoundedCornerShape(radius + 6.dp))
         )
-        val plate = when (theme.qrStyle) {
+        val plate = if (theme.id == "F")
+            // Figma "QR": white plate, ~9% corner radius, TROY BLUE stroke, soft shadow.
+            Modifier.shadow(20.dp, RoundedCornerShape(radius), ambientColor = Color(0x40000000), spotColor = Color(0x40000000))
+                .background(Color.White, RoundedCornerShape(radius)).border(2.5.dp, Color(0xFF4DC0DF), RoundedCornerShape(radius)).padding(18.dp)
+        else when (theme.qrStyle) {
             QrStyle.GLASS_CARD -> Modifier.background(Color.White, RoundedCornerShape(radius)).padding(18.dp)
             QrStyle.BARE_PLATE -> Modifier.background(Color.White, RoundedCornerShape(radius)).padding(18.dp)
             QrStyle.BOARDING_PASS -> Modifier.shadow(24.dp, RoundedCornerShape(radius), ambientColor = Color(0x66171614), spotColor = Color(0x66171614)).background(Color.White, RoundedCornerShape(radius)).border(1.dp, Color(0xFFE4C79C), RoundedCornerShape(radius)).padding(22.dp)
@@ -291,8 +319,9 @@ private fun QrPlate(theme: SansinaTheme) {
 
 @Composable
 fun BrandLockup(theme: SansinaTheme, phase: Phase, modifier: Modifier = Modifier) {
-    val color by animateColorAsState(theme.primary(phase), tween(600), label = "brand")
-    val dim = if (phase == Phase.RESULT) 0.6f else 1f
+    // Figma: the campaign look keeps the wordmark white on the blue world.
+    val color by animateColorAsState(if (theme.id == "F") Color.White else theme.primary(phase), tween(600), label = "brand")
+    val dim = if (phase == Phase.RESULT && theme.id != "F") 0.6f else 1f
     Row(modifier.graphicsLayer { alpha = dim }, verticalAlignment = Alignment.CenterVertically) {
         Wordmark(color, size = 34, tag = theme.brandTag)
         if (!theme.brandTag) {

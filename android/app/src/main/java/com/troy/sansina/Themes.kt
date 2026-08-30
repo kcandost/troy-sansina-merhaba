@@ -120,16 +120,22 @@ val ThemeE = SansinaTheme(
     washBg = Color(0xFFF7FAFF), washTextPrimary = Color(0xFF0B1B33), washTextSecondary = Color(0xFF4A5A72),
 )
 
-/** F — the final campaign look from the agency designs (brand/reference/troy-final-screens.jpeg). */
+/**
+ * F — the final campaign look, tokens extracted from the agency Figma source
+ * (brand/reference/TROY_ROZYLABS.fig): TROY BLUE #4DC0DF, card/bg radial #C4F2FF→#4DC0DF,
+ * black headlines, white "merhaba", amounts in TROY BLUE with a white outline.
+ */
+val TroyBlue = Color(0xFF4DC0DF)
+val TroyBlueLight = Color(0xFFC4F2FF)
 val ThemeF = SansinaTheme(
     id = "F", letter = "F", name = "Troy Mavi", subtitle = "Final kampanya tasarımı (ajans)",
-    bg = Color(0xFF8FD6EF), textPrimary = Color.White, textSecondary = Color(0xF0FFFFFF), accent = Color.White,
-    headlineWeight = FontWeight.Bold, h1Size = 58, helloSize = 84, bigSize = 116,
-    buttonBg = Color.White, buttonText = Color(0xFF1FA8DC), buttonShape = ButtonShape.PILL, buttonHeight = 58.dp, glassButton = false,
-    productCardBg = Color(0xFF9FDCF2), productCardBorder = Color(0xB3FFFFFF), productInk = Color.White,
-    brushed = false, decor = Decor.TROY_SKY, qrStyle = QrStyle.PLAIN_CARD, qrModule = Color(0xFF0B1B33),
-    confetti = listOf(Color.White, Color(0xFF7CCDEA), Color(0xFF3AA8D8), Color(0xFFB3E6F5), Color(0xFF0A62FF)),
-    brandTag = true, helloAccent = false,
+    bg = TroyBlue, textPrimary = Color(0xFF000000), textSecondary = Color(0xD9000000), accent = Color.White,
+    headlineWeight = FontWeight.Bold, h1Size = 73, helloSize = 84, bigSize = 162,
+    buttonBg = Color.White, buttonText = TroyBlue, buttonShape = ButtonShape.PILL, buttonHeight = 58.dp, glassButton = false,
+    productCardBg = Color(0xFF8CD9EE), productCardBorder = Color(0x00FFFFFF), productInk = Color.White,
+    brushed = false, decor = Decor.TROY_SKY, qrStyle = QrStyle.PLAIN_CARD, qrModule = Color(0xFF000000),
+    confetti = listOf(Color.White, TroyBlueLight, TroyBlue, Color(0xFF9BDCF3), Color(0xFF046ED9)),
+    brandTag = true, helloAccent = true,
 )
 
 val AllThemes = listOf(ThemeF, ThemeA, ThemeB, ThemeC, ThemeD, ThemeE)
