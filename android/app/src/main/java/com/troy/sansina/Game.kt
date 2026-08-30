@@ -14,15 +14,18 @@ import org.json.JSONArray
 import kotlin.random.Random
 
 /**
- * INVITE   cards orbit, invite text in the centre
- * FADE     invite text dissolves, cards keep orbiting
- * FILL     cards leave the orbit and tile the screen
- * FLIP     cards turn to promo values in escalating batches
- * SHUFFLE  cards swap slots, faster each step
- * PICK     losers fall away, the winner grows
- * PRIZE / QR
+ * INVITE   idle: "merhaba" + CTA breathe, waiting for a touch
+ * SELECT   four cards slide in one by one; the user picks one
+ * SHUFFLE  cards swap places for ~2.5 s, then the picked card comes to the centre, the rest fade out
+ * READY    one card in the centre, glowing; "Hemen çevir, avantajını gör!"
+ * REVEAL   the card flips (0.6 s) with a light burst
+ * RESULT   amount scales up, "avantajına merhaba", confetti; QR + instruction fade in after 0.5 s;
+ *          the screen then stays still until the idle timer returns to INVITE
  */
-enum class Phase { INVITE, FADE, FILL, FLIP, SHUFFLE, PICK, PRIZE, QR }
+enum class Phase { INVITE, SELECT, SHUFFLE, READY, REVEAL, RESULT }
+
+/** Number of cards offered on the selection screen. */
+const val CARD_COUNT = 4
 
 /** Colour ladder: material gets richer as value climbs. */
 enum class Tier { ALUMINIUM, BRONZE, SILVER, GOLD, PREMIUM }
@@ -51,15 +54,14 @@ data class PromoConfig(val promos: List<Promo>) {
         }
     }
 
+    fun tierOf(promo: Promo): Tier = ladder().firstOrNull { it.first.amount == promo.amount }?.second ?: Tier.PREMIUM
+
     fun serialize() = promos.joinToString(";") { "${it.amount},${it.weight}" }
 
     companion object {
         const val MIN_PROMOS = 2
         const val MAX_PROMOS = 6
-        const val MIN_CARDS = 8
-        const val MAX_CARDS = 40
-        const val DEFAULT_CARDS = 20
-        val DEFAULT = PromoConfig(listOf(Promo(250, 40), Promo(500, 30), Promo(750, 15), Promo(1000, 10), Promo(1500, 5)))
+        val DEFAULT = PromoConfig(listOf(Promo(250, 40), Promo(500, 30), Promo(750, 20), Promo(1000, 10)))
         fun parse(s: String?): PromoConfig = runCatching {
             PromoConfig(s!!.split(";").map { val (a, w) = it.split(","); Promo(a.toInt(), w.toInt()) })
         }.getOrDefault(DEFAULT)
@@ -104,7 +106,7 @@ object Catalogue {
         return all
     }
 
-    /** Round-robin across categories so no single kind dominates the ring. */
+    /** Round-robin across categories so no single kind dominates. */
     fun balanced(ctx: Context, n: Int, rnd: Random = Random.Default): List<ProductAsset> {
         val byCat = load(ctx).groupBy { it.category }.mapValues { it.value.shuffled(rnd).toMutableList() }
         val cats = byCat.keys.shuffled(rnd)
@@ -133,14 +135,29 @@ object Catalogue {
 
 // ───────────────────────── Game ─────────────────────────
 
-class GameState(private val ctx: Context, var config: PromoConfig, var cardCount: Int, private val onWin: (Promo) -> Unit) {
+/** Motion timings (ms), tuned to the requirements doc. */
+object Timing {
+    const val CARD_ENTER_GAP = 170L        // stagger between the four cards sliding in
+    const val CARD_ENTER = 420L            // one card's fade/slide
+    const val SHUFFLE_TOTAL = 2500L        // 2–3 s of swapping
+    const val SHUFFLE_STEPS = 7
+    const val COLLAPSE = 650L              // picked card to centre, others fade
+    const val FLIP = 640L                  // 0.5–0.8 s card turn
+    const val REVEAL_HOLD = 1100L          // burst + a beat before the result screen
+    const val RESULT_QR_DELAY = 500L       // QR + instruction fade in after the amount
+    const val SELECT_IDLE = 60_000L        // nobody picked / flipped: back to invite
+}
+
+class GameState(private val ctx: Context, var config: PromoConfig, private val onWin: (Promo) -> Unit) {
     var phase by mutableStateOf(Phase.INVITE)
     var cards by mutableStateOf(deal())
-    /** Which cards are face-up (promo side). Grows in escalating batches. */
-    var flipped by mutableStateOf<Set<Int>>(emptySet())
+    /** Cards that have entered the selection screen (staggered). */
+    var entered by mutableStateOf<Set<Int>>(emptySet())
     /** Slot index for each card during shuffle; identity when not shuffling. */
-    var slots by mutableStateOf<List<Int>>(emptyList())
+    var slots by mutableStateOf<List<Int>>(cards.indices.toList())
     var shuffleStep by mutableStateOf(0)
+    /** Whether the shuffle has finished and the losers are collapsing away. */
+    var collapsed by mutableStateOf(false)
     var winner by mutableStateOf(0)
     var revealed by mutableStateOf(false)
     var runId by mutableStateOf(0)
@@ -150,21 +167,19 @@ class GameState(private val ctx: Context, var config: PromoConfig, var cardCount
     fun reset() {
         runId++
         phase = Phase.INVITE
-        flipped = emptySet(); shuffleStep = 0; revealed = false
+        entered = emptySet(); shuffleStep = 0; collapsed = false; revealed = false
         cards = deal()
         slots = cards.indices.toList()
     }
 
-    fun applyConfig(c: PromoConfig, count: Int = cardCount) { config = c; cardCount = count; reset() }
+    fun applyConfig(c: PromoConfig) { config = c; reset() }
 
     private fun deal(): List<Card> {
-        val n = cardCount.coerceIn(PromoConfig.MIN_CARDS, PromoConfig.MAX_CARDS)
-        val products = Catalogue.balanced(ctx, n)
-        val ladder = config.ladder()
-        // Every promo appears at least once; the rest are distributed by weight so the board "looks" like the odds.
-        val promoList = ArrayList<Pair<Promo, Tier>>(n)
-        promoList += ladder
-        while (promoList.size < n) {
+        val products = Catalogue.balanced(ctx, CARD_COUNT)
+        val ladder = config.ladder().shuffled()
+        val promoList = ArrayList<Pair<Promo, Tier>>(CARD_COUNT)
+        promoList += ladder.take(CARD_COUNT)
+        while (promoList.size < CARD_COUNT) {
             var r = Random.nextInt(config.totalWeight.coerceAtLeast(1))
             promoList += ladder.firstOrNull { r -= it.first.weight; r < 0 } ?: ladder.last()
         }
@@ -172,65 +187,60 @@ class GameState(private val ctx: Context, var config: PromoConfig, var cardCount
         return products.mapIndexed { i, p -> Card(p, promoList[i].first, promoList[i].second) }
     }
 
-    /** Weighted draw by the configured percentages, then a random card carrying that promo. */
-    private fun drawWinner(): Int {
+    /** Weighted draw by the configured percentages. */
+    private fun drawPromo(): Promo {
         var r = Random.nextInt(config.totalWeight.coerceAtLeast(1))
-        val promo = config.promos.firstOrNull { r -= it.weight; r < 0 } ?: config.promos.last()
-        val candidates = cards.indices.filter { cards[it].promo.amount == promo.amount }
-        return candidates.random()
+        return config.promos.firstOrNull { r -= it.weight; r < 0 } ?: config.promos.last()
     }
 
-    /** Plays the whole choreography. Cancelled when [runId] changes. */
-    suspend fun play() {
+    private suspend fun step(my: Int, ms: Long): Boolean { delay(ms); return my == runId }
+
+    /** Invite → selection: the four cards enter one after another. */
+    suspend fun startSelection() {
+        if (phase != Phase.INVITE) return
         runId++
         val my = runId
-        suspend fun step(ms: Long): Boolean { delay(ms); return my == runId }
-        if (slots.size != cards.size) slots = cards.indices.toList()
-
-        phase = Phase.FADE
-        if (!step(1300)) return
-
-        phase = Phase.FILL
-        if (!step(1400)) return
-
-        // Escalating flips: 1, 2, 3, 5, 8, 13 … until every card is face-up.
-        phase = Phase.FLIP
-        val order = cards.indices.shuffled()
-        var a = 1; var b = 2; var i = 0
-        var gap = 900L
-        while (i < order.size) {
-            val batch = order.subList(i, minOf(order.size, i + a))
-            flipped = flipped + batch
-            i += a
-            val next = a + b; a = b; b = next
-            if (!step(gap)) return
-            gap = (gap * 0.82).toLong().coerceAtLeast(260)
-        }
-        if (!step(700)) return
-
-        // Shuffle: swap slots, accelerating.
-        phase = Phase.SHUFFLE
-        var d = 620L
-        for (s in 1..7) {
-            shuffleStep = s
-            slots = slots.shuffled()
-            if (!step(d)) return
-            d = (d * 0.85).toLong().coerceAtLeast(300)
-        }
+        entered = emptySet()
         slots = cards.indices.toList()
-        if (!step(500)) return
+        phase = Phase.SELECT
+        for (i in cards.indices) {
+            entered = entered + i
+            if (!step(my, Timing.CARD_ENTER_GAP)) return
+        }
+    }
 
-        winner = drawWinner()
-        phase = Phase.PICK
-        revealed = false
-        if (!step(700)) return
+    /** The user touched card [i]: shuffle, then bring that card to the centre. */
+    suspend fun pick(i: Int) {
+        if (phase != Phase.SELECT || i !in entered) return
+        runId++
+        val my = runId
+        winner = i
+        phase = Phase.SHUFFLE
+        val stepMs = Timing.SHUFFLE_TOTAL / Timing.SHUFFLE_STEPS
+        for (s in 1..Timing.SHUFFLE_STEPS) {
+            shuffleStep = s
+            var next = slots.shuffled()
+            while (next == slots) next = slots.shuffled()
+            slots = next
+            if (!step(my, stepMs)) return
+        }
+        // The prize is decided by the configured odds; the picked card carries it.
+        val promo = drawPromo()
+        cards = cards.mapIndexed { k, c -> if (k == i) c.copy(promo = promo, tier = config.tierOf(promo)) else c }
+        collapsed = true
+        if (!step(my, Timing.COLLAPSE)) return
+        phase = Phase.READY
+    }
+
+    /** The user touched the centre card: flip it and move on to the result. */
+    suspend fun flip() {
+        if (phase != Phase.READY) return
+        runId++
+        val my = runId
+        phase = Phase.REVEAL
         revealed = true
         onWin(winningCard.promo)
-        if (!step(2800)) return
-
-        phase = Phase.PRIZE
-        if (!step(3000)) return
-
-        phase = Phase.QR
+        if (!step(my, Timing.FLIP + Timing.REVEAL_HOLD)) return
+        phase = Phase.RESULT
     }
 }

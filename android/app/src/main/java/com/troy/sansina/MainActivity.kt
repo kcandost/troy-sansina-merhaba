@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -42,8 +43,10 @@ class MainActivity : ComponentActivity() {
 private const val PREFS = "sansina"
 private const val KEY_THEME = "theme"
 private const val KEY_PROMOS = "promos"
-private const val KEY_CARDS = "cards"
 private const val KEY_IDLE = "idle_seconds"
+
+/** How long the QR screen stays before returning to the invite (spec: 15–20 s). */
+const val DEFAULT_IDLE_SECONDS = 18
 
 @Composable
 fun SansinaApp() {
@@ -54,17 +57,24 @@ fun SansinaApp() {
     val stats = remember { PromoStats(ctx).also { it.load(config) } }
     var gate by remember { mutableStateOf(false) }       // PIN prompt showing
     var settingsOpen by remember { mutableStateOf(false) }
-    var idleSeconds by remember { mutableStateOf(prefs.getInt(KEY_IDLE, 15)) }
-    var cardCount by remember { mutableStateOf(prefs.getInt(KEY_CARDS, PromoConfig.DEFAULT_CARDS)) }
-    val state = remember { GameState(ctx, config, cardCount) { stats.record(it) } }
+    var idleSeconds by remember { mutableStateOf(prefs.getInt(KEY_IDLE, DEFAULT_IDLE_SECONDS)) }
+    val state = remember { GameState(ctx, config) { stats.record(it) } }
     val scope = rememberCoroutineScope()
     val phase = state.phase
 
-    fun start() { scope.launch { state.play() } }
+    fun start() { scope.launch { state.startSelection() } }
+    fun pick(i: Int) { scope.launch { state.pick(i) } }
+    fun flip() { scope.launch { state.flip() } }
 
-    // Nobody touched the QR page: go back to the invite after the configured idle time.
+    // Idle handling: the result/QR page returns after the configured time;
+    // an abandoned selection or unflipped card returns after a longer grace period.
     LaunchedEffect(phase, idleSeconds, settingsOpen) {
-        if (phase == Phase.QR && !settingsOpen) { kotlinx.coroutines.delay(idleSeconds * 1000L); state.reset() }
+        if (settingsOpen) return@LaunchedEffect
+        when (phase) {
+            Phase.RESULT -> { delay(Timing.RESULT_QR_DELAY + idleSeconds * 1000L); state.reset() }
+            Phase.SELECT, Phase.READY -> { delay(Timing.SELECT_IDLE); state.reset() }
+            else -> Unit
+        }
     }
 
     androidx.activity.compose.BackHandler { if (phase != Phase.INVITE) state.reset() }
@@ -72,23 +82,22 @@ fun SansinaApp() {
     Box(Modifier.fillMaxSize()) {
         WorldBackground(theme, phase)
 
-        // Tap anywhere: starts the flow from invite, returns to invite mid-flow.
+        // Tap anywhere on the idle screen starts the flow.
         Box(
             Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
-                if (phase == Phase.INVITE) start() else if (phase != Phase.QR) state.reset()
+                if (phase == Phase.INVITE) start()
             }
         )
 
         AnimatedContent(
             targetState = phase,
-            transitionSpec = { fadeIn(tween(380)) togetherWith fadeOut(tween(220)) },
+            transitionSpec = { fadeIn(tween(420)) togetherWith fadeOut(tween(260)) },
             label = "phase",
-            contentKey = { p -> if (p.ordinal <= Phase.PICK.ordinal) "stage" else p.name }
+            contentKey = { p -> if (p == Phase.RESULT) "result" else "stage" }
         ) { p ->
             when (p) {
-                Phase.PRIZE -> PrizeScreen(state, theme)
-                Phase.QR -> QrScreen(state, theme, onRestart = { state.reset() })
-                else -> StageScreen(state, theme, onStart = ::start)
+                Phase.RESULT -> ResultScreen(state, theme, onRestart = { state.reset() })
+                else -> StageScreen(state, theme, onStart = ::start, onPick = ::pick, onFlip = ::flip)
             }
         }
 
@@ -101,13 +110,8 @@ fun SansinaApp() {
         }
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
-                theme = theme, config = config, stats = stats, cardCount = cardCount, idleSeconds = idleSeconds,
+                theme = theme, config = config, stats = stats, idleSeconds = idleSeconds,
                 onIdleSeconds = { v -> idleSeconds = v; prefs.edit().putInt(KEY_IDLE, v).apply() },
-                onCardCount = { c ->
-                    cardCount = c
-                    prefs.edit().putInt(KEY_CARDS, c).apply()
-                    state.applyConfig(config, c)
-                },
                 onTheme = { t -> theme = t; prefs.edit().putString(KEY_THEME, t.id).apply() },
                 onConfig = { c ->
                     config = c

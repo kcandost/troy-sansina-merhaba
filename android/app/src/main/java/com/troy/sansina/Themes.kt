@@ -38,7 +38,7 @@ data class SansinaTheme(
     val confetti: List<Color>,
     val brandTag: Boolean,          // "+artısı var" (true) vs "Premium Partner" (false)
     val helloAccent: Boolean,       // colour "merhaba!" on hello screen
-    /** E only: on invite/prize/QR the world is a light wash; otherwise blue. */
+    /** E only: on invite/result the world is a light wash; otherwise blue. */
     val washSteps: Set<Phase> = emptySet(),
     val washBg: Color = bg,
     val washTextPrimary: Color = textPrimary,
@@ -116,7 +116,7 @@ val ThemeE = SansinaTheme(
     brushed = false, decor = Decor.STORE_WASH, qrStyle = QrStyle.SHADOW_BOX, qrModule = Color(0xFF0B1B33),
     confetti = listOf(Color.White, Color(0xFFFFC93F), Color(0xFF0A62FF), Color(0xFF9FD2FF), Gold),
     brandTag = true, helloAccent = false,
-    washSteps = setOf(Phase.INVITE, Phase.PRIZE, Phase.QR),
+    washSteps = setOf(Phase.INVITE, Phase.RESULT),
     washBg = Color(0xFFF7FAFF), washTextPrimary = Color(0xFF0B1B33), washTextSecondary = Color(0xFF4A5A72),
 )
 
