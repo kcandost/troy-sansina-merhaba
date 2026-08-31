@@ -1,27 +1,72 @@
-# TROY — custom app
+# TROY "Şansına Merhaba"
 
-Design and build repo for the TROY (Apple Premium Partner, Türkiye) mobile app.
+An interactive in-store campaign game for TROY (Apple Premium Partner, Türkiye), built by [RozyLabs](https://rozylabs.com). The app runs full-screen on a retail robot's tablet display: customers tap the screen, pick one of four cards, and win a discount they redeem in-store via QR code.
 
-**Status:** design system v0.1. No application code yet.
+**Downloads**
+
+| Asset | Link |
+|---|---|
+| 📱 Android APK (latest) | [Troy_Sansina_Merhaba.apk](https://github.com/kcandost/troy-sansina-merhaba/releases/latest/download/Troy_Sansina_Merhaba.apk) |
+| 📄 Store Operations Guide (Turkish, PDF) | [Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf](docs/Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf) |
+
+---
+
+## Overview
+
+The experience is a six-step loop that runs unattended all day:
+
+1. **Invite** — "Bugünkü şansına merhaba demek ister misin?" with an animated call to action and a periodic robot-voice prompt
+2. **Card selection** — four TROY cards slide in; the customer taps one
+3. **Shuffle** — ~2.5 seconds of card shuffling builds anticipation
+4. **Flip** — the chosen card turns with a light-burst effect
+5. **Reward** — the winning amount, confetti, and the campaign message
+6. **QR & reset** — a QR code holds for a configurable interval, then the screen returns to the invite
+
+Prize amounts and their odds are fully configurable from a hidden, PIN-protected settings panel (amounts, weighted probabilities, QR dwell time, card-back art, and per-amount win statistics).
+
+## Design
+
+The UI is a faithful implementation of the agency's final campaign designs (`TROY_ROZYLABS` Figma file, frames 5–11): the TROY-blue diagonal light-beam wash, the SEKIL wave pattern, ARTI plus marks, the framed idle screen, and the exact type ramp. Vector assets are exported straight from the Figma source and shipped as Android vector drawables.
+
+The agency typeface (BR Candor) is licensed; the app bundles [Nunito](https://fonts.google.com/specimen/Nunito) as the closest open substitute. Drop the licensed TTFs into `android/app/src/main/res/font/` to swap it in.
+
+Five earlier design-exploration themes (A–E) remain selectable in settings for preview purposes.
+
+## Repository Layout
 
 ```
-docs/
-  01-brand-audit.md        what troyestore.com actually is, measured from the live site
-  02-design-principles.md  five testable rules the system enforces
-  03-components.md         component inventory, specified in tokens
-  04-turkish-commerce.md   money formatting, TR strings, KVKK rules
-design-system/
-  tokens/color.json  type.json  layout.json  motion.json   source of truth
-  tokens/tokens.css                                        web / preview build
-  tokens/tokens.ts                                         React Native / TS build
-  preview/index.html                                       visual specimen page
+android/            Kotlin / Jetpack Compose app (single module)
+brand/              TROY brand assets, curated product imagery, Figma reference exports
+design-system/      Design tokens (JSON source of truth + CSS/TS builds) and specimen page
+design-explorations/ Early concept canvases
+docs/               Brand audit, design principles, component specs, and the client guide (PDF)
+requirements.md     Product and motion requirements
 ```
 
-## Rules for consumers
-1. Components read **semantic** tokens only. Reaching into primitives is a review block.
-2. Light and dark are both first-class. Never declare a colour outside the token layer.
-3. Volt (`#D6FF4B`) marks exactly one live commercial offer per screen. Nothing else.
-4. Every price is accompanied by its installment line.
+## Building
 
-Token JSON is the source of truth; `tokens.css` and `tokens.ts` are hand-kept in sync
-until a build step exists (Style Dictionary is the intended next step).
+Requirements: JDK 17+, Android SDK 35, Gradle 8.13.
+
+```bash
+cd android
+gradle assembleDebug
+# APK: app/build/outputs/apk/debug/app-debug.apk
+```
+
+Target device is a 1920×1200 (16:10) landscape tablet; `minSdk 26`.
+
+### Robot voice (optional)
+
+The invite and win announcements are pre-baked ElevenLabs lines shipped as assets. To regenerate them:
+
+```bash
+ELEVENLABS_API_KEY=... ELEVENLABS_VOICE_ID=... python3 android/scripts/generate_voice.py
+```
+
+## Operations
+
+Store staff access settings through an invisible touch target inside the top-left corner of the frame, gated by a PIN. The full walkthrough — game flow, settings reference, and operational notes — is in the [store operations guide](docs/Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf).
+
+---
+
+© RozyLabs. TROY brand assets belong to their respective owners and are included for this campaign only.
