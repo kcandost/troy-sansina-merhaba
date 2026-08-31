@@ -1,9 +1,25 @@
 package com.troy.sansina
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+/**
+ * Campaign face for Troy Mavi. The agency file is set in BR Candor (licensed);
+ * Nunito is the closest open substitute — rounded geometric, double-storey a.
+ * Drop the licensed BR Candor TTFs into res/font to swap it in.
+ */
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+val TroyFont = FontFamily(
+    Font(R.font.nunito, FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
+    Font(R.font.nunito, FontWeight.SemiBold, variationSettings = FontVariation.Settings(FontVariation.weight(600))),
+    Font(R.font.nunito, FontWeight.Bold, variationSettings = FontVariation.Settings(FontVariation.weight(750))),
+    Font(R.font.nunito, FontWeight.ExtraBold, variationSettings = FontVariation.Settings(FontVariation.weight(850))),
+)
 
 enum class ButtonShape { PILL, SQUARE }
 enum class Decor { QUIET_GLOW, GLASS_FIELD, SPOTLIGHT, TRAY_LIGHT, STORE_WASH, TROY_SKY }
@@ -38,6 +54,8 @@ data class SansinaTheme(
     val confetti: List<Color>,
     val brandTag: Boolean,          // "+artısı var" (true) vs "Premium Partner" (false)
     val helloAccent: Boolean,       // colour "merhaba!" on hello screen
+    /** Campaign typeface; null = system default. */
+    val fontFamily: FontFamily? = null,
     /** E only: on invite/result the world is a light wash; otherwise blue. */
     val washSteps: Set<Phase> = emptySet(),
     val washBg: Color = bg,
@@ -129,13 +147,16 @@ val TroyBlue = Color(0xFF4DC0DF)
 val TroyBlueLight = Color(0xFFC4F2FF)
 val ThemeF = SansinaTheme(
     id = "F", letter = "F", name = "Troy Mavi", subtitle = "Final kampanya tasarımı (ajans)",
-    bg = TroyBlue, textPrimary = Color(0xFF000000), textSecondary = Color(0xD9000000), accent = Color.White,
-    headlineWeight = FontWeight.Bold, h1Size = 73, helloSize = 84, bigSize = 162,
-    buttonBg = Color.White, buttonText = TroyBlue, buttonShape = ButtonShape.PILL, buttonHeight = 58.dp, glassButton = false,
+    bg = TroyBlue, textPrimary = Color(0xFF000000), textSecondary = Color(0xF2000000), accent = Color.White,
+    // Figma type ramp at the 0.6 px→dp scale used throughout: 90px→54, 140px→84, 200px→120.
+    headlineWeight = FontWeight.ExtraBold, h1Size = 54, helloSize = 84, bigSize = 120,
+    // Input: white pill 137px tall, 50px TROY-BLUE bold label.
+    buttonBg = Color.White, buttonText = TroyBlue, buttonShape = ButtonShape.PILL, buttonHeight = 82.dp, glassButton = false,
     productCardBg = Color(0xFF8CD9EE), productCardBorder = Color(0x00FFFFFF), productInk = Color.White,
     brushed = false, decor = Decor.TROY_SKY, qrStyle = QrStyle.PLAIN_CARD, qrModule = Color(0xFF000000),
     confetti = listOf(Color.White, TroyBlueLight, TroyBlue, Color(0xFF9BDCF3), Color(0xFF046ED9)),
     brandTag = true, helloAccent = true,
+    fontFamily = TroyFont,
 )
 
 val AllThemes = listOf(ThemeF, ThemeA, ThemeB, ThemeC, ThemeD, ThemeE)

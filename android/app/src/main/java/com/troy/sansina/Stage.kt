@@ -14,19 +14,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Figma card ratio 400 × 545.45.
 const val CARD_W = 96f
-const val CARD_H = 134f
+const val CARD_H = 131f
 
 /** Soft "premium" easing shared by the stage. */
 val SoftOut = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
@@ -38,7 +43,8 @@ val SoftOut = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
 @Composable
 fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, back: CardBack = CardBack.TROY, shine: Boolean = false, modifier: Modifier = Modifier) {
     val rot by animateFloatAsState(if (faceUp) 180f else 0f, tween(Timing.FLIP.toInt(), easing = SoftOut), label = "flip")
-    val shape = RoundedCornerShape(12.dp)
+    // Figma "Kart": corner radius 9.09% of the card width.
+    val shape = if (theme.id == "F") RoundedCornerShape(9.dp) else RoundedCornerShape(12.dp)
     val ctx = LocalContext.current
     val bmp by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, card.product.file, back) {
         value = if (back == CardBack.PRODUCT) Catalogue.bitmap(ctx, card.product.file) else null
@@ -46,8 +52,16 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, back: CardBack = 
     val sweep = rememberInfiniteTransition(label = "sheen").animateFloat(-1.2f, 2.2f, infiniteRepeatable(tween(2600, easing = LinearEasing)), label = "sw")
     Box(modifier.size(CARD_W.dp, CARD_H.dp).graphicsLayer { rotationY = rot; cameraDistance = 12f * density }) {
         if (rot <= 90f) {
+            // Figma: the card back radiates from top-centre — #C4F2FF → #88D9EF (50%) → #6BCDE7 (75%) → #4DC0DF.
             val backFill = if (theme.id == "F")
-                Modifier.background(Brush.radialGradient(listOf(Color(0xFFC4F2FF), Color(0xFF4DC0DF)), Offset(CARD_W * 1.5f, CARD_H * 1.2f), CARD_W * 3.4f), shape)
+                Modifier.drawBehind {
+                    drawRect(
+                        Brush.radialGradient(
+                            colorStops = arrayOf(0f to Color(0xFFC4F2FF), 0.5f to Color(0xFF88D9EF), 0.75f to Color(0xFF6BCDE7), 1f to Color(0xFF4DC0DF)),
+                            center = Offset(size.width / 2f, size.height * 0.2225f), radius = size.height * 0.78f
+                        )
+                    )
+                }
             else Modifier.background(theme.productCardBg, shape).border(1.dp, theme.productCardBorder, shape)
             Box(
                 Modifier.fillMaxSize().shadow(10.dp, shape, ambientColor = Color(0x59000000), spotColor = Color(0x59000000))
@@ -57,23 +71,29 @@ fun GameCard(card: Card, theme: SansinaTheme, faceUp: Boolean, back: CardBack = 
                 when (back) {
                     CardBack.PRODUCT -> bmp?.let { Image(it, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit) }
                     CardBack.TROY -> {
-                        // Figma "Kart": inner white frame (364×509 on 400×545) + small ARTI plus marks + white logo.
                         if (theme.id == "F") {
-                            Box(Modifier.fillMaxSize().padding(4.dp).border(0.8.dp, Color(0xB3FFFFFF), RoundedCornerShape(9.dp)))
+                            // Figma "Kart" back: SEKIL wave at the bottom, CERCEVE inner frame with a top
+                            // gap holding a solid plus, six scattered 50% ARTI marks, white logo lockup.
+                            val sekil = painterResource(R.drawable.sekil)
+                            val cerceve = painterResource(R.drawable.cerceve_card)
                             androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
-                                val pw = Color(0x7AFFFFFF)
-                                fun arti(cx: Float, cy: Float, r: Float) {
-                                    val t = r * 0.30f
-                                    drawRoundRect(pw, Offset(cx - t / 2, cy - r), androidx.compose.ui.geometry.Size(t, r * 2), androidx.compose.ui.geometry.CornerRadius(t / 2))
-                                    drawRoundRect(pw, Offset(cx - r, cy - t / 2), androidx.compose.ui.geometry.Size(r * 2, t), androidx.compose.ui.geometry.CornerRadius(t / 2))
-                                }
-                                arti(size.width * 0.2f, size.height * 0.16f, size.width * 0.045f)
-                                arti(size.width * 0.84f, size.height * 0.3f, size.width * 0.03f)
-                                arti(size.width * 0.78f, size.height * 0.82f, size.width * 0.05f)
-                                arti(size.width * 0.18f, size.height * 0.78f, size.width * 0.028f)
+                                val w = size.width; val h = size.height
+                                translate(0f, h * 0.685f) { with(sekil) { draw(Size(w * 1.1727f, h * 0.315f), alpha = 0.4f) } }
+                                val cw = w * 0.9158f; val ch = h * 0.9382f
+                                translate((w - cw) / 2f, (h - ch) / 2f) { with(cerceve) { draw(Size(cw, ch)) } }
+                                artiCross(Offset(w * 0.5f, h * 0.0326f), w * 0.0707f, Color.White)
+                                val half = Color.White.copy(0.5f)
+                                artiCross(Offset(w * 0.7954f, h * 0.1666f), w * 0.1591f, half)
+                                artiCross(Offset(w * 0.4522f, h * 0.1083f), w * 0.0773f, half)
+                                artiCross(Offset(w * 0.1477f, h * 0.5816f), w * 0.0773f, half)
+                                artiCross(Offset(w * 0.1932f, h * 0.25f), w * 0.1091f, half)
+                                artiCross(Offset(w * 0.8569f, h * 0.4917f), w * 0.0727f, half)
+                                artiCross(Offset(w * 0.7864f, h * 0.7133f), w * 0.1091f, half)
                             }
+                            Image(painterResource(R.drawable.troy_logo), null, Modifier.fillMaxWidth(0.5035f))
+                        } else {
+                            Wordmark(theme.productInk, size = 22, tag = theme.brandTag)
                         }
-                        Wordmark(theme.productInk, size = 22, tag = theme.brandTag)
                     }
                 }
                 if (shine) {
@@ -157,9 +177,12 @@ fun Stage(state: GameState, theme: SansinaTheme, cardBack: CardBack, onPick: (In
 
     BoxWithConstraints(modifier.fillMaxSize()) {
         val w = maxWidth.value
-        val rowScale = (w / (n * (CARD_W + 44f))).coerceIn(1.2f, 2.0f)
-        val gap = (CARD_W + 44f) * rowScale
-        val centreScale = rowScale * 1.28f
+        val f = theme.id == "F"
+        // Figma frame 6: card width 20.8% of the frame, 23.45% centre-to-centre spacing;
+        // frame 7: the winner grows to 25.9% (×1.245) and sits 111px below centre.
+        val rowScale = if (f) (w * 0.208f) / CARD_W else (w / (n * (CARD_W + 44f))).coerceIn(1.2f, 2.0f)
+        val gap = if (f) w * 0.2345f else (CARD_W + 44f) * rowScale
+        val centreScale = rowScale * (if (f) 1.245f else 1.28f)
 
         CardGlow(theme.accent, visible = phase == Phase.READY, scale = centreScale, Modifier.align(Alignment.Center))
 
@@ -170,12 +193,12 @@ fun Stage(state: GameState, theme: SansinaTheme, cardBack: CardBack, onPick: (In
             val gone = centred && !isWinner
 
             val targetX = if (centred && isWinner) 0f else (slot - (n - 1) / 2f) * gap
-            val targetY = if (centred && isWinner) 0f else 16f
+            val targetY = if (centred && isWinner) (if (f) 36f else 0f) else if (f) 12f else 16f
             val targetS = if (centred && isWinner) centreScale else rowScale
-            // Slight fan while selecting (like the agency's card row), jitter while shuffling.
+            // Figma frame 6 tilts the row -1°, +2°, -1°, -1°; jitter while shuffling.
             val jitter = when {
                 phase == Phase.SHUFFLE && !collapsed -> ((i * 37 + state.shuffleStep * 91) % 9 - 4).toFloat()
-                selecting -> (slot - (n - 1) / 2f) * 3.2f
+                selecting -> if (f) listOf(-1f, 2f, -1f, -1f).getOrElse(slot) { 0f } else (slot - (n - 1) / 2f) * 3.2f
                 else -> 0f
             }
 

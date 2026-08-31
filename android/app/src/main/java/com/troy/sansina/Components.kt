@@ -109,6 +109,6 @@ fun Confetti(active: Boolean, colors: List<Color>, modifier: Modifier = Modifier
 }
 
 @Composable
-fun Caption(text: String, color: Color, size: Int = 18, weight: FontWeight = FontWeight.Normal, modifier: Modifier = Modifier) {
-    Text(text, color = color, fontSize = size.sp, fontWeight = weight, textAlign = TextAlign.Center, modifier = modifier)
+fun Caption(text: String, color: Color, size: Int = 18, weight: FontWeight = FontWeight.Normal, modifier: Modifier = Modifier, fontFamily: androidx.compose.ui.text.font.FontFamily? = null) {
+    Text(text, color = color, fontSize = size.sp, fontWeight = weight, fontFamily = fontFamily, textAlign = TextAlign.Center, modifier = modifier)
 }

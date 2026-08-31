@@ -114,9 +114,13 @@ fun SansinaApp() {
             }
         }
 
-        BrandLockup(theme, phase, Modifier.align(Alignment.TopCenter).systemBarsPadding().padding(top = 36.dp))
+        // Figma: the campaign look carries no top wordmark — frame 5's big logo is part of the
+        // invite composition (drawn by InviteText); frames 6–11 have none at all.
+        if (theme.id != "F") BrandLockup(theme, phase, Modifier.align(Alignment.TopCenter).systemBarsPadding().padding(top = 36.dp))
 
-        SettingsButton(theme, phase, onClick = { gate = true }, modifier = Modifier.align(Alignment.TopStart).systemBarsPadding().padding(start = 24.dp, top = 24.dp))
+        // On the campaign look the gear tucks into the CERCEVE frame's top-left corner (frame inset ≈45dp).
+        val gearInset = if (theme.id == "F") 58.dp else 24.dp
+        SettingsButton(theme, phase, onClick = { gate = true }, modifier = Modifier.align(Alignment.TopStart).systemBarsPadding().padding(start = gearInset, top = gearInset))
 
         AnimatedVisibility(gate, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             PinGate(onUnlock = { gate = false; settingsOpen = true; state.reset() }, onCancel = { gate = false })
