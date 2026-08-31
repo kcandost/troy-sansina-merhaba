@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -60,6 +62,11 @@ fun SansinaApp() {
     var settingsOpen by remember { mutableStateOf(false) }
     var idleSeconds by remember { mutableStateOf(prefs.getInt(KEY_IDLE, DEFAULT_IDLE_SECONDS)) }
     var cardBack by remember { mutableStateOf(runCatching { CardBack.valueOf(prefs.getString(KEY_CARD_BACK, null)!!) }.getOrDefault(CardBack.TROY)) }
+    // Robot pause-on-touch (same mechanism as Rozy Assistant): while a visitor uses the
+    // kiosk the paired cleaning robot halts; the controller owns the pause-once +
+    // sliding-60s-resume logic and no-ops when no robot URL is configured.
+    val robot = remember { RobotPause.controller(ctx) }
+    var robotUrl by remember { mutableStateOf(RobotPause.baseUrl(ctx) ?: "") }
     val state = remember { GameState(ctx, config) { stats.record(it) } }
     val voice = remember { Voice(ctx) }
     val scope = rememberCoroutineScope()
@@ -92,7 +99,16 @@ fun SansinaApp() {
 
     androidx.activity.compose.BackHandler { if (phase != Phase.INVITE) state.reset() }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier.fillMaxSize().pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                    if (event.changes.any { it.changedToDown() }) robot.onUserTouch()
+                }
+            }
+        }
+    ) {
         WorldBackground(theme, phase)
 
         // Tap anywhere on the idle screen starts the flow.
@@ -128,6 +144,8 @@ fun SansinaApp() {
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
                 theme = theme, config = config, stats = stats, idleSeconds = idleSeconds, cardBack = cardBack,
+                robotUrl = robotUrl,
+                onRobotUrl = { v -> robotUrl = v.trim().trimEnd('/'); RobotPause.setBaseUrl(ctx, v) },
                 onIdleSeconds = { v -> idleSeconds = v; prefs.edit().putInt(KEY_IDLE, v).apply() },
                 onCardBack = { b -> cardBack = b; prefs.edit().putString(KEY_CARD_BACK, b.name).apply() },
                 onTheme = { t -> theme = t; prefs.edit().putString(KEY_THEME, t.id).apply() },

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 const val SETTINGS_PIN = "152723"
 
@@ -85,7 +86,11 @@ fun PinGate(onUnlock: () -> Unit, onCancel: () -> Unit) {
 
 // ───────────────────────── Settings page ─────────────────────────
 
-private enum class Category(val label: String, val hint: String) { THEME("Tema", "Görünüm ve davranış"), PROMO("Promo", "Kollar ve pano") }
+private enum class Category(val label: String, val hint: String) {
+    THEME("Tema", "Görünüm ve davranış"),
+    PROMO("Promo", "Kollar ve pano"),
+    ROBOT("Robot", "Duraklatma ve bağlantı"),
+}
 
 @Composable
 fun SettingsScreen(
@@ -94,6 +99,8 @@ fun SettingsScreen(
     stats: PromoStats,
     idleSeconds: Int,
     cardBack: CardBack,
+    robotUrl: String,
+    onRobotUrl: (String) -> Unit,
     onIdleSeconds: (Int) -> Unit,
     onCardBack: (CardBack) -> Unit,
     onTheme: (SansinaTheme) -> Unit,
@@ -126,6 +133,7 @@ fun SettingsScreen(
                 when (category) {
                     Category.THEME -> ThemeCategory(theme, config, idleSeconds, cardBack, onIdleSeconds, onCardBack, onTheme)
                     Category.PROMO -> PromoCategory(config, stats, onConfig)
+                    Category.ROBOT -> RobotCategory(robotUrl, onRobotUrl)
                 }
             }
         }
@@ -300,6 +308,66 @@ private fun PromoCategory(config: PromoConfig, stats: PromoStats, onConfig: (Pro
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.End) {
                     SmallButton("Panoyu sıfırla", Color(0xFFFBE3E0), Red) { stats.reset(config) }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RobotCategory(robotUrl: String, onRobotUrl: (String) -> Unit) {
+    var draft by remember(robotUrl) { mutableStateOf(robotUrl) }
+    var probeResult by remember { mutableStateOf<String?>(null) }
+    var probing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.fillMaxWidth(0.62f)) {
+        Section(
+            "Temizlik robotu",
+            "Ekrana her dokunuşta eşleştirilmiş Saha temizlik robotu duraklatılır; son dokunuştan 60 sn sonra görevine devam eder. Adres boşsa özellik devre dışıdır."
+        ) {
+            Text("Robot adresi", color = Ink600, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+            BasicTextField(
+                value = draft,
+                onValueChange = { draft = it.trim() },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                textStyle = TextStyle(color = Ink, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                decorationBox = { inner ->
+                    Box(
+                        Modifier.fillMaxWidth().height(48.dp).background(Ink50, RoundedCornerShape(10.dp))
+                            .border(1.dp, Ink200, RoundedCornerShape(10.dp)).padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (draft.isEmpty()) Text("http://192.168.1.42:7242", color = Ink600.copy(alpha = 0.5f), fontSize = 16.sp)
+                        inner()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val dirty = draft.trimEnd('/') != robotUrl
+                SmallButton("Uygula", if (dirty) Blue else Ink200, if (dirty) Color.White else Ink600, enabled = dirty) {
+                    onRobotUrl(draft); probeResult = null
+                }
+                if (robotUrl.isNotEmpty()) SmallButton("Bağlantıyı kaldır", Color(0xFFFBE3E0), Red) {
+                    draft = ""; onRobotUrl(""); probeResult = null
+                }
+                Spacer(Modifier.weight(1f))
+                val canProbe = draft.isNotBlank() && !probing
+                SmallButton(if (probing) "Deneniyor…" else "Bağlantıyı test et", Ink50, Ink, enabled = canProbe) {
+                    probing = true; probeResult = null
+                    scope.launch {
+                        probeResult = RobotPause.probe(draft)
+                        probing = false
+                    }
+                }
+            }
+            probeResult?.let { r ->
+                val ok = r.startsWith("Bağlantı başarılı")
+                Text(r, color = if (ok) Green else Red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
+                if (ok) Text(
+                    "Test yalnızca durum uç noktasını okur; duraklat/devam davranışı sahada doğrulanmalıdır (dokun → durur, 60 sn sonra → devam eder).",
+                    color = Ink600, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
     }

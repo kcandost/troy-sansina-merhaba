@@ -24,6 +24,17 @@ The experience is a six-step loop that runs unattended all day:
 
 Prize amounts and their odds are fully configurable from a hidden, PIN-protected settings panel (amounts, weighted probabilities, QR dwell time, card-back art, and per-amount win statistics).
 
+## Robot Pause-on-Touch
+
+The kiosk shares its chassis with a Saha Robotik cleaning robot. So the robot never drives off mid-game, the app halts it whenever a visitor is interacting — the same mechanism Rozy Assistant uses:
+
+- Any screen touch pauses the robot (`POST <robot>/api/v1/tasks/pause`), sent once per engagement
+- The robot resumes (`POST <robot>/api/v1/tasks/resume`) 60 seconds after the **last** touch — a sliding window, restarted on every tap
+- Resume retries with escalating backoff and then indefinitely; a persisted crash-recovery flag resumes the robot on next app start if the process died while it was paused
+- The robot's local API answers HTTP 200 even when it refuses a command, so confirmation is read from the JSON envelope's `success` field, not the status code
+
+The robot's LAN address (e.g. `http://192.168.1.42:7242`) is configured in the settings panel under **Robot**, which also offers a read-only connection test. With no address configured, the feature is a complete no-op.
+
 ## Design
 
 The UI is a faithful implementation of the agency's final campaign designs (`TROY_ROZYLABS` Figma file, frames 5–11): the TROY-blue diagonal light-beam wash, the SEKIL wave pattern, ARTI plus marks, the framed idle screen, and the exact type ramp. Vector assets are exported straight from the Figma source and shipped as Android vector drawables.
