@@ -33,7 +33,7 @@ The kiosk shares its chassis with a Saha Robotik cleaning robot. So the robot ne
 - Resume retries with escalating backoff and then indefinitely; a persisted crash-recovery flag resumes the robot on next app start if the process died while it was paused
 - The robot's local API answers HTTP 200 even when it refuses a command, so confirmation is read from the JSON envelope's `success` field, not the status code
 
-The robot's LAN address (e.g. `http://192.168.1.42:7242`) is configured in the settings panel under **Robot**, which also offers a read-only connection test. With no address configured, the feature is a complete no-op.
+Every robot serves this API at the same fixed address on its own local network, so there is nothing to configure and nothing to mistype in the field: the address is the `RobotPause.BASE_URL` constant. The settings panel's **Robot** section offers a read-only connection test against `GET /api/v1/status`, which reports the robot's state, battery, and any condition that would keep it stationary after a resume (e-stop, blocked navigation, charging).
 
 ## Design
 

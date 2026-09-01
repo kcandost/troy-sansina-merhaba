@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -66,7 +65,6 @@ fun SansinaApp() {
     // kiosk the paired cleaning robot halts; the controller owns the pause-once +
     // sliding-60s-resume logic and no-ops when no robot URL is configured.
     val robot = remember { RobotPause.controller(ctx) }
-    var robotUrl by remember { mutableStateOf(RobotPause.baseUrl(ctx) ?: "") }
     val state = remember { GameState(ctx, config) { stats.record(it) } }
     val voice = remember { Voice(ctx) }
     val scope = rememberCoroutineScope()
@@ -100,11 +98,19 @@ fun SansinaApp() {
     androidx.activity.compose.BackHandler { if (phase != Phase.INVITE) state.reset() }
 
     Box(
+        // Robot pause-on-touch capture. On the Initial pass the root sees every event
+        // BEFORE any child can consume it, so a tap on a card, the gear, the PIN pad or
+        // the settings panel all count — the whole screen, as the spec requires.
+        //
+        // Any PRESSED pointer counts, not just changedToDown(): a finger held down or
+        // dragged emits no new down event, so a down-only trigger would let the 60 s
+        // window elapse while a visitor is still touching and the robot would drive off
+        // mid-interaction — the one failure this feature exists to prevent.
         Modifier.fillMaxSize().pointerInput(Unit) {
             awaitPointerEventScope {
                 while (true) {
                     val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-                    if (event.changes.any { it.changedToDown() }) robot.onUserTouch()
+                    if (event.changes.any { it.pressed }) robot.onUserTouch()
                 }
             }
         }
@@ -144,8 +150,6 @@ fun SansinaApp() {
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
                 theme = theme, config = config, stats = stats, idleSeconds = idleSeconds, cardBack = cardBack,
-                robotUrl = robotUrl,
-                onRobotUrl = { v -> robotUrl = v.trim().trimEnd('/'); RobotPause.setBaseUrl(ctx, v) },
                 onIdleSeconds = { v -> idleSeconds = v; prefs.edit().putInt(KEY_IDLE, v).apply() },
                 onCardBack = { b -> cardBack = b; prefs.edit().putString(KEY_CARD_BACK, b.name).apply() },
                 onTheme = { t -> theme = t; prefs.edit().putString(KEY_THEME, t.id).apply() },
