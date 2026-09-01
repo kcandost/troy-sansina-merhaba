@@ -99,8 +99,20 @@ class RobotPauseController(
         scope.launch { touches.collect { handleTouch() } }
     }
 
-    /** UI-thread entry point — called on every finger-down anywhere on screen. */
+    private var lastTouchLogMs = 0L
+
+    /**
+     * UI-thread entry point — called for every pressed pointer anywhere on screen,
+     * including the repeats a held or dragging finger produces.
+     */
     fun onUserTouch() {
+        // A drag fires this ~60×/s. The flow collapses that harmlessly, but an unthrottled
+        // log would bury the pause/resume lines this tag exists to make readable.
+        val now = System.currentTimeMillis()
+        if (now - lastTouchLogMs >= TOUCH_LOG_THROTTLE_MS) {
+            lastTouchLogMs = now
+            Log.d(TAG, "touch → state=$state target=${target()?.baseUrl ?: "<none>"}")
+        }
         touches.tryEmit(Unit)
     }
 
@@ -155,16 +167,17 @@ class RobotPauseController(
                 }
                 loggedNoTarget = false
                 state = State.PAUSING
+                Log.i(TAG, "IDLE → PAUSING: pausing ${t.robotId} at ${t.baseUrl}")
                 if (postPauseWithRetries(t)) {
                     state = State.PAUSED
                     pausedTarget = t
                     persistPausedByUs(true)
-                    Log.i(TAG, "paused ${t.robotId}")
+                    Log.i(TAG, "PAUSING → PAUSED: ${t.robotId} is paused")
                     restartResumeWindow()
                 } else {
                     // Robot unreachable — it never paused, so there is nothing to resume.
                     // The next touch tries again.
-                    Log.w(TAG, "pause failed for ${t.robotId} — giving up until next touch")
+                    Log.w(TAG, "PAUSING → IDLE: pause failed for ${t.robotId} — giving up until next touch")
                     state = State.IDLE
                 }
             }
@@ -175,14 +188,17 @@ class RobotPauseController(
     private fun restartResumeWindow() {
         val t = pausedTarget ?: return
         resumeJob?.cancel()
+        Log.d(TAG, "resume window (re)started — ${t.robotId} resumes in ${pauseWindowMs}ms unless touched again")
         resumeJob = scope.launch {
             delay(pauseWindowMs)
+            Log.i(TAG, "resume window elapsed (${pauseWindowMs}ms since last touch) — resuming ${t.robotId}")
             resumeUntilSuccess(t)
         }
     }
 
     private suspend fun postPauseWithRetries(t: RobotTarget): Boolean {
-        for (backoffMs in PAUSE_RETRY_DELAYS_MS) {
+        PAUSE_RETRY_DELAYS_MS.forEachIndexed { i, backoffMs ->
+            if (backoffMs > 0) Log.d(TAG, "pause retry ${i + 1}/${PAUSE_RETRY_DELAYS_MS.size} in ${backoffMs}ms")
             delay(backoffMs)
             if (post("${t.baseUrl}$PAUSE_PATH")) return true
         }
@@ -208,7 +224,7 @@ class RobotPauseController(
                 state = State.IDLE
                 pausedTarget = null
                 persistPausedByUs(false)
-                Log.i(TAG, "resumed ${t.robotId}")
+                Log.i(TAG, "PAUSED → IDLE: resumed ${t.robotId} (attempt ${attempt + 1})")
                 return
             }
             if (touchWaitingOnResume) {
@@ -229,6 +245,7 @@ class RobotPauseController(
         const val DEFAULT_PAUSE_WINDOW_MS = 60_000L
         const val PAUSE_PATH = "/api/v1/tasks/pause"
         const val RESUME_PATH = "/api/v1/tasks/resume"
+        private const val TOUCH_LOG_THROTTLE_MS = 1_000L
         private val PAUSE_RETRY_DELAYS_MS = listOf(0L, 2_000L, 5_000L)
         private val RESUME_RETRY_DELAYS_MS = listOf(5_000L, 15_000L, 30_000L)
         private const val RESUME_STEADY_RETRY_MS = 60_000L
@@ -236,28 +253,23 @@ class RobotPauseController(
 }
 
 /**
- * App-lifetime wiring: prefs-backed robot URL, one shared controller whose 60 s window
- * and resume-retry loop survive activity recreation, plus a read-only reachability probe
- * for the settings console.
+ * App-lifetime wiring: one shared controller whose 60 s window and resume-retry loop
+ * survive activity recreation, plus a read-only reachability probe for the settings console.
  *
- * The robot API is a plain-HTTP LAN endpoint on the robot itself (port 7242, no auth);
- * a tight 3 s per-request timeout keeps an unreachable LAN address from blocking.
+ * The robot API is a plain-HTTP endpoint on the robot itself (port 7242, no auth). Every
+ * robot serves it at the SAME fixed address on its own local network, so the address is a
+ * constant here rather than a setting — there is nothing for an operator to configure or
+ * mistype in the field. A tight 3 s per-request timeout keeps an unreachable robot from
+ * blocking the UI thread's coroutine scope.
  */
 object RobotPause {
+    /** Fixed on every robot's own local network. */
+    const val BASE_URL = "http://192.168.3.3:7242"
+
     private const val PREFS = "sansina"
-    private const val KEY_URL = "robot_base_url"
     private const val KEY_PAUSED = "robot_paused_by_us"
 
     @Volatile private var controller: RobotPauseController? = null
-
-    fun baseUrl(ctx: Context): String? =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_URL, null)?.takeIf { it.isNotBlank() }
-
-    fun setBaseUrl(ctx: Context, value: String?) {
-        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val v = value?.trim()?.trimEnd('/')
-        prefs.edit().apply { if (v.isNullOrBlank()) remove(KEY_URL) else putString(KEY_URL, v) }.apply()
-    }
 
     fun controller(context: Context): RobotPauseController {
         controller?.let { return it }
@@ -267,33 +279,50 @@ object RobotPause {
             val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val c = RobotPauseController(
                 scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
-                target = { baseUrl(app)?.let { RobotTarget("saha-robot", it) } },
+                target = { RobotTarget("saha-robot", BASE_URL) },
                 persistPausedByUs = { prefs.edit().putBoolean(KEY_PAUSED, it).apply() },
                 post = ::post,
             )
             controller = c
-            c.resumeIfPreviouslyPausedOnBoot(prefs.getBoolean(KEY_PAUSED, false))
+            val wasPaused = prefs.getBoolean(KEY_PAUSED, false)
+            Log.i(
+                TAG,
+                "controller ready — url=$BASE_URL " +
+                    "window=${RobotPauseController.DEFAULT_PAUSE_WINDOW_MS}ms wasPausedByUs=$wasPaused",
+            )
+            c.resumeIfPreviouslyPausedOnBoot(wasPaused)
             return c
         }
     }
 
     private suspend fun post(url: String): Boolean = withContext(Dispatchers.IO) {
+        val started = System.currentTimeMillis()
+        Log.d(TAG, "POST → $url")
         try {
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.connectTimeout = 3_000
             conn.readTimeout = 3_000
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("Content-Type", "application/json")
+            // Both endpoints take no parameters, but a POST with no body at all leaves
+            // Content-Length unset, which the robot's ASGI server answers with 400 before
+            // the handler ever runs. Declare an explicit empty body instead.
+            conn.doOutput = true
+            conn.setFixedLengthStreamingMode(0)
+            conn.outputStream.close()
             val code = conn.responseCode
             val body = runCatching {
                 (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.readText()
             }.getOrNull()
             conn.disconnect()
+            val ms = System.currentTimeMillis() - started
             val outcome = RobotCommandEnvelope.read(code, body)
-            if (outcome.confirmed) Log.d(TAG, "POST confirmed: $url (${outcome.detail})")
-            else Log.w(TAG, "POST not confirmed: $url (${outcome.detail})")
+            if (outcome.confirmed) Log.i(TAG, "POST ok in ${ms}ms: $url → ${outcome.detail} | body=${body.orEmpty().take(300)}")
+            else Log.w(TAG, "POST NOT confirmed in ${ms}ms: $url → ${outcome.detail} | body=${body.orEmpty().take(300)}")
             outcome.confirmed
         } catch (e: Exception) {
-            Log.w(TAG, "POST failed: $url", e)
+            Log.w(TAG, "POST failed in ${System.currentTimeMillis() - started}ms: $url", e)
             false
         }
     }
@@ -302,20 +331,40 @@ object RobotPause {
      * Settings-console "Test connection": read-only GET `<base>/api/v1/status` —
      * never touches the pause/resume endpoints. Returns a human-readable result line.
      */
-    suspend fun probe(baseUrl: String): String = withContext(Dispatchers.IO) {
+    suspend fun probe(): String = withContext(Dispatchers.IO) {
+        val url = "$BASE_URL/api/v1/status"
+        Log.i(TAG, "probe → $url")
         try {
-            val conn = URL(baseUrl.trimEnd('/') + "/api/v1/status").openConnection() as HttpURLConnection
+            val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 5_000
             conn.readTimeout = 5_000
+            conn.setRequestProperty("Accept", "application/json")
             val code = conn.responseCode
-            val body = runCatching { conn.inputStream.bufferedReader().readText() }.getOrNull()
+            val body = runCatching {
+                (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.readText()
+            }.getOrNull()
             conn.disconnect()
+            Log.i(TAG, "probe ← HTTP $code | body=${body.orEmpty().take(300)}")
             if (code !in 200..299) return@withContext "Ulaşılamadı: HTTP $code"
             val json = body?.let { runCatching { JSONObject(it) }.getOrNull() }
             val stateLabel = json?.optString("state_label")?.ifBlank { null }
             val battery = json?.takeIf { it.has("battery_percent") }?.optInt("battery_percent")
-            listOfNotNull("Bağlantı başarılı", stateLabel, battery?.let { "pil %$it" }).joinToString(" · ")
+            // Surfaced because each one independently stops the robot obeying resume:
+            // an e-stopped or out-of-service robot answers success=true and stays put,
+            // so the operator needs to see it here rather than debug it as a pause bug.
+            val blockers = listOfNotNull(
+                "acil stop".takeIf { json?.optBoolean("is_estop") == true || json?.optBoolean("soft_estop") == true },
+                "navigasyon engelli".takeIf { json?.optBoolean("navigation_blocked") == true },
+                "şarjda".takeIf { json?.optBoolean("is_charging") == true },
+            )
+            listOfNotNull(
+                "Bağlantı başarılı",
+                stateLabel,
+                battery?.let { "pil %$it" },
+                blockers.joinToString(", ").ifBlank { null },
+            ).joinToString(" · ")
         } catch (e: Exception) {
+            Log.w(TAG, "probe failed: $url", e)
             "Ulaşılamadı: ${e.message ?: e.javaClass.simpleName}"
         }
     }
