@@ -63,7 +63,7 @@ fun SansinaApp() {
     var cardBack by remember { mutableStateOf(runCatching { CardBack.valueOf(prefs.getString(KEY_CARD_BACK, null)!!) }.getOrDefault(CardBack.TROY)) }
     // Robot pause-on-touch (same mechanism as Rozy Assistant): while a visitor uses the
     // kiosk the paired cleaning robot halts; the controller owns the pause-once +
-    // sliding-60s-resume logic and no-ops when no robot URL is configured.
+    // sliding-60s-resume logic. The robot address is fixed (RobotPause.BASE_URL).
     val robot = remember { RobotPause.controller(ctx) }
     val state = remember { GameState(ctx, config) { stats.record(it) } }
     val voice = remember { Voice(ctx) }
