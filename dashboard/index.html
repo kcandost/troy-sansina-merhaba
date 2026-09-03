@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troy Sansina — Filo Paneli</title>
+<style>
+  :root { --ink:#171614; --ink6:#5c5a56; --ink2:#e4e2de; --bg:#f5f4f2; --blue:#4dc0df; --blue-d:#1c9cbf; --red:#c2402f; --green:#2e7d43; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1 { font-size: 24px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 28px 0 10px; }
+  .sub { color: var(--ink6); font-size: 13px; margin-bottom: 24px; }
+  .card { background:#fff; border:1px solid var(--ink2); border-radius:16px; padding:20px; margin-bottom:20px; }
+  table { border-collapse: collapse; width:100%; }
+  th { text-align:left; color:var(--ink6); font-size:12px; font-weight:600; padding:6px 10px; border-bottom:1px solid var(--ink2); }
+  td { padding:8px 10px; border-bottom:1px solid #f0efec; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom:none; }
+  .num { text-align:right; }
+  .badge { display:inline-block; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:600; }
+  .on  { background:#e3f4e8; color:var(--green); } .off { background:#f2f1ef; color:var(--ink6); }
+  .exhausted { color:var(--red); font-weight:600; }
+  input, select { font:inherit; padding:8px 10px; border:1px solid var(--ink2); border-radius:10px; background:var(--bg); width:100%; }
+  input:focus, select:focus { outline:2px solid var(--blue); border-color:transparent; }
+  button { font:inherit; font-weight:600; border:0; border-radius:12px; padding:10px 18px; cursor:pointer; background:var(--blue-d); color:#fff; }
+  button.ghost { background:var(--bg); color:var(--ink); border:1px solid var(--ink2); }
+  button:disabled { background:var(--ink2); color:var(--ink6); cursor:default; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .msg { font-size:13px; font-weight:600; margin-top:10px; } .err { color:var(--red); } .ok { color:var(--green); }
+  .grid { display:grid; grid-template-columns: repeat(4, 1fr) 40px; gap:8px; margin-bottom:8px; align-items:center; }
+  .grid .h { color:var(--ink6); font-size:12px; font-weight:600; }
+  .x { background:none; color:var(--red); font-size:18px; padding:4px; }
+  #login { max-width: 380px; margin: 10vh auto; }
+  label { display:block; color:var(--ink6); font-size:12px; margin:12px 0 4px; }
+  .tablewrap { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <div id="login" class="card">
+    <h1>Troy Sansina</h1>
+    <div class="sub">Filo paneli — giriş</div>
+    <label>Supabase adresi</label><input id="l-url" placeholder="https://xxxx.supabase.co">
+    <label>Anon anahtarı</label><input id="l-key" placeholder="eyJ…">
+    <label>E-posta</label><input id="l-email" type="email">
+    <label>Şifre</label><input id="l-pass" type="password">
+    <div style="margin-top:16px"><button id="l-btn">Giriş yap</button></div>
+    <div id="l-msg" class="msg err"></div>
+  </div>
+
+  <div id="app" hidden>
+    <div class="row" style="justify-content:space-between">
+      <div><h1>Filo Paneli</h1><div class="sub">Robot başına kupon kullanımı · <span id="refreshed"></span></div></div>
+      <button class="ghost" id="logout">Çıkış</button>
+    </div>
+
+    <div class="card tablewrap"><h2 style="margin-top:0">Kullanım</h2><div id="usage"></div></div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Kupon ayarları</h2>
+      <div class="sub">Tutar, çıkma yüzdesi (toplam 100 olmalı) ve adet limiti (0 = sınırsız). Kaydet: robotlar 60 sn içinde alır ve sayaçlarını sıfırlar.</div>
+      <div class="row" style="margin-bottom:14px">
+        <select id="target" style="max-width:260px"></select>
+        <button class="ghost" id="load-cfg">Yükle</button>
+      </div>
+      <div id="editor"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="ghost" id="add-row">+ Kupon ekle</button>
+        <span id="sum" style="margin-left:auto;font-weight:600"></span>
+        <button id="save-cfg">Kaydet ve gönder</button>
+      </div>
+      <div id="cfg-msg" class="msg"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Yeni robot</h2>
+      <div class="row">
+        <input id="r-id" placeholder="robot-2" style="max-width:180px">
+        <input id="r-name" placeholder="Mağaza adı" style="max-width:240px">
+        <button class="ghost" id="r-add">Ekle</button>
+      </div>
+      <div id="r-msg" class="msg"></div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+let sb = null, robots = [], rows = [];
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('tr-TR');
+
+function client() {
+  const url = localStorage.getItem('sb_url'), key = localStorage.getItem('sb_key');
+  if (!url || !key) return null;
+  return supabase.createClient(url, key);
+}
+
+async function init() {
+  try { $('l-url').value = localStorage.getItem('sb_url') || ''; $('l-key').value = localStorage.getItem('sb_key') || ''; } catch (e) {}
+  sb = client();
+  if (sb && (await sb.auth.getSession()).data.session) return show();
+}
+
+$('l-btn').onclick = async () => {
+  const url = $('l-url').value.trim().replace(/\/$/, ''), key = $('l-key').value.trim();
+  try { localStorage.setItem('sb_url', url); localStorage.setItem('sb_key', key); } catch (e) {}
+  sb = supabase.createClient(url, key);
+  const { error } = await sb.auth.signInWithPassword({ email: $('l-email').value.trim(), password: $('l-pass').value });
+  if (error) { $('l-msg').textContent = 'Giriş başarısız: ' + error.message; return; }
+  show();
+};
+
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function show() {
+  $('login').hidden = true; $('app').hidden = false;
+  await refresh();
+  setInterval(refresh, 30_000);
+}
+
+async function refresh() {
+  const [r, u, c] = await Promise.all([
+    sb.from('robots').select('*').order('id'),
+    sb.from('usage_view').select('*'),
+    sb.from('robot_configs').select('*'),
+  ]);
+  if (r.error) { $('usage').textContent = 'Veri alınamadı: ' + r.error.message; return; }
+  robots = r.data;
+  const usage = u.data || [], cfgs = c.data || [];
+  const amounts = [...new Set(cfgs.flatMap(x => x.promos.map(p => p.amount)))].sort((a, b) => a - b);
+  const used = (rid, a) => usage.find(x => x.robot_id === rid && x.amount === a)?.used || 0;
+  const lim = (rid, a) => cfgs.find(x => x.robot_id === rid)?.promos.find(p => p.amount === a)?.limit ?? null;
+  const online = t => t && (Date.now() - new Date(t).getTime() < 5 * 60_000);
+
+  let h = '<table><tr><th>Robot</th><th>Durum</th>';
+  amounts.forEach(a => h += `<th class="num">${fmt(a)} TL</th>`);
+  h += '<th class="num">Toplam</th></tr>';
+  const totals = Object.fromEntries(amounts.map(a => [a, 0]));
+  robots.forEach(r => {
+    let sum = 0;
+    h += `<tr><td><b>${r.name}</b> <span style="color:var(--ink6);font-size:12px">${r.id}</span></td>` +
+         `<td><span class="badge ${online(r.last_seen_at) ? 'on' : 'off'}">${online(r.last_seen_at) ? 'çevrimiçi' : (r.last_seen_at ? 'son: ' + new Date(r.last_seen_at).toLocaleString('tr-TR') : 'hiç bağlanmadı')}</span></td>`;
+    amounts.forEach(a => {
+      const n = used(r.id, a), l = lim(r.id, a); sum += n; totals[a] += n;
+      const cap = l ? ` / ${l}` : '';
+      h += `<td class="num${l && n >= l ? ' exhausted' : ''}">${n}${cap}</td>`;
+    });
+    h += `<td class="num"><b>${sum}</b></td></tr>`;
+  });
+  h += '<tr><td colspan="2"><b>Filo toplamı</b></td>';
+  let g = 0; amounts.forEach(a => { g += totals[a]; h += `<td class="num"><b>${totals[a]}</b></td>`; });
+  h += `<td class="num"><b>${g}</b></td></tr></table>`;
+  $('usage').innerHTML = h;
+  $('refreshed').textContent = 'güncellendi ' + new Date().toLocaleTimeString('tr-TR');
+
+  const t = $('target'), cur = t.value;
+  t.innerHTML = '<option value="*">Tüm robotlar</option>' + robots.map(r => `<option value="${r.id}">${r.name} (${r.id})</option>`).join('');
+  if ([...t.options].some(o => o.value === cur)) t.value = cur;
+}
+
+// ── config editor ──
+function renderEditor() {
+  let h = '<div class="grid"><span class="h">Tutar (TL)</span><span class="h">Yüzde (%)</span><span class="h">Limit (0=∞)</span><span class="h"></span><span></span></div>';
+  rows.forEach((p, i) => {
+    h += `<div class="grid">
+      <input type="number" value="${p.amount}" onchange="rows[${i}].amount=+this.value;sum()">
+      <input type="number" value="${p.weight}" onchange="rows[${i}].weight=+this.value;sum()">
+      <input type="number" value="${p.limit}" onchange="rows[${i}].limit=+this.value">
+      <span></span>
+      <button class="x" onclick="rows.splice(${i},1);renderEditor()">−</button>
+    </div>`;
+  });
+  $('editor').innerHTML = h; sum();
+}
+function sum() {
+  const s = rows.reduce((n, p) => n + p.weight, 0);
+  $('sum').textContent = 'Toplam: %' + s;
+  $('sum').style.color = s === 100 ? 'var(--green)' : 'var(--red)';
+}
+$('add-row').onclick = () => { rows.push({ amount: (Math.max(0, ...rows.map(p => p.amount)) || 0) + 250, weight: 0, limit: 0 }); renderEditor(); };
+$('load-cfg').onclick = async () => {
+  const id = $('target').value === '*' ? robots[0]?.id : $('target').value;
+  const { data } = await sb.from('robot_configs').select('promos').eq('robot_id', id).maybeSingle();
+  rows = data?.promos ?? [{ amount: 250, weight: 40, limit: 0 }, { amount: 500, weight: 30, limit: 0 }, { amount: 750, weight: 20, limit: 0 }, { amount: 1000, weight: 10, limit: 0 }];
+  renderEditor();
+  $('cfg-msg').textContent = '';
+};
+$('save-cfg').onclick = async () => {
+  const s = rows.reduce((n, p) => n + p.weight, 0);
+  const bad = rows.length < 2 || rows.length > 6 || s !== 100 || rows.some(p => p.amount <= 0 || p.weight < 0 || p.limit < 0)
+    || new Set(rows.map(p => p.amount)).size !== rows.length;
+  if (bad) { $('cfg-msg').textContent = 'Geçersiz: 2–6 kupon, yüzdeler toplam 100, tutarlar farklı ve pozitif olmalı.'; $('cfg-msg').className = 'msg err'; return; }
+  const targets = $('target').value === '*' ? robots.map(r => r.id) : [$('target').value];
+  for (const id of targets) {
+    const { error } = await sb.rpc('save_config', { p_robot: id, p_promos: rows });
+    if (error) { $('cfg-msg').textContent = `${id}: kaydedilemedi — ${error.message}`; $('cfg-msg').className = 'msg err'; return; }
+  }
+  $('cfg-msg').textContent = `Gönderildi (${targets.length} robot). Robotlar 60 sn içinde alır; sayaçlar sıfırlanır.`;
+  $('cfg-msg').className = 'msg ok';
+  refresh();
+};
+
+// ── robot onboarding ──
+$('r-add').onclick = async () => {
+  const id = $('r-id').value.trim(), name = $('r-name').value.trim();
+  if (!id || !name) { $('r-msg').textContent = 'Kimlik ve ad gerekli.'; $('r-msg').className = 'msg err'; return; }
+  const token = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
+  const { error } = await sb.from('robots').insert({ id, name, device_token: token });
+  if (error) { $('r-msg').textContent = 'Eklenemedi: ' + error.message; $('r-msg').className = 'msg err'; return; }
+  $('r-msg').innerHTML = `Eklendi. Cihaz anahtarı (tablete girilecek, bir daha gösterilmez): <code>${token}</code>`;
+  $('r-msg').className = 'msg ok';
+  refresh();
+};
+
+init();
+</script>
+</body>
+</html>
