@@ -1,0 +1,143 @@
+package com.troy.sansina
+
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.UUID
+
+/** One QR shown, waiting to be reported to the backend. */
+data class GrantEvent(val uuid: String, val amount: Int, val version: Int, val atMs: Long)
+
+/** Pure JSON encoding/decoding for the sync layer; kept side-effect free for unit tests. */
+object SyncCodec {
+    private fun iso(ms: Long): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            .apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date(ms))
+
+    /** Payload for the ingest_grants RPC. */
+    fun encodeEvents(events: List<GrantEvent>): String = JSONArray().apply {
+        events.forEach {
+            put(JSONObject()
+                .put("client_uuid", it.uuid)
+                .put("amount", it.amount)
+                .put("config_version", it.version)
+                .put("granted_at", iso(it.atMs)))
+        }
+    }.toString()
+
+    /** Local queue persistence: keeps the raw millis so nothing is lost in round-trips. */
+    fun encodeQueue(events: List<GrantEvent>): String = JSONArray().apply {
+        events.forEach { put(JSONObject().put("u", it.uuid).put("a", it.amount).put("v", it.version).put("t", it.atMs)) }
+    }.toString()
+
+    fun parseQueue(s: String?): List<GrantEvent> = runCatching {
+        val arr = JSONArray(s!!)
+        (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            GrantEvent(o.getString("u"), o.getInt("a"), o.getInt("v"), o.getLong("t"))
+        }
+    }.getOrDefault(emptyList())
+
+    /** fetch_config response → (version, config); null unless the config is present and valid. */
+    fun parseConfig(json: String): Pair<Int, PromoConfig>? = runCatching {
+        val o = JSONObject(json)
+        val arr = o.getJSONArray("promos")
+        val config = PromoConfig((0 until arr.length()).map { i ->
+            val p = arr.getJSONObject(i)
+            Promo(p.getInt("amount"), p.getInt("weight"), p.optInt("limit", 0))
+        })
+        if (config.isValid) o.getInt("version") to config else null
+    }.getOrNull()
+}
+
+/** Backend connection settings, edited from the hidden settings panel. */
+class SyncSettings(ctx: Context) {
+    private val prefs = ctx.getSharedPreferences("sansina_sync", Context.MODE_PRIVATE)
+    var url by mutableStateOf(prefs.getString("url", "") ?: "")
+        private set
+    var anonKey by mutableStateOf(prefs.getString("anon_key", "") ?: "")
+        private set
+    var robotId by mutableStateOf(prefs.getString("robot_id", "") ?: "")
+        private set
+    var deviceToken by mutableStateOf(prefs.getString("device_token", "") ?: "")
+        private set
+    var lastSyncAt by mutableStateOf(prefs.getLong("last_sync", 0L))
+
+    val configured get() = url.isNotBlank() && anonKey.isNotBlank() && deviceToken.isNotBlank()
+
+    fun save(url: String, anonKey: String, robotId: String, deviceToken: String) {
+        this.url = url.trim().trimEnd('/'); this.anonKey = anonKey.trim()
+        this.robotId = robotId.trim(); this.deviceToken = deviceToken.trim()
+        prefs.edit().putString("url", this.url).putString("anon_key", this.anonKey)
+            .putString("robot_id", this.robotId).putString("device_token", this.deviceToken).apply()
+    }
+
+    fun touch() { lastSyncAt = System.currentTimeMillis(); prefs.edit().putLong("last_sync", lastSyncAt).apply() }
+}
+
+/**
+ * Offline-first sync: grants queue locally and flush when the network allows;
+ * config is pulled on demand. Every failure is silent — the game must never notice.
+ */
+class Sync(ctx: Context, private val settings: SyncSettings) {
+    private val prefs = ctx.getSharedPreferences("sansina_queue", Context.MODE_PRIVATE)
+    var pending by mutableStateOf(SyncCodec.parseQueue(prefs.getString("q", null)).size)
+        private set
+
+    private fun queue() = SyncCodec.parseQueue(prefs.getString("q", null))
+    private fun store(q: List<GrantEvent>) {
+        prefs.edit().putString("q", SyncCodec.encodeQueue(q)).apply()
+        pending = q.size
+    }
+
+    fun enqueue(amount: Int, version: Int) =
+        store(queue() + GrantEvent(UUID.randomUUID().toString(), amount, version, System.currentTimeMillis()))
+
+    /** Posts the whole queue via ingest_grants; drains it on success. */
+    suspend fun flush(): Boolean {
+        if (!settings.configured) return false
+        val q = queue()
+        if (q.isEmpty()) return true
+        val body = JSONObject()
+            .put("p_token", settings.deviceToken)
+            .put("p_events", JSONArray(SyncCodec.encodeEvents(q)))
+        return withContext(Dispatchers.IO) {
+            if (rpc("ingest_grants", body.toString()) != null) { store(emptyList()); settings.touch(); true } else false
+        }
+    }
+
+    /** Latest remote config, or null (not configured / offline / invalid payload). */
+    suspend fun fetchConfig(): Pair<Int, PromoConfig>? {
+        if (!settings.configured) return null
+        val body = JSONObject().put("p_token", settings.deviceToken)
+        return withContext(Dispatchers.IO) {
+            rpc("fetch_config", body.toString())?.let { SyncCodec.parseConfig(it) }?.also { settings.touch() }
+        }
+    }
+
+    private fun rpc(fn: String, body: String): String? = runCatching {
+        val conn = URL("${settings.url}/rest/v1/rpc/$fn").openConnection() as HttpURLConnection
+        try {
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 10_000; conn.readTimeout = 10_000
+            conn.doOutput = true
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("apikey", settings.anonKey)
+            conn.setRequestProperty("Authorization", "Bearer ${settings.anonKey}")
+            conn.outputStream.use { it.write(body.toByteArray()) }
+            if (conn.responseCode !in 200..299) return null
+            conn.inputStream.bufferedReader().readText()
+        } finally { conn.disconnect() }
+    }.getOrNull()
+}
