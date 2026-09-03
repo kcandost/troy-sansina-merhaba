@@ -65,7 +65,9 @@ fun SansinaApp() {
     // kiosk the paired cleaning robot halts; the controller owns the pause-once +
     // sliding-60s-resume logic. The robot address is fixed (RobotPause.BASE_URL).
     val robot = remember { RobotPause.controller(ctx) }
-    val state = remember { GameState(ctx, config) { stats.record(it) } }
+    val state = remember { GameState(ctx, config, counts = { stats.counts }) { stats.record(it) } }
+    // Every promo at its grant cap: the game must not start (brand directive).
+    val exhausted = config.active(stats.counts).isEmpty()
     val voice = remember { Voice(ctx) }
     val scope = rememberCoroutineScope()
     val phase = state.phase
@@ -80,7 +82,7 @@ fun SansinaApp() {
         }
     }
 
-    fun start() { scope.launch { state.startSelection() } }
+    fun start() { if (!exhausted) scope.launch { state.startSelection() } }
     fun pick(i: Int) { scope.launch { state.pick(i) } }
     fun flip() { scope.launch { state.flip() } }
 
@@ -134,6 +136,10 @@ fun SansinaApp() {
                 Phase.RESULT -> ResultScreen(state, theme, onRestart = { state.reset() })
                 else -> StageScreen(state, theme, cardBack, onStart = ::start, onPick = ::pick, onFlip = ::flip)
             }
+        }
+
+        AnimatedVisibility(exhausted && phase == Phase.INVITE, enter = fadeIn(tween(420)), exit = fadeOut(tween(260))) {
+            CampaignEnded(theme)
         }
 
         // Figma: the campaign look carries no top wordmark — frame 5's big logo is part of the

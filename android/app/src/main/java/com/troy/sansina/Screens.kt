@@ -258,6 +258,19 @@ fun InviteText(theme: SansinaTheme, visible: Boolean, onStart: () -> Unit) {
     }
 }
 
+/** Every promo hit its grant cap: hold this static screen until new config arrives. */
+@Composable
+fun CampaignEnded(theme: SansinaTheme) {
+    Column(
+        Modifier.fillMaxSize().background(Color(0xF2FFFFFF)),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
+    ) {
+        Text("Kampanya sona erdi", color = Color(0xFF171614), fontSize = 64.sp, fontWeight = FontWeight.ExtraBold, fontFamily = theme.fontFamily)
+        Spacer(Modifier.height(18.dp))
+        Text("Yeni avantajlar için bizi takip et.", color = Color(0xFF5C5A56), fontSize = 26.sp, fontFamily = theme.fontFamily)
+    }
+}
+
 /**
  * Frame 5, laid out by frame fractions: big white logo lockup at 16.5%,
  * "Bugünkü şansına" (90px) / "merhaba" (140px white, soft shadow) / "demek ister misin?" (60px),

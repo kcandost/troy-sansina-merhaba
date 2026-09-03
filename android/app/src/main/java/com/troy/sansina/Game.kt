@@ -53,6 +53,14 @@ data class PromoConfig(val promos: List<Promo>) {
     /** Promos still grantable given the local counts since the last config change. */
     fun active(counts: Map<Int, Int>) = promos.filter { it.limit == 0 || (counts[it.amount] ?: 0) < it.limit }
 
+    /** Weighted draw over the non-exhausted promos; null when everything hit its limit. */
+    fun draw(counts: Map<Int, Int>, rnd: kotlin.random.Random = kotlin.random.Random): Promo? {
+        val pool = active(counts)
+        if (pool.isEmpty()) return null
+        var r = rnd.nextInt(pool.sumOf { it.weight }.coerceAtLeast(1))
+        return pool.firstOrNull { r -= it.weight; r < 0 } ?: pool.last()
+    }
+
     /** Sorted by amount ascending, each mapped onto the 5-step colour ladder. */
     fun ladder(): List<Pair<Promo, Tier>> {
         val sorted = promos.sortedBy { it.amount }
@@ -160,7 +168,12 @@ object Timing {
     const val SELECT_IDLE = 60_000L        // nobody picked / flipped: back to invite
 }
 
-class GameState(private val ctx: Context, var config: PromoConfig, private val onWin: (Promo) -> Unit) {
+class GameState(
+    private val ctx: Context,
+    var config: PromoConfig,
+    private val counts: () -> Map<Int, Int> = { emptyMap() },
+    private val onWin: (Promo) -> Unit
+) {
     var phase by mutableStateOf(Phase.INVITE)
     var cards by mutableStateOf(deal())
     /** Cards that have entered the selection screen (staggered). */
@@ -188,7 +201,8 @@ class GameState(private val ctx: Context, var config: PromoConfig, private val o
 
     private fun deal(): List<Card> {
         val products = Catalogue.balanced(ctx, CARD_COUNT)
-        val ladder = config.ladder().shuffled()
+        val activeSet = config.active(counts()).toSet()
+        val ladder = config.ladder().filter { it.first in activeSet }.ifEmpty { config.ladder() }.shuffled()
         val promoList = ArrayList<Pair<Promo, Tier>>(CARD_COUNT)
         promoList += ladder.take(CARD_COUNT)
         while (promoList.size < CARD_COUNT) {
@@ -199,11 +213,9 @@ class GameState(private val ctx: Context, var config: PromoConfig, private val o
         return products.mapIndexed { i, p -> Card(p, promoList[i].first, promoList[i].second) }
     }
 
-    /** Weighted draw by the configured percentages. */
-    private fun drawPromo(): Promo {
-        var r = Random.nextInt(config.totalWeight.coerceAtLeast(1))
-        return config.promos.firstOrNull { r -= it.weight; r < 0 } ?: config.promos.last()
-    }
+    /** Weighted draw by the configured percentages, skipping exhausted promos. */
+    private fun drawPromo(): Promo =
+        config.draw(counts()) ?: config.promos.minBy { it.amount }
 
     private suspend fun step(my: Int, ms: Long): Boolean { delay(ms); return my == runId }
 
