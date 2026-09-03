@@ -57,26 +57,48 @@ fun DrawScope.sparkle(center: Offset, r: Float, color: Color) {
     drawPath(p, color)
 }
 
-/** Drawn module grid; placeholder for a scannable QR. */
+// Client QR (brand/reference/figma-assets/qr-plate.svg) — encodes https://appy.to/troy1000.
+private val QrRows = arrayOf(
+    "11111110101011000010101111111",
+    "10000010001011101011001000001",
+    "10111010000010100011101011101",
+    "10111010011001001101101011101",
+    "10111010101110100001101011101",
+    "10000010101101111010001000001",
+    "11111110101010101010101111111",
+    "00000000000001000000000000000",
+    "01111111011001001010100110001",
+    "10111001000110100100001010001",
+    "11100010100001010010111010100",
+    "11001100101001001000011011010",
+    "11001111110110111110110100111",
+    "01010001101100000111111011001",
+    "00110110001011001100110100000",
+    "01011101001001100110010011010",
+    "01101010001100101000010101100",
+    "11000100001111010110101011111",
+    "10111011100010011101001111100",
+    "10001000100101110011101011010",
+    "10111011100101110101111111111",
+    "00000000111010100000100011001",
+    "11111110111000111011101010000",
+    "10000010100011101001100011001",
+    "10111010100100100010111111101",
+    "10111010100110111001110100100",
+    "10111010100010100001111111010",
+    "10000010111110001010010010010",
+    "11111110011000100100010011100",
+)
+
+/** The client's redemption QR, drawn module-for-module from their Figma asset. */
 @Composable
 fun QrGrid(dark: Color, light: Color, modifier: Modifier = Modifier) {
-    val rnd = remember { Random(7) }
-    val bits = remember { Array(21) { BooleanArray(21) { rnd.nextFloat() < 0.45f } } }
     Canvas(modifier.background(light, RoundedCornerShape(12.dp)).padding(10.dp)) {
-        val n = 21
+        val n = QrRows.size
         val m = size.minDimension / n
-        fun finder(ox: Int, oy: Int) {
-            for (y in 0 until 7) for (x in 0 until 7) {
-                val edge = x == 0 || y == 0 || x == 6 || y == 6
-                val core = x in 2..4 && y in 2..4
-                if (edge || core) drawRect(dark, Offset((ox + x) * m, (oy + y) * m), Size(m, m))
-            }
-        }
         for (y in 0 until n) for (x in 0 until n) {
-            val inFinder = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9)
-            if (!inFinder && bits[y][x]) drawRect(dark, Offset(x * m, y * m), Size(m, m))
+            if (QrRows[y][x] == '1') drawRect(dark, Offset(x * m, y * m), Size(m + 0.5f, m + 0.5f))
         }
-        finder(0, 0); finder(n - 7, 0); finder(0, n - 7)
     }
 }
 

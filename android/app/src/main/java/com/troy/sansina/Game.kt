@@ -36,8 +36,8 @@ enum class CardBack(val label: String, val hint: String) {
 /** Colour ladder: material gets richer as value climbs. */
 enum class Tier { ALUMINIUM, BRONZE, SILVER, GOLD, PREMIUM }
 
-/** One promo lever: a discount amount and the share of draws (in %) it should win. */
-data class Promo(val amount: Int, val weight: Int) {
+/** One promo lever: a discount amount, its share of draws (in %), and a grant cap (0 = unlimited). */
+data class Promo(val amount: Int, val weight: Int, val limit: Int = 0) {
     val label: String get() = "%,d".format(amount).replace(',', '.') + " TL"
 }
 
@@ -48,7 +48,10 @@ data class Card(val product: ProductAsset, val promo: Promo, val tier: Tier)
 /** Promo configuration, persisted; weights must sum to 100. */
 data class PromoConfig(val promos: List<Promo>) {
     val totalWeight get() = promos.sumOf { it.weight }
-    val isValid get() = promos.size in MIN_PROMOS..MAX_PROMOS && totalWeight == 100 && promos.all { it.amount > 0 && it.weight >= 0 }
+    val isValid get() = promos.size in MIN_PROMOS..MAX_PROMOS && totalWeight == 100 && promos.all { it.amount > 0 && it.weight >= 0 && it.limit >= 0 }
+
+    /** Promos still grantable given the local counts since the last config change. */
+    fun active(counts: Map<Int, Int>) = promos.filter { it.limit == 0 || (counts[it.amount] ?: 0) < it.limit }
 
     /** Sorted by amount ascending, each mapped onto the 5-step colour ladder. */
     fun ladder(): List<Pair<Promo, Tier>> {
@@ -62,14 +65,17 @@ data class PromoConfig(val promos: List<Promo>) {
 
     fun tierOf(promo: Promo): Tier = ladder().firstOrNull { it.first.amount == promo.amount }?.second ?: Tier.PREMIUM
 
-    fun serialize() = promos.joinToString(";") { "${it.amount},${it.weight}" }
+    fun serialize() = promos.joinToString(";") { "${it.amount},${it.weight},${it.limit}" }
 
     companion object {
         const val MIN_PROMOS = 2
         const val MAX_PROMOS = 6
         val DEFAULT = PromoConfig(listOf(Promo(250, 40), Promo(500, 30), Promo(750, 20), Promo(1000, 10)))
         fun parse(s: String?): PromoConfig = runCatching {
-            PromoConfig(s!!.split(";").map { val (a, w) = it.split(","); Promo(a.toInt(), w.toInt()) })
+            PromoConfig(s!!.split(";").map {
+                val f = it.split(",")
+                Promo(f[0].toInt(), f[1].toInt(), f.getOrNull(2)?.toInt() ?: 0)
+            })
         }.getOrDefault(DEFAULT)
     }
 }
