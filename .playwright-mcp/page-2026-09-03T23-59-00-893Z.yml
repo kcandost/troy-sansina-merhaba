@@ -1,0 +1,13 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - heading "Troy Sansina" [level=1] [ref=e4]
+    - generic [ref=e5]: Filo paneli — giriş
+    - generic [ref=e6]: Supabase adresi
+    - textbox "https://xxxx.supabase.co" [ref=e7]
+    - generic [ref=e8]: Anon anahtarı
+    - textbox "eyJ…" [ref=e9]
+    - generic [ref=e10]: E-posta
+    - textbox [ref=e11]
+    - generic [ref=e12]: Şifre
+    - textbox [ref=e13]
+    - button "Giriş yap" [ref=e15] [cursor=pointer]

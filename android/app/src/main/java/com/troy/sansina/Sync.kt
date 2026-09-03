@@ -101,8 +101,9 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
         pending = q.size
     }
 
+    /** Oldest events drop past 500 so an offline-only install can't grow the queue forever. */
     fun enqueue(amount: Int, version: Int) =
-        store(queue() + GrantEvent(UUID.randomUUID().toString(), amount, version, System.currentTimeMillis()))
+        store((queue() + GrantEvent(UUID.randomUUID().toString(), amount, version, System.currentTimeMillis())).takeLast(500))
 
     /** Posts the whole queue via ingest_grants; drains it on success. */
     suspend fun flush(): Boolean {

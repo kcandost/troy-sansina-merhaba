@@ -22,7 +22,11 @@ The experience is a six-step loop that runs unattended all day:
 5. **Reward** — the winning amount, confetti, and the campaign message
 6. **QR & reset** — a QR code holds for a configurable interval, then the screen returns to the invite
 
-Prize amounts and their odds are fully configurable from a hidden, PIN-protected settings panel (amounts, weighted probabilities, QR dwell time, card-back art, and per-amount win statistics).
+Prize amounts and their odds are fully configurable from a hidden, PIN-protected settings panel (amounts, weighted probabilities, per-coupon count limits, QR dwell time, card-back art, and per-amount win statistics).
+
+## Backend (fleet tracking & remote control)
+
+Each robot reports coupon grants to a small Supabase backend and polls it for coupon settings (amounts, weights, per-robot count limits) every 60 s — pushed from a single-page [dashboard](dashboard/). Limits are enforced from the tablet's local counters, so everything keeps working offline (events queue and flush on reconnect); when every coupon hits its cap the tablet holds a "Kampanya sona erdi" screen until a new config arrives. Unconfigured tablets run fully standalone. Setup: [supabase/README.md](supabase/README.md) · design: [docs/superpowers/specs/2026-09-03-backend-architecture-design.md](docs/superpowers/specs/2026-09-03-backend-architecture-design.md).
 
 ## Robot Pause-on-Touch
 

@@ -262,7 +262,7 @@ fun InviteText(theme: SansinaTheme, visible: Boolean, onStart: () -> Unit) {
 @Composable
 fun CampaignEnded(theme: SansinaTheme) {
     Column(
-        Modifier.fillMaxSize().background(Color(0xF2FFFFFF)),
+        Modifier.fillMaxSize().background(Color(0xFFF6FBFD)),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
     ) {
         Text("Kampanya sona erdi", color = Color(0xFF171614), fontSize = 64.sp, fontWeight = FontWeight.ExtraBold, fontFamily = theme.fontFamily)
