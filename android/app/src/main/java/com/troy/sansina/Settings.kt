@@ -90,6 +90,7 @@ private enum class Category(val label: String, val hint: String) {
     THEME("Tema", "Görünüm ve davranış"),
     PROMO("Promo", "Kollar ve pano"),
     ROBOT("Robot", "Duraklatma ve bağlantı"),
+    SYNC("Bağlantı", "Uzak takip ve yönetim"),
 }
 
 @Composable
@@ -104,6 +105,8 @@ fun SettingsScreen(
     onTheme: (SansinaTheme) -> Unit,
     onConfig: (PromoConfig) -> Unit,
     onClose: () -> Unit,
+    syncSettings: SyncSettings,
+    sync: Sync,
 ) {
     BackHandler(onBack = onClose)
     var category by remember { mutableStateOf(Category.THEME) }
@@ -132,6 +135,7 @@ fun SettingsScreen(
                     Category.THEME -> ThemeCategory(theme, config, idleSeconds, cardBack, onIdleSeconds, onCardBack, onTheme)
                     Category.PROMO -> PromoCategory(config, stats, onConfig)
                     Category.ROBOT -> RobotCategory()
+                    Category.SYNC -> SyncCategory(syncSettings, sync)
                 }
             }
         }
@@ -240,12 +244,14 @@ private fun PromoCategory(config: PromoConfig, stats: PromoStats, onConfig: (Pro
                 Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
                     Text("Tutar (TL)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     Text("Yüzde (%)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    Text("Limit (0=∞)", color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(44.dp))
                 }
                 draft.forEachIndexed { i, p ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         NumberField(p.amount, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(amount = v) } }
                         NumberField(p.weight, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(weight = v) } }
+                        NumberField(p.limit, Modifier.weight(1f)) { v -> draft = draft.toMutableList().also { it[i] = p.copy(limit = v) } }
                         Box(
                             Modifier.size(36.dp).clip(CircleShape).background(if (draft.size > PromoConfig.MIN_PROMOS) Color(0xFFFBE3E0) else Ink50)
                                 .clickable(enabled = draft.size > PromoConfig.MIN_PROMOS) { draft = draft.toMutableList().also { it.removeAt(i) } },
@@ -343,6 +349,69 @@ private fun RobotCategory() {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SyncCategory(settings: SyncSettings, sync: Sync) {
+    var url by remember { mutableStateOf(settings.url) }
+    var anonKey by remember { mutableStateOf(settings.anonKey) }
+    var robotId by remember { mutableStateOf(settings.robotId) }
+    var token by remember { mutableStateOf(settings.deviceToken) }
+    var testResult by remember { mutableStateOf<String?>(null) }
+    var testing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.fillMaxWidth(0.62f)) {
+        Section(
+            "Uzak takip ve yönetim",
+            "Supabase bağlantısı: kupon kullanımları merkeze raporlanır, kupon ayarları merkezden alınır. Boş bırakılırsa cihaz tamamen çevrimdışı çalışır."
+        ) {
+            TextRow("Sunucu adresi (https://…supabase.co)", url) { url = it }
+            TextRow("API anahtarı (anon)", anonKey) { anonKey = it }
+            TextRow("Robot kimliği", robotId) { robotId = it }
+            TextRow("Cihaz anahtarı", token) { token = it }
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                val dirty = url != settings.url || anonKey != settings.anonKey || robotId != settings.robotId || token != settings.deviceToken
+                SmallButton("Kaydet", if (dirty) Blue else Ink200, if (dirty) Color.White else Ink600, enabled = dirty) {
+                    settings.save(url, anonKey, robotId, token); testResult = null
+                }
+                SmallButton(if (testing) "Deneniyor…" else "Bağlantıyı test et", Ink50, Ink, enabled = !testing && settings.configured) {
+                    testing = true; testResult = null
+                    scope.launch {
+                        val cfg = sync.fetchConfig()
+                        testResult = if (cfg != null) "Bağlantı başarılı — sunucudaki ayar sürümü: ${cfg.first}"
+                        else "Bağlantı kurulamadı. Adres, anahtarlar ve ağı kontrol edin."
+                        testing = false
+                    }
+                }
+            }
+            testResult?.let {
+                Text(it, color = if (it.startsWith("Bağlantı başarılı")) Green else Red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
+            }
+            val last = settings.lastSyncAt
+            val lastText = if (last == 0L) "hiç" else android.text.format.DateFormat.format("dd.MM.yyyy HH:mm", last).toString()
+            Text(
+                "Son eşitleme: $lastText · Kuyrukta ${sync.pending} kayıt",
+                color = Ink600, fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TextRow(label: String, value: String, onChange: (String) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 10.dp)) {
+        Text(label, color = Ink600, fontSize = 12.sp, modifier = Modifier.padding(bottom = 4.dp))
+        BasicTextField(
+            value = value,
+            onValueChange = { onChange(it.trim()) },
+            singleLine = true,
+            textStyle = TextStyle(color = Ink, fontSize = 15.sp),
+            decorationBox = { inner ->
+                Box(Modifier.fillMaxWidth().height(44.dp).background(Ink50, RoundedCornerShape(10.dp)).border(1.dp, Ink200, RoundedCornerShape(10.dp)).padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) { inner() }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

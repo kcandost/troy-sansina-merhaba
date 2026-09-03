@@ -46,6 +46,7 @@ private const val KEY_THEME = "theme"
 private const val KEY_PROMOS = "promos"
 private const val KEY_IDLE = "idle_seconds"
 private const val KEY_CARD_BACK = "card_back"
+private const val KEY_CONFIG_VERSION = "config_version"
 
 /** How long the QR screen stays before returning to the invite (spec: 15–20 s). */
 const val DEFAULT_IDLE_SECONDS = 18
@@ -65,11 +66,20 @@ fun SansinaApp() {
     // kiosk the paired cleaning robot halts; the controller owns the pause-once +
     // sliding-60s-resume logic. The robot address is fixed (RobotPause.BASE_URL).
     val robot = remember { RobotPause.controller(ctx) }
-    val state = remember { GameState(ctx, config, counts = { stats.counts }) { stats.record(it) } }
+    val syncSettings = remember { SyncSettings(ctx) }
+    val sync = remember { Sync(ctx, syncSettings) }
+    var configVersion by remember { mutableStateOf(prefs.getInt(KEY_CONFIG_VERSION, 0)) }
+    val scope = rememberCoroutineScope()
+    val state = remember {
+        GameState(ctx, config, counts = { stats.counts }) {
+            stats.record(it)
+            sync.enqueue(it.amount, configVersion)
+            scope.launch { sync.flush() }
+        }
+    }
     // Every promo at its grant cap: the game must not start (brand directive).
     val exhausted = config.active(stats.counts).isEmpty()
     val voice = remember { Voice(ctx) }
-    val scope = rememberCoroutineScope()
     val phase = state.phase
 
     // Robot voice: invite on idle (cooldown inside Voice), win line on the reveal.
@@ -94,6 +104,26 @@ fun SansinaApp() {
             Phase.RESULT -> { delay(Timing.RESULT_QR_DELAY + idleSeconds * 1000L); state.reset() }
             Phase.SELECT, Phase.READY -> { delay(Timing.SELECT_IDLE); state.reset() }
             else -> Unit
+        }
+    }
+
+    // Remote sync: while idling on the invite screen, flush any queued grants and poll
+    // for a newer config every 60 s. A version bump applies the new promos and resets
+    // the local counters (same contract as an on-device config edit).
+    LaunchedEffect(phase, settingsOpen, syncSettings.configured) {
+        if (phase != Phase.INVITE || settingsOpen || !syncSettings.configured) return@LaunchedEffect
+        while (true) {
+            sync.flush()
+            val remote = sync.fetchConfig()
+            if (remote != null && remote.first > configVersion) {
+                val (v, c) = remote
+                configVersion = v
+                config = c
+                prefs.edit().putInt(KEY_CONFIG_VERSION, v).putString(KEY_PROMOS, c.serialize()).apply()
+                stats.reset(c)
+                state.applyConfig(c)
+            }
+            delay(60_000)
         }
     }
 
@@ -165,7 +195,9 @@ fun SansinaApp() {
                     stats.reset(c)
                     state.applyConfig(c)
                 },
-                onClose = { settingsOpen = false }
+                onClose = { settingsOpen = false },
+                syncSettings = syncSettings,
+                sync = sync
             )
         }
     }
