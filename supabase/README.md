@@ -5,7 +5,7 @@ One-time setup (~10 minutes, all in the Supabase web console):
 1. **Create a project** at [supabase.com](https://supabase.com) (free tier is plenty). Note the **Project URL** and the **anon (public) API key** from Project Settings → API.
 2. **Run the migration**: open SQL Editor, paste `migrations/0001_init.sql`, run it.
 3. **Create the dashboard login**: Authentication → Users → Add user (email + password). This is the shared team login for the dashboard. Disable public signups under Authentication → Providers → Email.
-4. **Robots enroll themselves**: the app ships with the project URL + anon key baked in; on first boot a tablet registers its hardware id and appears on the dashboard under "Onay bekleyen cihazlar". Give it a store name and approve — done. (The hidden settings panel → **Bağlantı** still allows manual override, and shows sync status.)
+4. **Robots enroll themselves**: the app ships with the project URL + anon key baked in. On first boot the tablet shows a one-field setup screen ("Cihaz kurulumu") — type the device's name and it registers and appears on the dashboard under that name immediately. Offline installs store the name and enroll automatically once the network returns. Legacy/unnamed registrations still land in the dashboard's "Onay bekleyen cihazlar" approval flow. (The hidden settings panel → **Bağlantı** still allows manual override.)
 6. **Set the first coupon config** from the dashboard (`dashboard/index.html`) — or via SQL:
 
    ```sql

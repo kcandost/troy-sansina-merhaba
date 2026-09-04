@@ -132,8 +132,8 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
      * returned token. A device the dashboard already claimed gets no token re-issue —
      * recovery goes through the dashboard's unclaim action.
      */
-    suspend fun register(deviceId: String, model: String): Boolean {
-        val body = JSONObject().put("p_device_id", deviceId).put("p_model", model)
+    suspend fun register(deviceId: String, model: String, name: String): Boolean {
+        val body = JSONObject().put("p_device_id", deviceId).put("p_model", model).put("p_name", name)
         return withContext(Dispatchers.IO) {
             val resp = rpc("register_device", body.toString()) ?: return@withContext false
             runCatching {

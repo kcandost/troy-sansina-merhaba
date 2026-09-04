@@ -48,6 +48,7 @@ private const val KEY_IDLE = "idle_seconds"
 private const val KEY_CARD_BACK = "card_back"
 private const val KEY_CONFIG_VERSION = "config_version"
 private const val KEY_PAUSED = "paused_amounts"
+private const val KEY_DEVICE_NAME = "device_name"
 
 /** How long the QR screen stays before returning to the invite (spec: 15–20 s). */
 const val DEFAULT_IDLE_SECONDS = 18
@@ -112,12 +113,17 @@ fun SansinaApp() {
         }
     }
 
-    // First boot: self-enroll with the hardware id so the fleet dashboard can trace this
-    // device without anyone typing tokens. Retries hourly until the backend is reachable.
-    LaunchedEffect(Unit) {
+    // First boot: the setup screen collects this device's fleet name; enrollment sends
+    // it with the hardware id so the dashboard shows the device under that name at once.
+    // If the network is down at setup time, the stored name retries hourly.
+    var deviceName by remember { mutableStateOf(prefs.getString(KEY_DEVICE_NAME, "") ?: "") }
+    val deviceId = remember {
+        (android.provider.Settings.Secure.getString(ctx.contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "").lowercase()
+    }
+    LaunchedEffect(deviceName) {
+        if (deviceName.isBlank() || deviceId.isBlank()) return@LaunchedEffect
         while (!syncSettings.configured) {
-            val id = android.provider.Settings.Secure.getString(ctx.contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: return@LaunchedEffect
-            if (sync.register(id.lowercase(), android.os.Build.MODEL)) break
+            if (sync.register(deviceId, android.os.Build.MODEL, deviceName)) break
             delay(3_600_000)
         }
     }
@@ -202,6 +208,14 @@ fun SansinaApp() {
         AnimatedVisibility(gate, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             PinGate(onUnlock = { gate = false; settingsOpen = true; state.reset() }, onCancel = { gate = false })
         }
+        if (deviceName.isBlank() && !syncSettings.configured) {
+            SetupScreen(
+                deviceId = deviceId,
+                onRegister = { n -> sync.register(deviceId, android.os.Build.MODEL, n) },
+                onDone = { n -> prefs.edit().putString(KEY_DEVICE_NAME, n).apply(); deviceName = n }
+            )
+        }
+
         AnimatedVisibility(settingsOpen, enter = fadeIn(tween(200)), exit = fadeOut(tween(160))) {
             SettingsScreen(
                 theme = theme, config = config, stats = stats, idleSeconds = idleSeconds, cardBack = cardBack,

@@ -84,6 +84,60 @@ fun PinGate(onUnlock: () -> Unit, onCancel: () -> Unit) {
     }
 }
 
+/**
+ * First-run setup: the device gets its fleet name at install time and appears on the
+ * dashboard under it. Blocks the game until named; offline installs can defer (the
+ * stored name keeps retrying in the background).
+ */
+@Composable
+fun SetupScreen(deviceId: String, onRegister: suspend (String) -> Boolean, onDone: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var saving by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    Box(Modifier.fillMaxSize().background(Ink50), contentAlignment = Alignment.Center) {
+        Column(
+            Modifier.width(520.dp).background(Color.White, RoundedCornerShape(24.dp)).border(1.dp, Ink200, RoundedCornerShape(24.dp)).padding(32.dp)
+        ) {
+            Text("Cihaz kurulumu", color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Bu tablete bir ad ver; filo panelinde bu adla görünecek.",
+                color = Ink600, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
+            )
+            BasicTextField(
+                value = name,
+                onValueChange = { name = it.take(64) },
+                singleLine = true,
+                textStyle = TextStyle(color = Ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
+                decorationBox = { inner ->
+                    Box(Modifier.fillMaxWidth().height(54.dp).background(Ink50, RoundedCornerShape(12.dp)).border(1.dp, if (name.isBlank()) Ink200 else Blue, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
+                        if (name.isEmpty()) Text("ör. Kadıköy Mağaza", color = Ink600, fontSize = 18.sp)
+                        inner()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (failed) Text(
+                "Sunucuya ulaşılamadı. Yeniden dene veya çevrimdışı devam et — ad kaydedildi, bağlantı gelince otomatik tanıtılır.",
+                color = Red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp)
+            )
+            Row(Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(deviceId, color = Ink600, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                if (failed) SmallButton("Çevrimdışı devam et", Ink50, Ink) { onDone(name.trim()) }
+                val can = name.isNotBlank() && !saving
+                SmallButton(if (saving) "Kaydediliyor…" else "Kaydet ve başla", if (can) Blue else Ink200, if (can) Color.White else Ink600, enabled = can) {
+                    scope.launch {
+                        saving = true
+                        val ok = onRegister(name.trim())
+                        saving = false
+                        if (ok) onDone(name.trim()) else failed = true
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ───────────────────────── Settings page ─────────────────────────
 
 private enum class Category(val label: String, val hint: String) {
