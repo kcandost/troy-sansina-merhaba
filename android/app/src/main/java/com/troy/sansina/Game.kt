@@ -106,6 +106,19 @@ class PromoStats(ctx: Context) {
         counts = config.promos.associate { it.amount to 0 }
     }
 
+    /**
+     * Adopt a config without zeroing counts — used when the FIRST remote config arrives,
+     * so rounds played in the pre-config window still count against local limits.
+     * Amounts absent from the new config are dropped.
+     */
+    fun adopt(config: PromoConfig) {
+        val kept = config.promos.associate { it.amount to (counts[it.amount] ?: 0) }
+        val e = prefs.edit().clear().putString("config", config.serialize())
+        kept.forEach { (a, n) -> if (n > 0) e.putInt("c_$a", n) }
+        e.apply()
+        counts = kept
+    }
+
     fun record(promo: Promo) {
         val n = (counts[promo.amount] ?: 0) + 1
         counts = counts + (promo.amount to n)

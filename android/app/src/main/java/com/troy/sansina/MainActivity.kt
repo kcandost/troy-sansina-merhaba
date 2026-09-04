@@ -141,10 +141,12 @@ fun SansinaApp() {
                 pausedAmounts = remote.paused
                 prefs.edit().putString(KEY_PAUSED, remote.paused.joinToString(",")).apply()
                 if (remote.version > configVersion) {
+                    val firstConfig = configVersion == 0
                     configVersion = remote.version
                     config = remote.config
                     prefs.edit().putInt(KEY_CONFIG_VERSION, remote.version).putString(KEY_PROMOS, remote.config.serialize()).apply()
-                    stats.reset(remote.config)
+                    // The first delivery adopts (keeps pre-config plays); later versions reset.
+                    if (firstConfig) stats.adopt(remote.config) else stats.reset(remote.config)
                     state.applyConfig(remote.config)
                 }
             }
