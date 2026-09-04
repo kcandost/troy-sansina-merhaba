@@ -31,6 +31,13 @@ class PromoConfigTest {
         assertNull(PromoConfig(listOf(Promo(250, 100, 1), Promo(500, 0, 1))).draw(mapOf(250 to 1, 500 to 1), kotlin.random.Random(1)))
     }
 
+    @Test fun activeAndDrawExcludeGloballyPaused() {
+        val c = PromoConfig(listOf(Promo(250, 40, 0), Promo(500, 60, 0)))
+        assertEquals(listOf(Promo(500, 60, 0)), c.active(emptyMap(), setOf(250)))
+        assertEquals(500, c.draw(emptyMap(), kotlin.random.Random(1), setOf(250))!!.amount)
+        assertNull(c.draw(emptyMap(), kotlin.random.Random(1), setOf(250, 500)))
+    }
+
     @Test fun negativeLimitInvalid() {
         assertFalse(PromoConfig(listOf(Promo(250, 40, -1), Promo(500, 60, 0))).isValid)
     }

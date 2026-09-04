@@ -17,7 +17,7 @@ One-time setup (~10 minutes, all in the Supabase web console):
 ## How it works
 
 - Tablets self-enroll on first boot (`register_device`, keyed by hardware ANDROID_ID); an unclaimed device can re-fetch its token after a data wipe, a claimed one cannot (unclaim it via SQL `update robots set claimed=false where id='…'` to recover). They append one row to `grants` per QR shown (queued locally while offline, deduped by `client_uuid`), and poll `fetch_config` every 60s on the invite screen. A higher `version` resets local counters and applies the new promos.
-- `limit` is **per robot**; `0` = unlimited. Tablets enforce limits from their local counters, so they work offline. When every promo is exhausted the tablet shows "Kampanya sona erdi" until a new config version arrives.
+- Quotas come in two layers: `limit` is **per robot** (`0` = unlimited, offline-enforced from local counters), and `global_quotas` holds a **fleet-wide cap** per coupon — when total usage reaches it, `fetch_config` marks the coupon "paused" and every robot stops granting it at its next 60s poll (so a global cap can overshoot by at most ~1 minute of fleet grants; offline robots enforce only their local limits). Tablets enforce limits from their local counters, so they work offline. When every promo is exhausted the tablet shows "Kampanya sona erdi" until a new config version arrives.
 - The anon key alone grants nothing: robots authenticate with their `device_token` inside the RPCs; the dashboard uses the email login.
 - To rotate a leaked token: `update robots set device_token = encode(gen_random_bytes(16),'hex') where id = 'robot-1' returning device_token;` then update the tablet.
 

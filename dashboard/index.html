@@ -13,94 +13,97 @@
     --line: #dde7ee; --ground: #eff6f9; --surface: #ffffff;
     --troy: #4dc0df; --troy-soft: #e2f5fb; --troy-deep: #0e7e9e;
     --ok: #1e7a46; --ok-soft: #e2f3e9; --warn: #b3362b; --warn-soft: #fbe9e6;
-    --radius: 14px;
+    --radius: 12px;
   }
   * { box-sizing: border-box; }
   html { scrollbar-color: #b9cdd8 var(--ground); }
   body {
     margin: 0; background: var(--ground); color: var(--ink);
-    font: 600 15px/1.5 "Nunito", -apple-system, "Segoe UI", sans-serif;
+    font: 600 14px/1.45 "Nunito", -apple-system, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   ::selection { background: var(--troy); color: #fff; }
   :focus-visible { outline: 2.5px solid var(--troy); outline-offset: 2px; border-radius: 6px; }
 
-  /* ── header ── */
-  header {
-    background: var(--surface); border-bottom: 1px solid var(--line);
-    position: sticky; top: 0; z-index: 5;
-  }
-  .head-in {
-    max-width: 1120px; margin: 0 auto; padding: 14px 24px;
-    display: flex; align-items: center; gap: 18px;
-  }
-  .wordmark { height: 26px; width: auto; color: var(--ink); flex: none; }
-  .head-div { width: 1px; height: 28px; background: var(--line); }
-  .head-title { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
-  .head-sub { color: var(--ink-2); font-size: 13px; margin-top: -2px; }
-  .head-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
-  #refreshed { color: var(--ink-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+  header { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .head-in { max-width: 1160px; margin: 0 auto; padding: 10px 22px; display: flex; align-items: center; gap: 14px; }
+  .wordmark { height: 22px; width: auto; color: var(--ink); flex: none; }
+  .head-div { width: 1px; height: 24px; background: var(--line); }
+  .head-title { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
+  .head-sub { color: var(--ink-2); font-size: 12px; margin-top: -2px; }
+  .head-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  #refreshed { color: var(--ink-3); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-  main { max-width: 1120px; margin: 0 auto; padding: 26px 24px 40px; }
+  main { max-width: 1160px; margin: 0 auto; padding: 18px 22px 30px; }
+  .cols { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 960px) { .cols { grid-template-columns: 1fr 1fr; align-items: start; } }
 
-  /* ── cards ── */
   section.card {
-    background: var(--surface); border-radius: var(--radius); padding: 22px 24px;
+    background: var(--surface); border-radius: var(--radius); padding: 16px 18px;
     box-shadow: 0 1px 2px rgba(11,27,51,.05), 0 8px 24px -18px rgba(11,27,51,.25);
-    margin-bottom: 22px;
+    margin-bottom: 14px;
   }
-  .card h2 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
-  .card .sub { color: var(--ink-2); font-size: 13px; font-weight: 600; margin: 2px 0 16px; }
+  .card h2 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+  .card .sub { color: var(--ink-2); font-size: 12px; font-weight: 600; margin: 2px 0 12px; }
 
-  /* ── tables ── */
-  .tablewrap { overflow-x: auto; margin: 0 -8px; }
-  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  .tablewrap { overflow-x: auto; margin: 0 -6px; }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; }
   th {
-    text-align: left; padding: 8px 10px; border-bottom: 1.5px solid var(--line);
-    font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
+    text-align: left; padding: 6px 8px; border-bottom: 1.5px solid var(--line);
+    font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
   }
-  td { padding: 12px 10px; border-bottom: 1px solid #edf3f7; font-variant-numeric: tabular-nums; }
+  td { padding: 8px; border-bottom: 1px solid #edf3f7; font-variant-numeric: tabular-nums; }
   tbody tr { transition: background .12s ease-out; }
   tbody tr:hover { background: #f7fbfd; }
   tfoot td { border-bottom: none; border-top: 1.5px solid var(--line); font-weight: 800; }
   .num { text-align: right; }
   .robot-name { font-weight: 800; }
-  .robot-id { color: var(--ink-3); font-size: 13px; font-weight: 600; }
+  .robot-id { color: var(--ink-3); font-size: 12px; font-weight: 600; }
 
-  .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    border-radius: 999px; padding: 3px 11px 3px 9px; font-size: 13px; font-weight: 800;
-  }
-  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12px; font-weight: 800; }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .on { background: var(--ok-soft); color: var(--ok); }
   .on .dot { animation: pulse 2.2s ease-out infinite; }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(30,122,70,.45); } 70%, 100% { box-shadow: 0 0 0 6px rgba(30,122,70,0); } }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(30,122,70,.45); } 70%, 100% { box-shadow: 0 0 0 5px rgba(30,122,70,0); } }
   .off { background: #eef2f6; color: var(--ink-2); }
   .off .dot { opacity: .5; }
 
   .cap { color: var(--ink-3); font-weight: 600; }
-  .meter { height: 4px; border-radius: 2px; background: #e6eef3; margin-top: 5px; overflow: hidden; }
-  .meter i {
-    display: block; height: 100%; border-radius: 2px; background: var(--troy);
-    transform-origin: left; animation: fill .7s cubic-bezier(.16,1,.3,1) backwards;
-  }
+  .pct { color: var(--ink-2); font-size: 12px; font-weight: 700; }
+  .meter { height: 4px; border-radius: 2px; background: #e6eef3; margin-top: 4px; overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: 2px; background: var(--troy); transform-origin: left; animation: fill .7s cubic-bezier(.16,1,.3,1) backwards; }
   @keyframes fill { from { transform: scaleX(0); } }
-  .full .meter i { background: var(--warn); }
+  .full .meter i, .meter i.hot { background: var(--warn); }
   .full .used { color: var(--warn); font-weight: 800; }
 
-  /* ── forms & buttons ── */
+  /* ── global quota rows ── */
+  .quota-row { display: grid; grid-template-columns: 74px 1fr 96px 84px; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid #edf3f7; }
+  .quota-row:last-of-type { border-bottom: none; }
+  .quota-amt { font-weight: 800; white-space: nowrap; }
+  .quota-bar { height: 18px; border-radius: 9px; background: #e6eef3; overflow: hidden; position: relative; }
+  .quota-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--troy), var(--troy-deep)); border-radius: 9px; transform-origin: left; animation: fill .8s cubic-bezier(.16,1,.3,1) backwards; min-width: 4px; }
+  .quota-bar i.hot { background: linear-gradient(90deg, #d4604f, var(--warn)); }
+  .quota-bar em { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink); text-shadow: 0 0 4px rgba(255,255,255,.8); }
+  .quota-stat { font-size: 12px; text-align: right; white-space: nowrap; }
+  .quota-stat b { font-size: 13px; }
+  .quota-row input { padding: 6px 9px; font-size: 13px; }
+  .quota-head { display: grid; grid-template-columns: 74px 1fr 96px 84px; gap: 12px; padding-bottom: 4px; }
+  .quota-head span { color: var(--ink-3); font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+  .quota-head span:nth-child(3) { text-align: right; }
+  .paused-chip { display: inline-block; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 800; margin-left: 6px; }
+
   input, select {
-    font: inherit; color: var(--ink); padding: 9px 12px; width: 100%;
-    border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface);
+    font: inherit; color: var(--ink); padding: 7px 10px; width: 100%;
+    border: 1.5px solid var(--line); border-radius: 9px; background: var(--surface);
     transition: border-color .12s ease-out;
   }
   input::placeholder { color: var(--ink-3); }
   input:hover, select:hover { border-color: #c2d4de; }
   input:focus, select:focus { outline: none; border-color: var(--troy); box-shadow: 0 0 0 3px var(--troy-soft); }
-  label { display: block; color: var(--ink-2); font-size: 13px; font-weight: 700; margin: 14px 0 5px; }
+  label { display: block; color: var(--ink-2); font-size: 12px; font-weight: 700; margin: 12px 0 4px; }
   button {
     font: inherit; font-weight: 800; cursor: pointer; border: 0; border-radius: 999px;
-    padding: 10px 20px; background: var(--troy-deep); color: #fff;
+    padding: 8px 16px; background: var(--troy-deep); color: #fff;
     transition: filter .12s ease-out, transform .12s ease-out;
   }
   button:hover { filter: brightness(1.08); }
@@ -108,54 +111,50 @@
   button.ghost { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); }
   button.ghost:hover { filter: none; border-color: #c2d4de; background: #f7fbfd; }
   button:disabled { background: #e6eef3; color: var(--ink-3); cursor: default; filter: none; transform: none; }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .msg { font-size: 13px; font-weight: 700; margin-top: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .msg { font-size: 12.5px; font-weight: 700; margin-top: 10px; }
   .err { color: var(--warn); } .ok-t { color: var(--ok); }
 
-  /* ── unclaimed strip ── */
   #pending.card { border: 1.5px solid var(--troy); box-shadow: 0 8px 24px -14px rgba(77,192,223,.5); }
-  .pending-row { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid #edf3f7; flex-wrap: wrap; }
+  .pending-row { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #edf3f7; flex-wrap: wrap; }
   .pending-row:last-child { border-bottom: none; }
-  .pending-meta { flex: 1 1 220px; }
-  .pending-row input { max-width: 240px; }
+  .pending-meta { flex: 1 1 200px; }
+  .pending-row input { max-width: 220px; }
 
-  /* ── config editor ── */
-  .grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 40px; gap: 10px; align-items: center; margin-bottom: 10px; max-width: 560px; }
-  .grid .h { color: var(--ink-3); font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
-  .x { background: none; border: 0; color: var(--warn); font-size: 20px; padding: 4px 8px; border-radius: 8px; }
+  .grid { display: grid; grid-template-columns: 1.1fr 1fr 1fr 36px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .grid .h { color: var(--ink-3); font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+  .x { background: none; border: 0; color: var(--warn); font-size: 18px; padding: 2px 6px; border-radius: 8px; }
   .x:hover { background: var(--warn-soft); filter: none; }
-  #sum { font-weight: 800; font-variant-numeric: tabular-nums; }
+  #sum { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 13px; }
 
-  /* ── login ── */
   #login { max-width: 400px; margin: 9vh auto 0; }
-  #login .wordmark { height: 34px; display: block; margin: 4px auto 2px; }
-  #login .lead { text-align: center; color: var(--ink-2); font-size: 13px; margin-bottom: 8px; }
-  details { margin-top: 16px; }
-  summary { cursor: pointer; color: var(--ink-2); font-size: 13px; font-weight: 700; }
+  #login .wordmark { height: 32px; display: block; margin: 4px auto 2px; }
+  #login .lead { text-align: center; color: var(--ink-2); font-size: 12.5px; margin-bottom: 6px; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; color: var(--ink-2); font-size: 12.5px; font-weight: 700; }
   summary:hover { color: var(--troy-deep); }
 
-  /* ── footer ── */
-  footer { max-width: 1120px; margin: 0 auto; padding: 6px 24px 34px; display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 13px; }
+  footer { max-width: 1160px; margin: 0 auto; padding: 2px 22px 26px; display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 12px; }
   footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; letter-spacing: .01em; }
   footer a:hover { color: var(--troy-deep); }
-  footer .tick { width: 8px; height: 8px; border-radius: 2px; background: var(--troy); flex: none; }
+  footer .tick { width: 7px; height: 7px; border-radius: 2px; background: var(--troy); flex: none; }
 
   @media (max-width: 600px) {
-    .head-in { gap: 12px; padding: 12px 16px; }
+    .head-in { gap: 10px; padding: 10px 14px; }
     .head-title { white-space: nowrap; }
     .head-sub, #refreshed { display: none; }
-    main { padding: 18px 14px 28px; }
-    section.card { padding: 18px 16px; }
+    main { padding: 14px 12px 24px; }
+    section.card { padding: 14px; }
+    .quota-row, .quota-head { grid-template-columns: 64px 1fr 84px 70px; gap: 8px; }
   }
 
-  /* entrance: one authored moment */
   #app > main > *, #app footer { animation: rise .5s cubic-bezier(.16,1,.3,1) backwards; }
   #app > main > *:nth-child(2) { animation-delay: .06s; }
   #app > main > *:nth-child(3) { animation-delay: .12s; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-  .skeleton { color: var(--ink-3); padding: 18px 4px; }
+  .skeleton { color: var(--ink-3); padding: 14px 4px; }
 </style>
 </head>
 <body>
@@ -163,7 +162,7 @@
 <div id="login-wrap">
   <main>
     <section class="card" id="login">
-      <svg class="wordmark" viewBox="0 0.891 60.17 29.61" role="img" aria-label="TROY"><g fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></g></svg>
+      <svg class="wordmark" viewBox="0 0.891 60.17 29.61" role="img" aria-label="TROY"><use href="#troy-wm"/></svg>
       <p class="lead">Şansına Merhaba — filo paneli</p>
       <label for="l-email">E-posta</label><input id="l-email" type="email" autocomplete="username">
       <label for="l-pass">Şifre</label><input id="l-pass" type="password" autocomplete="current-password">
@@ -172,7 +171,7 @@
         <label for="l-url">Supabase adresi</label><input id="l-url">
         <label for="l-key">Anon anahtarı</label><input id="l-key">
       </details>
-      <div style="margin-top:18px"><button id="l-btn" style="width:100%">Giriş yap</button></div>
+      <div style="margin-top:16px"><button id="l-btn" style="width:100%">Giriş yap</button></div>
       <div id="l-msg" class="msg err" role="alert"></div>
     </section>
   </main>
@@ -181,7 +180,7 @@
 <div id="app" hidden>
   <header>
     <div class="head-in">
-      <svg class="wordmark" viewBox="0 0.891 60.17 29.61" role="img" aria-label="TROY"><g fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></g></svg>
+      <svg class="wordmark" viewBox="0 0.891 60.17 29.61" role="img" aria-label="TROY"><use href="#troy-wm"/></svg>
       <div class="head-div"></div>
       <div>
         <div class="head-title">Filo Paneli</div>
@@ -202,23 +201,36 @@
     </section>
 
     <section class="card">
-      <h2>Kullanım</h2>
-      <p class="sub">Robot başına gösterilen kupon adedi. Limitli kuponlarda dolum çubuğu kalan hakkı gösterir.</p>
+      <h2>Kampanya kotası</h2>
+      <p class="sub">Kupon başına filo geneli tavan. Dolan kupon tüm robotlarda 60 saniye içinde duraklatılır; kota 0 = tavansız.</p>
+      <div class="quota-head"><span>Kupon</span><span>Filo kullanımı</span><span>Kullanılan</span><span>Kota</span></div>
+      <div id="quotas" class="skeleton">Yükleniyor…</div>
+      <div class="row" style="margin-top:10px; justify-content:flex-end">
+        <span id="gq-msg" class="msg" style="margin:0" role="status"></span>
+        <button id="save-gq">Kotaları kaydet</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Robot bazında kullanım</h2>
+      <p class="sub">Gösterilen kupon adedi ve robot limiti doluluk oranı.</p>
       <div class="tablewrap"><div id="usage" class="skeleton">Yükleniyor…</div></div>
     </section>
 
     <section class="card">
       <h2>Kupon ayarları</h2>
-      <p class="sub">Tutar, çıkma yüzdesi (toplam %100) ve adet limiti (0 = sınırsız). Kaydettiğinde robotlar 60 saniye içinde alır ve sayaçlarını sıfırlar.</p>
-      <div class="row" style="margin-bottom:16px">
-        <select id="target" style="max-width:280px" aria-label="Hedef robot"></select>
+      <p class="sub">Tutar, çıkma yüzdesi (toplam %100) ve robot başına limit (0 = sınırsız). Kaydet: robotlar 60 saniye içinde alır, sayaçlar sıfırlanır.</p>
+      <div class="row" style="margin-bottom:12px">
+        <select id="target" style="max-width:260px" aria-label="Hedef robot"></select>
         <button class="ghost" id="load-cfg">Ayarları yükle</button>
       </div>
-      <div id="editor"></div>
-      <div class="row" style="margin-top:6px; max-width:560px">
-        <button class="ghost" id="add-row">+ Kupon ekle</button>
-        <span id="sum" style="margin-left:auto"></span>
-        <button id="save-cfg">Kaydet ve gönder</button>
+      <div style="max-width:560px">
+        <div id="editor"></div>
+        <div class="row" style="margin-top:4px">
+          <button class="ghost" id="add-row">+ Kupon ekle</button>
+          <span id="sum" style="margin-left:auto"></span>
+          <button id="save-cfg">Kaydet ve gönder</button>
+        </div>
       </div>
       <div id="cfg-msg" class="msg" role="status"></div>
     </section>
@@ -230,12 +242,14 @@
   </footer>
 </div>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="troy-wm" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></g></defs></svg>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // Project defaults (anon key is public by design; access is gated by auth + RLS).
 const DEFAULT_URL = 'https://pvgzgmhqwffytrnjebkg.supabase.co';
 const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2Z3pnbWhxd2ZmeXRybmplYmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NzMwNjAsImV4cCI6MjEwNDA0OTA2MH0.5Ya86a5XL7-SnCyqt52a_UXyWLx1A0y6pGojFB1FGgU';
-let sb = null, robots = [], rows = [];
+let sb = null, robots = [], rows = [], gq = {};
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('tr-TR');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -271,16 +285,20 @@ async function show() {
 }
 
 async function refresh() {
-  const [r, u, c] = await Promise.all([
+  const [r, u, c, g, q] = await Promise.all([
     sb.from('robots').select('*').order('id'),
     sb.from('usage_view').select('*'),
     sb.from('robot_configs').select('*'),
+    sb.from('global_usage_view').select('*'),
+    sb.from('global_quotas').select('*'),
   ]);
   if (r.error) { $('usage').innerHTML = '<div class="msg err">Veriye ulaşılamadı. Bağlantıyı kontrol edip sayfayı yenile.</div>'; return; }
   const all = r.data;
   robots = all.filter(x => x.claimed);
   renderPending(all.filter(x => !x.claimed));
-  renderUsage(u.data || [], c.data || []);
+  const cfgs = c.data || [];
+  renderQuotas(g.data || [], q.data || [], cfgs);
+  renderUsage(u.data || [], cfgs);
   $('refreshed').textContent = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) + ' itibarıyla';
 
   const t = $('target'), cur = t.value;
@@ -289,6 +307,7 @@ async function refresh() {
 }
 
 const online = t => t && (Date.now() - new Date(t).getTime() < 5 * 60_000);
+const allAmounts = cfgs => [...new Set(cfgs.flatMap(x => x.promos.map(p => p.amount)))].sort((a, b) => a - b);
 
 function renderPending(list) {
   $('pending').hidden = list.length === 0;
@@ -310,9 +329,43 @@ async function claim(id) {
   if (!error) refresh();
 }
 
+// ── global quotas: fleet bar + % per coupon, inline quota editor ──
+function renderQuotas(globalUsage, quotas, cfgs) {
+  const amounts = [...new Set([...allAmounts(cfgs), ...quotas.map(x => x.amount)])].sort((a, b) => a - b);
+  if (amounts.length === 0) { $('quotas').innerHTML = '<div class="skeleton">Önce bir kupon ayarı gönder.</div>'; return; }
+  gq = Object.fromEntries(amounts.map(a => [a, quotas.find(x => x.amount === a)?.quota || 0]));
+  const used = a => globalUsage.find(x => x.amount === a)?.used || 0;
+  $('quotas').classList.remove('skeleton');
+  $('quotas').innerHTML = amounts.map(a => {
+    const n = used(a), k = gq[a];
+    const pct = k > 0 ? Math.min(100, Math.round(n / k * 100)) : null;
+    const bar = k > 0
+      ? `<div class="quota-bar"><i class="${n >= k ? 'hot' : ''}" style="width:${Math.max(3, pct)}%"></i><em>%${pct}</em></div>`
+      : `<div class="quota-bar"><em style="color:var(--ink-3)">kota yok</em></div>`;
+    const stat = k > 0
+      ? `<b class="${n >= k ? 'err' : ''}">${n}</b><span class="cap"> / ${k}</span>${n >= k ? '<span class="paused-chip">durduruldu</span>' : ''}`
+      : `<b>${n}</b>`;
+    return `<div class="quota-row">
+      <span class="quota-amt">${fmt(a)} TL</span>
+      ${bar}
+      <span class="quota-stat">${stat}</span>
+      <input type="number" min="0" value="${k}" aria-label="${fmt(a)} TL kotası" onchange="gq[${a}]=Math.max(0,+this.value)">
+    </div>`;
+  }).join('');
+}
+
+$('save-gq').onclick = async () => {
+  const payload = Object.entries(gq).map(([amount, quota]) => ({ amount: +amount, quota }));
+  const { error } = await sb.rpc('save_global_quotas', { p_quotas: payload });
+  $('gq-msg').textContent = error ? 'Kaydedilemedi: ' + error.message : 'Kotalar güncellendi. Dolan kuponlar 60 saniye içinde durur.';
+  $('gq-msg').className = 'msg ' + (error ? 'err' : 'ok-t');
+  if (!error) refresh();
+};
+
+// ── per-robot usage table ──
 function renderUsage(usage, cfgs) {
   if (robots.length === 0) { $('usage').innerHTML = '<div class="skeleton">Henüz onaylı robot yok. Bir tablet açıldığında yukarıda belirecek.</div>'; return; }
-  const amounts = [...new Set(cfgs.flatMap(x => x.promos.map(p => p.amount)))].sort((a, b) => a - b);
+  const amounts = allAmounts(cfgs);
   const used = (rid, a) => usage.find(x => x.robot_id === rid && x.amount === a)?.used || 0;
   const lim = (rid, a) => cfgs.find(x => x.robot_id === rid)?.promos.find(p => p.amount === a)?.limit ?? null;
 
@@ -328,8 +381,8 @@ function renderUsage(usage, cfgs) {
     amounts.forEach(a => {
       const n = used(r.id, a), l = lim(r.id, a); sum += n; totals[a] += n;
       if (l) {
-        const pct = Math.min(100, n / l * 100);
-        h += `<td class="num ${n >= l ? 'full' : ''}"><span class="used">${n}</span><span class="cap"> / ${l}</span><div class="meter"><i style="width:${pct}%"></i></div></td>`;
+        const pct = Math.min(100, Math.round(n / l * 100));
+        h += `<td class="num ${n >= l ? 'full' : ''}"><span class="used">${n}</span><span class="cap"> / ${l}</span> <span class="pct">%${pct}</span><div class="meter"><i style="width:${pct}%"></i></div></td>`;
       } else {
         h += `<td class="num">${n}</td>`;
       }
@@ -345,7 +398,7 @@ function renderUsage(usage, cfgs) {
 
 // ── config editor ──
 function renderEditor() {
-  let h = '<div class="grid"><span class="h">Tutar (TL)</span><span class="h">Yüzde (%)</span><span class="h">Limit (0=sınırsız)</span><span></span></div>';
+  let h = '<div class="grid"><span class="h">Tutar (TL)</span><span class="h">Yüzde (%)</span><span class="h">Robot limiti</span><span></span></div>';
   rows.forEach((p, i) => {
     h += `<div class="grid">
       <input type="number" value="${p.amount}" min="1" aria-label="Tutar" onchange="rows[${i}].amount=+this.value;sum()">

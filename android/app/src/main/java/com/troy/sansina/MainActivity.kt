@@ -47,6 +47,7 @@ private const val KEY_PROMOS = "promos"
 private const val KEY_IDLE = "idle_seconds"
 private const val KEY_CARD_BACK = "card_back"
 private const val KEY_CONFIG_VERSION = "config_version"
+private const val KEY_PAUSED = "paused_amounts"
 
 /** How long the QR screen stays before returning to the invite (spec: 15–20 s). */
 const val DEFAULT_IDLE_SECONDS = 18
@@ -69,16 +70,20 @@ fun SansinaApp() {
     val syncSettings = remember { SyncSettings(ctx) }
     val sync = remember { Sync(ctx, syncSettings) }
     var configVersion by remember { mutableStateOf(prefs.getInt(KEY_CONFIG_VERSION, 0)) }
+    // Amounts paused by the fleet-wide quota (server-arbitrated, refreshed on every poll).
+    var pausedAmounts by remember {
+        mutableStateOf(prefs.getString(KEY_PAUSED, "")!!.split(",").mapNotNull { it.toIntOrNull() }.toSet())
+    }
     val scope = rememberCoroutineScope()
     val state = remember {
-        GameState(ctx, config, counts = { stats.counts }) {
+        GameState(ctx, config, counts = { stats.counts }, paused = { pausedAmounts }) {
             stats.record(it)
             sync.enqueue(it.amount, configVersion)
             scope.launch { sync.flush() }
         }
     }
-    // Every promo at its grant cap: the game must not start (brand directive).
-    val exhausted = config.active(stats.counts).isEmpty()
+    // Every promo at its cap (local limit or fleet quota): the game must not start.
+    val exhausted = config.active(stats.counts, pausedAmounts).isEmpty()
     val voice = remember { Voice(ctx) }
     val phase = state.phase
 
@@ -125,13 +130,17 @@ fun SansinaApp() {
         while (true) {
             sync.flush()
             val remote = sync.fetchConfig()
-            if (remote != null && remote.first > configVersion) {
-                val (v, c) = remote
-                configVersion = v
-                config = c
-                prefs.edit().putInt(KEY_CONFIG_VERSION, v).putString(KEY_PROMOS, c.serialize()).apply()
-                stats.reset(c)
-                state.applyConfig(c)
+            if (remote != null) {
+                // Fleet-quota pauses apply on every poll, without touching local counters.
+                pausedAmounts = remote.paused
+                prefs.edit().putString(KEY_PAUSED, remote.paused.joinToString(",")).apply()
+                if (remote.version > configVersion) {
+                    configVersion = remote.version
+                    config = remote.config
+                    prefs.edit().putInt(KEY_CONFIG_VERSION, remote.version).putString(KEY_PROMOS, remote.config.serialize()).apply()
+                    stats.reset(remote.config)
+                    state.applyConfig(remote.config)
+                }
             }
             delay(60_000)
         }

@@ -379,7 +379,7 @@ private fun SyncCategory(settings: SyncSettings, sync: Sync) {
                     testing = true; testResult = null
                     scope.launch {
                         val cfg = sync.fetchConfig()
-                        testResult = if (cfg != null) "Bağlantı başarılı — sunucudaki ayar sürümü: ${cfg.first}"
+                        testResult = if (cfg != null) "Bağlantı başarılı — sunucudaki ayar sürümü: ${cfg.version}"
                         else "Bağlantı kurulamadı. Adres, anahtarlar ve ağı kontrol edin."
                         testing = false
                     }

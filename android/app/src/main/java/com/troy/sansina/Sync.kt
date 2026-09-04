@@ -19,6 +19,9 @@ import java.util.UUID
 /** One QR shown, waiting to be reported to the backend. */
 data class GrantEvent(val uuid: String, val amount: Int, val version: Int, val atMs: Long)
 
+/** fetch_config payload: the robot's config plus the amounts paused by the fleet-wide quota. */
+data class RemoteConfig(val version: Int, val config: PromoConfig, val paused: Set<Int>)
+
 /** Pure JSON encoding/decoding for the sync layer; kept side-effect free for unit tests. */
 object SyncCodec {
     private fun iso(ms: Long): String =
@@ -49,15 +52,17 @@ object SyncCodec {
         }
     }.getOrDefault(emptyList())
 
-    /** fetch_config response → (version, config); null unless the config is present and valid. */
-    fun parseConfig(json: String): Pair<Int, PromoConfig>? = runCatching {
+    /** fetch_config response; null unless the config is present and valid. */
+    fun parseConfig(json: String): RemoteConfig? = runCatching {
         val o = JSONObject(json)
         val arr = o.getJSONArray("promos")
         val config = PromoConfig((0 until arr.length()).map { i ->
             val p = arr.getJSONObject(i)
             Promo(p.getInt("amount"), p.getInt("weight"), p.optInt("limit", 0))
         })
-        if (config.isValid) o.getInt("version") to config else null
+        val pausedArr = o.optJSONArray("paused")
+        val paused = pausedArr?.let { (0 until it.length()).map { i -> it.getInt(i) }.toSet() } ?: emptySet()
+        if (config.isValid) RemoteConfig(o.getInt("version"), config, paused) else null
     }.getOrNull()
 }
 
@@ -143,7 +148,7 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
     }
 
     /** Latest remote config, or null (not configured / offline / invalid payload). */
-    suspend fun fetchConfig(): Pair<Int, PromoConfig>? {
+    suspend fun fetchConfig(): RemoteConfig? {
         if (!settings.configured) return null
         val body = JSONObject().put("p_token", settings.deviceToken)
         return withContext(Dispatchers.IO) {

@@ -50,12 +50,13 @@ data class PromoConfig(val promos: List<Promo>) {
     val totalWeight get() = promos.sumOf { it.weight }
     val isValid get() = promos.size in MIN_PROMOS..MAX_PROMOS && totalWeight == 100 && promos.all { it.amount > 0 && it.weight >= 0 && it.limit >= 0 }
 
-    /** Promos still grantable given the local counts since the last config change. */
-    fun active(counts: Map<Int, Int>) = promos.filter { it.limit == 0 || (counts[it.amount] ?: 0) < it.limit }
+    /** Promos still grantable: under their local limit and not paused by the fleet-wide quota. */
+    fun active(counts: Map<Int, Int>, paused: Set<Int> = emptySet()) =
+        promos.filter { it.amount !in paused && (it.limit == 0 || (counts[it.amount] ?: 0) < it.limit) }
 
     /** Weighted draw over the non-exhausted promos; null when everything hit its limit. */
-    fun draw(counts: Map<Int, Int>, rnd: kotlin.random.Random = kotlin.random.Random): Promo? {
-        val pool = active(counts)
+    fun draw(counts: Map<Int, Int>, rnd: kotlin.random.Random = kotlin.random.Random, paused: Set<Int> = emptySet()): Promo? {
+        val pool = active(counts, paused)
         if (pool.isEmpty()) return null
         var r = rnd.nextInt(pool.sumOf { it.weight }.coerceAtLeast(1))
         return pool.firstOrNull { r -= it.weight; r < 0 } ?: pool.last()
@@ -172,6 +173,7 @@ class GameState(
     private val ctx: Context,
     var config: PromoConfig,
     private val counts: () -> Map<Int, Int> = { emptyMap() },
+    private val paused: () -> Set<Int> = { emptySet() },
     private val onWin: (Promo) -> Unit
 ) {
     var phase by mutableStateOf(Phase.INVITE)
@@ -201,7 +203,7 @@ class GameState(
 
     private fun deal(): List<Card> {
         val products = Catalogue.balanced(ctx, CARD_COUNT)
-        val activeSet = config.active(counts()).toSet()
+        val activeSet = config.active(counts(), paused()).toSet()
         val ladder = config.ladder().filter { it.first in activeSet }.ifEmpty { config.ladder() }.shuffled()
         val promoList = ArrayList<Pair<Promo, Tier>>(CARD_COUNT)
         promoList += ladder.take(CARD_COUNT)
@@ -215,7 +217,7 @@ class GameState(
 
     /** Weighted draw by the configured percentages, skipping exhausted promos. */
     private fun drawPromo(): Promo =
-        config.draw(counts()) ?: config.promos.minBy { it.amount }
+        config.draw(counts(), paused = paused()) ?: config.promos.minBy { it.amount }
 
     private suspend fun step(my: Int, ms: Long): Boolean { delay(ms); return my == runId }
 

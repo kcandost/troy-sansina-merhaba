@@ -22,12 +22,20 @@ class SyncTest {
     }
 
     @Test fun parseConfigValid() {
-        val (v, c) = SyncCodec.parseConfig(
-            """{"version":7,"promos":[{"amount":250,"weight":40,"limit":5},{"amount":500,"weight":60,"limit":0}]}"""
+        val r = SyncCodec.parseConfig(
+            """{"version":7,"promos":[{"amount":250,"weight":40,"limit":5},{"amount":500,"weight":60,"limit":0}],"paused":[500]}"""
         )!!
-        assertEquals(7, v)
-        assertTrue(c.isValid)
-        assertEquals(5, c.promos[0].limit)
+        assertEquals(7, r.version)
+        assertTrue(r.config.isValid)
+        assertEquals(5, r.config.promos[0].limit)
+        assertEquals(setOf(500), r.paused)
+    }
+
+    @Test fun parseConfigDefaultsPausedEmpty() {
+        val r = SyncCodec.parseConfig(
+            """{"version":1,"promos":[{"amount":250,"weight":40,"limit":0},{"amount":500,"weight":60,"limit":0}]}"""
+        )!!
+        assertEquals(emptySet<Int>(), r.paused)
     }
 
     @Test fun parseConfigRejectsInvalid() {
