@@ -242,11 +242,11 @@ curl -X POST -H "Content-Type: application/json" -H "Content-Length: 0" http://1
   </tr>
   <tr>
     <td><b>Robot bazında kullanım</b></td>
-    <td>Her robotun kupon bazında kaç QR gösterdiği, robot limiti doluluk yüzdesi ve çevrimiçi durumu. Sayfa 30 saniyede bir kendini yeniler; bir oyun oynandıktan en geç yarım dakika sonra tabloya yansır. <div class="sub">"Çevrimiçi" rozeti son 5 dakika içinde bağlantı kuran robotları gösterir; çevrimdışı robotlarda son görülme zamanı yazar.</div></td>
+    <td>Her robotun kayıt anından bu yana kupon bazında kaç QR gösterdiği (toplam sayı ayar değişse de sıfırlanmaz), geçerli dönemin robot limiti doluluk yüzdesi ve çevrimiçi durumu. Sayfa 30 saniyede bir kendini yeniler; bir oyun oynandıktan en geç yarım dakika sonra tabloya yansır. <div class="sub">"Çevrimiçi" rozeti son 5 dakika içinde bağlantı kuran robotları gösterir; tabletler açık olduğu sürece 5 dakikada bir sinyal gönderir, kapalı cihazlarda son görülme zamanı yazar.</div></td>
   </tr>
   <tr>
     <td><b>Kupon ayarları</b></td>
-    <td>Tutarlar, çıkma yüzdeleri ve <b>robot başına</b> adet limitleri buradan düzenlenir; tek bir robota veya "Tüm robotlar"a gönderilebilir. <div class="sub">"Kaydet ve gönder" sonrası robotlar yeni ayarı 60 saniye içinde alır ve sayaçlarını sıfırlar (marka yönergesi değişikliği = yeni sayım dönemi).</div></td>
+    <td>Tutarlar, çıkma yüzdeleri ve <b>robot başına</b> adet limitleri buradan düzenlenir; tek bir robota veya "Tüm robotlar"a gönderilebilir. <div class="sub">"Kaydet ve gönder" sonrası robotlar yeni ayarı 60 saniye içinde alır ve limit sayaçlarını sıfırlar (marka yönergesi değişikliği = yeni sayım dönemi); panodaki toplam gösterim sayıları korunur.</div></td>
   </tr>
   <tr>
     <td><b>Onay bekleyen cihazlar</b></td>

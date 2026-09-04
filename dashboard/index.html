@@ -213,13 +213,13 @@
 
     <section class="card">
       <h2>Robot bazında kullanım</h2>
-      <p class="sub">Gösterilen kupon adedi ve robot limiti doluluk oranı.</p>
+      <p class="sub">Kayıt anından bu yana gösterilen toplam kupon adedi. Çubuk, geçerli ayar dönemindeki robot limiti doluluğunu gösterir.</p>
       <div class="tablewrap"><div id="usage" class="skeleton">Yükleniyor…</div></div>
     </section>
 
     <section class="card">
       <h2>Kupon ayarları</h2>
-      <p class="sub">Tutar, çıkma yüzdesi (toplam %100) ve robot başına limit (0 = sınırsız). Kaydet: robotlar 60 saniye içinde alır, sayaçlar sıfırlanır.</p>
+      <p class="sub">Tutar, çıkma yüzdesi (toplam %100) ve robot başına limit (0 = sınırsız). Kaydet: robotlar 60 saniye içinde alır; limit sayaçları sıfırlanır, toplam gösterim sayıları korunur.</p>
       <div class="row" style="margin-bottom:12px">
         <select id="target" style="max-width:260px" aria-label="Hedef robot"></select>
         <button class="ghost" id="load-cfg">Ayarları yükle</button>
@@ -288,9 +288,10 @@ async function show() {
 }
 
 async function refresh() {
-  const [r, u, c, g, q] = await Promise.all([
+  const [r, u, lt, c, g, q] = await Promise.all([
     sb.from('robots').select('*').order('id'),
     sb.from('usage_view').select('*'),
+    sb.from('lifetime_usage_view').select('*'),
     sb.from('robot_configs').select('*'),
     sb.from('global_usage_view').select('*'),
     sb.from('global_quotas').select('*'),
@@ -301,7 +302,7 @@ async function refresh() {
   renderPending(all.filter(x => !x.claimed));
   const cfgs = c.data || [];
   renderQuotas(g.data || [], q.data || [], cfgs);
-  renderUsage(u.data || [], cfgs);
+  renderUsage(u.data || [], lt.data || [], cfgs);
   $('refreshed').textContent = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) + ' itibarıyla';
 
   const t = $('target'), cur = t.value;
@@ -365,11 +366,12 @@ $('save-gq').onclick = async () => {
   if (!error) refresh();
 };
 
-// ── per-robot usage table ──
-function renderUsage(usage, cfgs) {
+// ── per-robot usage table: lifetime totals, with the current-period limit meter beneath ──
+function renderUsage(usage, lifetime, cfgs) {
   if (robots.length === 0) { $('usage').innerHTML = '<div class="skeleton">Henüz onaylı robot yok. Bir tablet açıldığında yukarıda belirecek.</div>'; return; }
-  const amounts = allAmounts(cfgs);
+  const amounts = [...new Set([...allAmounts(cfgs), ...lifetime.map(x => x.amount)])].sort((a, b) => a - b);
   const used = (rid, a) => usage.find(x => x.robot_id === rid && x.amount === a)?.used || 0;
+  const life = (rid, a) => lifetime.find(x => x.robot_id === rid && x.amount === a)?.used || 0;
   const lim = (rid, a) => cfgs.find(x => x.robot_id === rid)?.promos.find(p => p.amount === a)?.limit ?? null;
 
   let h = '<table><thead><tr><th>Robot</th><th>Durum</th>';
@@ -382,12 +384,12 @@ function renderUsage(usage, cfgs) {
     h += `<tr><td><div class="robot-name">${esc(r.name)}</div><div class="robot-id">${esc(r.model || r.id)}</div></td>` +
          `<td><span class="badge ${on ? 'on' : 'off'}"><span class="dot"></span>${on ? 'Çevrimiçi' : (r.last_seen_at ? new Date(r.last_seen_at).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Hiç bağlanmadı')}</span></td>`;
     amounts.forEach(a => {
-      const n = used(r.id, a), l = lim(r.id, a); sum += n; totals[a] += n;
+      const t = life(r.id, a), n = used(r.id, a), l = lim(r.id, a); sum += t; totals[a] += t;
       if (l) {
         const pct = Math.min(100, Math.round(n / l * 100));
-        h += `<td class="num ${n >= l ? 'full' : ''}"><span class="used">${n}</span><span class="cap"> / ${l}</span> <span class="pct">%${pct}</span><div class="meter"><i style="width:${pct}%"></i></div></td>`;
+        h += `<td class="num ${n >= l ? 'full' : ''}"><span class="used">${t}</span> <span class="cap">dönem ${n}/${l}</span> <span class="pct">%${pct}</span><div class="meter"><i style="width:${pct}%"></i></div></td>`;
       } else {
-        h += `<td class="num">${n}</td>`;
+        h += `<td class="num">${t}</td>`;
       }
     });
     h += `<td class="num" style="font-weight:800">${sum}</td></tr>`;
@@ -439,7 +441,7 @@ $('save-cfg').onclick = async () => {
     const { error } = await sb.rpc('save_config', { p_robot: id, p_promos: rows });
     if (error) { $('cfg-msg').textContent = `${id}: kaydedilemedi — ${error.message}`; $('cfg-msg').className = 'msg err'; return; }
   }
-  $('cfg-msg').textContent = `Gönderildi (${targets.length} robot). Robotlar 60 saniye içinde alır; sayaçlar sıfırlanır.`;
+  $('cfg-msg').textContent = `Gönderildi (${targets.length} robot). Robotlar 60 saniye içinde alır; limit sayaçları sıfırlanır, toplam gösterimler korunur.`;
   $('cfg-msg').className = 'msg ok-t';
   refresh();
 };

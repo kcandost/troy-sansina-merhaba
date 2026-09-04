@@ -128,6 +128,17 @@ fun SansinaApp() {
         }
     }
 
+    // Liveness heartbeat: every 5 minutes, in every phase — the sync loop below stops
+    // during gameplay/settings, so without this a busy tablet looks offline on the
+    // dashboard (whose online window is exactly 5 minutes of last_seen_at).
+    LaunchedEffect(syncSettings.configured) {
+        if (!syncSettings.configured) return@LaunchedEffect
+        while (true) {
+            sync.heartbeat()
+            delay(300_000)
+        }
+    }
+
     // Remote sync: while idling on the invite screen, flush any queued grants and poll
     // for a newer config every 60 s. A version bump applies the new promos and resets
     // the local counters (same contract as an on-device config edit).

@@ -147,6 +147,13 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
         }
     }
 
+    /** Liveness ping so the dashboard can tell a powered-off tablet from an idle one. */
+    suspend fun heartbeat(): Boolean {
+        if (!settings.configured) return false
+        val body = JSONObject().put("p_token", settings.deviceToken)
+        return withContext(Dispatchers.IO) { rpc("device_heartbeat", body.toString()) != null }
+    }
+
     /** Latest remote config, or null (not configured / offline / invalid payload). */
     suspend fun fetchConfig(): RemoteConfig? {
         if (!settings.configured) return null
