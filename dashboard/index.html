@@ -164,7 +164,7 @@
     <section class="card" id="login">
       <svg class="wordmark" viewBox="0 0.891 60.17 29.61" role="img" aria-label="TROY"><use href="#troy-wm"/></svg>
       <p class="lead">Şansına Merhaba — filo paneli</p>
-      <label for="l-email">E-posta</label><input id="l-email" type="email" autocomplete="username">
+      <label for="l-email">Kullanıcı adı</label><input id="l-email" autocomplete="username" placeholder="troy_admin">
       <label for="l-pass">Şifre</label><input id="l-pass" type="password" autocomplete="current-password">
       <details>
         <summary>Sunucu ayarları</summary>
@@ -270,8 +270,11 @@ $('l-btn').onclick = async () => {
   const url = $('l-url').value.trim().replace(/\/$/, ''), key = $('l-key').value.trim();
   try { localStorage.setItem('sb_url', url); localStorage.setItem('sb_key', key); } catch (e) {}
   sb = supabase.createClient(url, key);
-  const { error } = await sb.auth.signInWithPassword({ email: $('l-email').value.trim(), password: $('l-pass').value });
-  if (error) { $('l-msg').textContent = 'Giriş yapılamadı. E-posta veya şifre hatalı.'; return; }
+  // Usernames map to internal addresses; a full e-mail is also accepted.
+  const u = $('l-email').value.trim();
+  const email = u.includes('@') ? u : u + '@rozylabs.com';
+  const { error } = await sb.auth.signInWithPassword({ email, password: $('l-pass').value });
+  if (error) { $('l-msg').textContent = 'Giriş yapılamadı. Kullanıcı adı veya şifre hatalı.'; return; }
   show();
 };
 $('l-pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('l-btn').click(); });
