@@ -61,12 +61,16 @@ object SyncCodec {
     }.getOrNull()
 }
 
+/** Fleet backend baked into the build so fresh installs can self-enroll; the anon key is public by design. */
+const val FLEET_URL = "https://pvgzgmhqwffytrnjebkg.supabase.co"
+const val FLEET_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2Z3pnbWhxd2ZmeXRybmplYmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NzMwNjAsImV4cCI6MjEwNDA0OTA2MH0.5Ya86a5XL7-SnCyqt52a_UXyWLx1A0y6pGojFB1FGgU"
+
 /** Backend connection settings, edited from the hidden settings panel. */
 class SyncSettings(ctx: Context) {
     private val prefs = ctx.getSharedPreferences("sansina_sync", Context.MODE_PRIVATE)
-    var url by mutableStateOf(prefs.getString("url", "") ?: "")
+    var url by mutableStateOf(prefs.getString("url", "")?.ifBlank { FLEET_URL } ?: FLEET_URL)
         private set
-    var anonKey by mutableStateOf(prefs.getString("anon_key", "") ?: "")
+    var anonKey by mutableStateOf(prefs.getString("anon_key", "")?.ifBlank { FLEET_ANON_KEY } ?: FLEET_ANON_KEY)
         private set
     var robotId by mutableStateOf(prefs.getString("robot_id", "") ?: "")
         private set
@@ -115,6 +119,26 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
             .put("p_events", JSONArray(SyncCodec.encodeEvents(q)))
         return withContext(Dispatchers.IO) {
             if (rpc("ingest_grants", body.toString()) != null) { store(emptyList()); settings.touch(); true } else false
+        }
+    }
+
+    /**
+     * First-boot self-enrollment: registers this device's hardware id and stores the
+     * returned token. A device the dashboard already claimed gets no token re-issue —
+     * recovery goes through the dashboard's unclaim action.
+     */
+    suspend fun register(deviceId: String, model: String): Boolean {
+        val body = JSONObject().put("p_device_id", deviceId).put("p_model", model)
+        return withContext(Dispatchers.IO) {
+            val resp = rpc("register_device", body.toString()) ?: return@withContext false
+            runCatching {
+                val o = JSONObject(resp)
+                val token = o.optString("device_token", "")
+                if (token.isBlank()) return@runCatching false
+                settings.save(settings.url, settings.anonKey, o.getString("robot_id"), token)
+                settings.touch()
+                true
+            }.getOrDefault(false)
         }
     }
 

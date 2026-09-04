@@ -107,6 +107,16 @@ fun SansinaApp() {
         }
     }
 
+    // First boot: self-enroll with the hardware id so the fleet dashboard can trace this
+    // device without anyone typing tokens. Retries hourly until the backend is reachable.
+    LaunchedEffect(Unit) {
+        while (!syncSettings.configured) {
+            val id = android.provider.Settings.Secure.getString(ctx.contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: return@LaunchedEffect
+            if (sync.register(id.lowercase(), android.os.Build.MODEL)) break
+            delay(3_600_000)
+        }
+    }
+
     // Remote sync: while idling on the invite screen, flush any queued grants and poll
     // for a newer config every 60 s. A version bump applies the new promos and resets
     // the local counters (same contract as an on-device config edit).
