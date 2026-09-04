@@ -86,6 +86,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// Project defaults (anon key is public by design; access is gated by auth + RLS).
+const DEFAULT_URL = 'https://pvgzgmhqwffytrnjebkg.supabase.co';
+const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2Z3pnbWhxd2ZmeXRybmplYmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NzMwNjAsImV4cCI6MjEwNDA0OTA2MH0.5Ya86a5XL7-SnCyqt52a_UXyWLx1A0y6pGojFB1FGgU';
 let sb = null, robots = [], rows = [];
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('tr-TR');
@@ -97,7 +100,7 @@ function client() {
 }
 
 async function init() {
-  try { $('l-url').value = localStorage.getItem('sb_url') || ''; $('l-key').value = localStorage.getItem('sb_key') || ''; } catch (e) {}
+  try { $('l-url').value = localStorage.getItem('sb_url') || DEFAULT_URL; $('l-key').value = localStorage.getItem('sb_key') || DEFAULT_KEY; } catch (e) { $('l-url').value = DEFAULT_URL; $('l-key').value = DEFAULT_KEY; }
   sb = client();
   if (sb && (await sb.auth.getSession()).data.session) return show();
 }

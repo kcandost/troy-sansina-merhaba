@@ -11,7 +11,7 @@ create table robots (
 -- promos: [{"amount":250,"weight":40,"limit":0}] — weights sum to 100, 2..6 entries, limit 0 = unlimited.
 create or replace function check_promos(p jsonb)
 returns boolean
-language sql immutable
+language sql immutable set search_path = ''
 as $$
   select jsonb_typeof(p) = 'array'
      and jsonb_array_length(p) between 2 and 6
@@ -55,7 +55,7 @@ alter table grants enable row level security;
 
 create policy dashboard_read_robots on robots for select to authenticated using (true);
 create policy dashboard_write_robots on robots for insert to authenticated with check (true);
-create policy dashboard_update_robots on robots for update to authenticated using (true);
+create policy dashboard_update_robots on robots for update to authenticated using (true) with check (true);
 create policy dashboard_read_configs on robot_configs for select to authenticated using (true);
 create policy dashboard_read_grants on grants for select to authenticated using (true);
 -- Config writes go through save_config() so the version bump can't be forgotten.

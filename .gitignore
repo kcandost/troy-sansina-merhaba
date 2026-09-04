@@ -12,3 +12,4 @@ android/.idea/
 
 # raw scraped product image dump (~700MB) — curated set lives in brand/products_selection/
 brand/products/
+.playwright-mcp/
