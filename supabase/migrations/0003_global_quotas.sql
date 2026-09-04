@@ -28,7 +28,8 @@ begin
   if jsonb_typeof(p_quotas) <> 'array' then
     raise exception 'invalid payload';
   end if;
-  delete from public.global_quotas;
+  -- pg-safeupdate is active on API sessions: DELETE needs a WHERE clause.
+  delete from public.global_quotas where amount is not null;
   insert into public.global_quotas (amount, quota)
   select (e->>'amount')::int, (e->>'quota')::int from jsonb_array_elements(p_quotas) e
   where (e->>'quota')::int > 0;
