@@ -59,6 +59,15 @@
   footer{margin-top:28px; padding-top:8px; border-top:1px solid var(--border); font-size:8.5pt; color:var(--muted); display:flex; justify-content:space-between; gap:12px;}
   footer b{color:var(--navy); font-weight:800;}
   .pagebreak{break-before:page;}
+  .toc{margin:4px 0 6px;}
+  .toc h2{margin-top:0;}
+  .toc ol{list-style:none; margin:2px 0 0; padding:0; max-width:72ch;}
+  .toc li{display:flex; align-items:baseline; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:10pt;}
+  .toc li:last-child{border-bottom:none;}
+  .toc .n{font-weight:800; color:var(--troy-deep); font-variant-numeric:tabular-nums; width:18px;}
+  .toc .t{font-weight:700; color:var(--navy);}
+  .toc .dots{flex:1; border-bottom:1.5px dotted var(--border); transform:translateY(-3px);}
+  .toc .pg{font-variant-numeric:tabular-nums; color:var(--muted); font-weight:700;}
 
   h3{font-size:11pt; font-weight:800; color:var(--navy); margin:14px 0 6px;}
   code, .mono{font-family:'SF Mono',Menlo,Consolas,monospace; font-size:8.5pt;}
@@ -88,6 +97,20 @@
   <dt>Tarih</dt><dd>04.09.2026</dd>
   <dt>Kapsam</dt><dd>Robot üst ekranında çalışan "Şansına Merhaba" uygulaması ve web tabanlı Filo Paneli</dd>
 </dl>
+
+<!-- Sayfa numaraları elle tutulur: PDF yeniden üretildiğinde kontrol edin. -->
+<div class="toc">
+  <h2>İçindekiler</h2>
+  <ol>
+    <li><span class="n">1</span><span class="t">Genel Bakış</span><span class="dots"></span><span class="pg">1</span></li>
+    <li><span class="n">2</span><span class="t">Oyun Akışı</span><span class="dots"></span><span class="pg">1</span></li>
+    <li><span class="n">3</span><span class="t">Ayarlar Bölümüne Erişim</span><span class="dots"></span><span class="pg">2</span></li>
+    <li><span class="n">4</span><span class="t">Ayar Seçenekleri</span><span class="dots"></span><span class="pg">3</span></li>
+    <li><span class="n">5</span><span class="t">İşletim Notları</span><span class="dots"></span><span class="pg">3</span></li>
+    <li><span class="n">6</span><span class="t">Robot Duraklatma Mekanizması</span><span class="dots"></span><span class="pg">4</span></li>
+    <li><span class="n">7</span><span class="t">Filo Paneli — Uzaktan İzleme ve Yönetim</span><span class="dots"></span><span class="pg">6</span></li>
+  </ol>
+</div>
 
 <h2><span class="num">1.</span>Genel Bakış</h2>
 <p>"Şansına Merhaba", mağaza içindeki robot ekranında kesintisiz çalışan interaktif bir kampanya oyunudur. Müşteri ekrana dokunarak dört karttan birini seçer; kazandığı avantaj tutarı ve QR kodu ekranda görüntülenir. Uygulama tam ekran çalışır, her turun sonunda kendiliğinden başa döner ve gün boyunca müdahale gerektirmez.</p>
@@ -197,9 +220,10 @@ curl -X POST -H "Content-Type: application/json" -H "Content-Length: 0" http://1
   <h3>Panele giriş</h3>
   <ol>
     <li>Tarayıcıdan <b><a href="https://troy-sansina-dashboard.vercel.app">troy-sansina-dashboard.vercel.app</a></b> adresine gidin.</li>
-    <li>Ekip e-posta adresi ve şifresiyle giriş yapın. Sunucu alanları otomatik doludur; değiştirmeyin.</li>
+    <li>Aşağıdaki bilgilerle giriş yapın (sunucu alanları otomatik doludur; değiştirmeyin):<br>
+      <b>E-posta:</b> <code>candost.akkaya@gmail.com</code>&nbsp;&nbsp;·&nbsp;&nbsp;<b>Şifre:</b> <code>wdcsSEnnTnKkkPGw</code></li>
   </ol>
-  <p class="note">Giriş bilgileri yalnızca kampanya sorumlularıyla paylaşılmalıdır. Şifre RozyLabs tarafından iletilir ve gerektiğinde sıfırlanabilir.</p>
+  <p class="note">Giriş bilgileri yalnızca kampanya sorumlularıyla paylaşılmalıdır; bu kılavuz mağaza personeli dışına çıkarılmamalıdır. Şifre gerektiğinde RozyLabs tarafından sıfırlanabilir.</p>
 </div>
 
 <h3>Yeni tabletin filoya katılması</h3>
