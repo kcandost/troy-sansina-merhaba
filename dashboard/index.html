@@ -129,6 +129,72 @@
   .linkish:hover { color: var(--warn); background: none; filter: none; transform: none; }
   #sum { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 13px; }
 
+  /* ── daily chart card ── */
+  #daily .card-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  #daily .card-head .sub { margin-bottom: 0; }
+  #daily .controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: #e6eef3; }
+  .seg button {
+    padding: 5px 12px; border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 12.5px;
+    transition: background .15s ease-out, color .15s ease-out, box-shadow .15s ease-out;
+  }
+  .seg button:hover { filter: none; color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(11,27,51,.12); }
+  #daily-robot { width: auto; max-width: 200px; padding: 6px 30px 6px 10px; font-size: 12.5px; font-weight: 700; appearance: none;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%234a5a72' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center; }
+
+  .figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 14px 0 6px; border-top: 1px solid #edf3f7; border-bottom: 1px solid #edf3f7; }
+  .fig { padding: 12px 14px 12px 0; min-width: 0; }
+  .fig + .fig { padding-left: 16px; border-left: 1px solid #edf3f7; }
+  .fig .k { color: var(--ink-2); font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fig .v { font-size: 28px; font-weight: 900; letter-spacing: -0.025em; line-height: 1.1; margin-top: 3px; color: var(--ink); }
+  .fig .v small { font-size: 13px; font-weight: 700; color: var(--ink-3); letter-spacing: 0; margin-left: 4px; }
+  .fig .d { font-size: 11.5px; font-weight: 700; color: var(--ink-3); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 0 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  .chart { position: relative; width: 100%; transition: opacity .25s ease-out; }
+  .chart.stale { opacity: .45; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart text { font: 700 11px/1 "Nunito", sans-serif; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .chart .grid line { stroke: #e6eef3; stroke-width: 1; }
+  .chart .base { stroke: #cbd8e0; stroke-width: 1; }
+  .chart .seg-rect { transition: opacity .12s ease-out; }
+  .chart .day-hit { fill: transparent; cursor: crosshair; outline: none; }
+  .chart .day-hit:focus-visible + .hi, .chart .day-hit:hover + .hi { opacity: 1; }
+  .chart .hi { fill: rgba(77,192,223,.10); opacity: 0; transition: opacity .12s ease-out; pointer-events: none; }
+  .chart .cap { fill: var(--ink-2); font-weight: 800; }
+  .chart .x-today { fill: var(--troy-deep); font-weight: 800; }
+  .chart .rise-in { transform-origin: bottom; transform-box: fill-box; animation: grow .6s cubic-bezier(.16,1,.3,1) backwards; }
+  @keyframes grow { from { transform: scaleY(0); } }
+  .tip {
+    position: absolute; top: 0; left: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity .12s ease-out;
+    background: var(--ink); color: #fff; border-radius: 10px; padding: 9px 11px; min-width: 150px;
+    box-shadow: 0 6px 20px -6px rgba(11,27,51,.45); font-size: 12px;
+  }
+  .tip.show { opacity: 1; }
+  .tip .t { font-size: 11px; font-weight: 700; color: #b9c8d6; margin-bottom: 5px; }
+  .tip .r { display: flex; align-items: center; gap: 7px; padding: 1px 0; font-variant-numeric: tabular-nums; }
+  .tip .r i { width: 10px; height: 3px; border-radius: 2px; flex: none; }
+  .tip .r b { margin-left: auto; font-weight: 800; }
+  .tip .sum { border-top: 1px solid rgba(255,255,255,.18); margin-top: 5px; padding-top: 5px; font-weight: 800; display: flex; }
+  .tip .sum b { margin-left: auto; }
+  .chart-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-size: 13px; pointer-events: none; }
+
+  #daily details { margin-top: 10px; }
+  #daily details table { min-width: 0; margin-top: 8px; }
+  #daily details td, #daily details th { padding: 5px 8px; font-size: 12.5px; }
+
+  @media (max-width: 720px) {
+    .figures { grid-template-columns: 1fr 1fr; }
+    .fig:nth-child(3) { padding-left: 0; border-left: none; border-top: 1px solid #edf3f7; }
+    .fig:nth-child(4) { border-top: 1px solid #edf3f7; }
+    .fig .v { font-size: 24px; }
+    #daily .controls { margin-left: 0; width: 100%; }
+  }
+
   #login { max-width: 400px; margin: 9vh auto 0; }
   #login .wordmark { height: 32px; display: block; margin: 4px auto 2px; }
   #login .lead { text-align: center; color: var(--ink-2); font-size: 12.5px; margin-bottom: 6px; }
@@ -200,6 +266,34 @@
       <h2>Onay bekleyen cihazlar</h2>
       <p class="sub">Bu tabletler kendilerini tanıttı. Bir ad verip onayladığında filoya katılır ve kupon ayarı alabilir.</p>
       <div id="pending-list"></div>
+    </section>
+
+    <section class="card" id="daily">
+      <div class="card-head">
+        <div>
+          <h2>Günlük kupon</h2>
+          <p class="sub">Gün gün gösterilen kupon adedi, tutara göre kırılımlı. Günler İstanbul saatine göre.</p>
+        </div>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Kapsam">
+            <button type="button" data-scope="fleet" aria-pressed="true">Filo</button>
+            <button type="button" data-scope="robot" aria-pressed="false">Robot</button>
+          </div>
+          <select id="daily-robot" aria-label="Robot seç" hidden></select>
+          <div class="seg" role="group" aria-label="Aralık">
+            <button type="button" data-range="7" aria-pressed="false">7 gün</button>
+            <button type="button" data-range="14" aria-pressed="true">14 gün</button>
+            <button type="button" data-range="30" aria-pressed="false">30 gün</button>
+          </div>
+        </div>
+      </div>
+      <div class="figures" id="daily-figs"></div>
+      <div class="legend" id="daily-legend" aria-label="Kupon tutarları"></div>
+      <div class="chart" id="daily-chart"><div class="skeleton">Yükleniyor…</div></div>
+      <details>
+        <summary>Tablo görünümü</summary>
+        <div class="tablewrap" id="daily-table"></div>
+      </details>
     </section>
 
     <section class="card">
@@ -290,19 +384,23 @@ async function show() {
 }
 
 async function refresh() {
-  const [r, u, lt, c, g, q] = await Promise.all([
+  $('daily-chart').classList.add('stale');
+  const [r, u, lt, c, g, q, d] = await Promise.all([
     sb.from('robots').select('*').order('id'),
     sb.from('usage_view').select('*'),
     sb.from('lifetime_usage_view').select('*'),
     sb.from('robot_configs').select('*'),
     sb.from('global_usage_view').select('*'),
     sb.from('global_quotas').select('*'),
+    sb.from('daily_usage_view').select('*').gte('day', dayKey(-(DAILY_MAX - 1))),
   ]);
   if (r.error) { $('usage').innerHTML = '<div class="msg err">Veriye ulaşılamadı. Bağlantıyı kontrol edip sayfayı yenile.</div>'; return; }
   const all = r.data;
   robots = all.filter(x => x.claimed);
   renderPending(all.filter(x => !x.claimed));
   const cfgs = c.data || [];
+  daily.rows = d.data || []; daily.cfgAmounts = allAmounts(cfgs); daily.loaded = true;
+  renderDaily();
   renderQuotas(g.data || [], q.data || [], cfgs);
   renderUsage(u.data || [], lt.data || [], cfgs);
   $('refreshed').textContent = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) + ' itibarıyla';
@@ -342,6 +440,157 @@ async function claim(id) {
   if (!name) { $('claim-name-' + id).focus(); return; }
   const { error } = await sb.from('robots').update({ name, claimed: true }).eq('id', id);
   if (!error) refresh();
+}
+
+// ── daily chart: stacked columns per Istanbul day, one segment per coupon amount ──
+// Ordinal teal ramp (250 TL lightest → largest amount darkest), validated with the dataviz
+// palette checker (ordinal mode, light surface): monotone lightness, ≥0.06 L steps, light end
+// 2.12:1 on white. Amount → step is fixed by rank across the whole dataset, so a robot that
+// never showed 1000 TL still uses the same colors as the fleet view.
+const RAMP = ['#4dc0df', '#27abd0', '#1a93b8', '#11799a', '#0d5f7b', '#0a465c'];
+const DAILY_MAX = 30;
+const TZ = 'Europe/Istanbul';
+const dayFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: TZ });          // → YYYY-MM-DD
+const dayLabelFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric', month: 'short' });
+const dayLongFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' });
+const dayKey = offset => dayFmt.format(new Date(Date.now() + offset * 86_400_000));
+const daily = {
+  rows: [], cfgAmounts: [], animated: false, loaded: false,
+  scope: localStorage.getItem('daily_scope') === 'robot' ? 'robot' : 'fleet',
+  range: [7, 14, 30].includes(+localStorage.getItem('daily_range')) ? +localStorage.getItem('daily_range') : 14,
+  robot: localStorage.getItem('daily_robot') || '',
+};
+
+document.querySelectorAll('#daily [data-scope]').forEach(b => b.onclick = () => { daily.scope = b.dataset.scope; localStorage.setItem('daily_scope', daily.scope); renderDaily(); });
+document.querySelectorAll('#daily [data-range]').forEach(b => b.onclick = () => { daily.range = +b.dataset.range; localStorage.setItem('daily_range', daily.range); renderDaily(); });
+$('daily-robot').onchange = e => { daily.robot = e.target.value; localStorage.setItem('daily_robot', daily.robot); renderDaily(); };
+new ResizeObserver(() => { if (daily.loaded) requestAnimationFrame(() => renderDaily(true)); }).observe($('daily-chart'));
+
+function niceMax(v) {
+  if (v <= 4) return 4;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p;
+  return 10 * p;
+}
+
+function renderDaily(resizeOnly = false) {
+  document.querySelectorAll('#daily [data-scope]').forEach(b => b.setAttribute('aria-pressed', b.dataset.scope === daily.scope));
+  document.querySelectorAll('#daily [data-range]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.range === daily.range));
+
+  // robot picker: keep the chosen robot if it still exists, else the first claimed one
+  const sel = $('daily-robot');
+  sel.hidden = daily.scope !== 'robot';
+  if (!robots.some(r => r.id === daily.robot)) daily.robot = robots[0]?.id || '';
+  sel.innerHTML = robots.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+  sel.value = daily.robot;
+
+  const rows = daily.scope === 'robot' ? daily.rows.filter(x => x.robot_id === daily.robot) : daily.rows;
+  const amounts = [...new Set([...daily.cfgAmounts, ...daily.rows.map(x => x.amount)])].sort((a, b) => a - b);
+  const color = a => RAMP[Math.min(RAMP.length - 1, amounts.indexOf(a))];
+  const days = Array.from({ length: daily.range }, (_, i) => dayKey(i - daily.range + 1));
+  const byDay = Object.fromEntries(days.map(d => [d, Object.fromEntries(amounts.map(a => [a, 0]))]));
+  rows.forEach(x => { if (byDay[x.day]) byDay[x.day][x.amount] += x.used; });
+  const total = d => amounts.reduce((n, a) => n + byDay[d][a], 0);
+  const today = days[days.length - 1], yday = dayKey(-1);
+  const todayN = total(today), ydayN = byDay[yday] ? total(yday) : 0;
+  const rangeN = days.reduce((n, d) => n + total(d), 0);
+  const activeDays = days.filter(d => total(d) > 0).length;
+  const scopeLabel = daily.scope === 'robot' ? (robots.find(r => r.id === daily.robot)?.name || 'robot') : 'filo';
+
+  // ── figures ──
+  if (!resizeOnly) {
+    // No day-over-day % here: today is always a partial day, so it would read as a drop until evening.
+    const deltaHtml = `<div class="d">dün ${fmt(ydayN)}</div>`;
+    const robotsToday = daily.scope === 'fleet' ? new Set(daily.rows.filter(x => x.day === today && x.used > 0).map(x => x.robot_id)).size : null;
+    const top = amounts.map(a => [a, days.reduce((n, d) => n + byDay[d][a], 0)]).sort((p, q) => q[1] - p[1])[0];
+    $('daily-figs').innerHTML = `
+      <div class="fig"><div class="k">Bugün</div><div class="v">${fmt(todayN)}</div>${deltaHtml}</div>
+      <div class="fig"><div class="k">Son ${daily.range} gün</div><div class="v">${fmt(rangeN)}</div><div class="d">${activeDays ? 'günde ort. ' + fmt(Math.round(rangeN / activeDays)) : 'henüz kupon yok'}</div></div>
+      <div class="fig"><div class="k">En çok çıkan</div><div class="v">${top && top[1] ? fmt(top[0]) + '<small>TL</small>' : '—'}</div><div class="d">${top && top[1] && rangeN ? '%' + Math.round(top[1] / rangeN * 100) + ' pay' : ''}</div></div>
+      ${daily.scope === 'fleet'
+        ? `<div class="fig"><div class="k">Bugün aktif robot</div><div class="v">${fmt(robotsToday)}<small>/ ${fmt(robots.length)}</small></div><div class="d">${robots.filter(r => online(r.last_seen_at)).length} çevrimiçi</div></div>`
+        : `<div class="fig"><div class="k">Bu robotun payı</div><div class="v">${(() => { const f = days.reduce((n, d) => n + daily.rows.filter(x => x.day === d).reduce((m, x) => m + x.used, 0), 0); return f ? '%' + Math.round(rangeN / f * 100) : '—'; })()}</div><div class="d">son ${daily.range} günde filo içinde</div></div>`}`;
+    $('daily-legend').innerHTML = amounts.map(a => `<span><i style="background:${color(a)}"></i>${fmt(a)} TL</span>`).join('');
+  }
+
+  // ── svg ──
+  const box = $('daily-chart');
+  const maxN = Math.max(0, ...days.map(total));
+  const yMax = niceMax(maxN);
+  const W = Math.max(280, box.clientWidth), H = 250;
+  const m = { t: 22, r: 6, b: 26, l: 12 + 7 * fmt(yMax).length };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const y = v => m.t + ph - v / yMax * ph;
+  const slot = pw / days.length, bw = Math.min(24, Math.round(slot * 0.62));
+  const peakDay = maxN > 0 ? days.find(d => total(d) === maxN) : null;
+  const labelEvery = slot >= 34 ? 1 : slot >= 18 ? 2 : 5;
+  // tick step must itself be a clean number (1 / 2 / 2.5 / 5 × 10ⁿ): 1500 → 3 steps of 500, 1200 → 6 of 200
+  const clean = v => { const q = v / Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 2.5, 5].some(k => Math.abs(q - k) < 1e-9); };
+  const div = [4, 5, 3, 6, 2].find(d => clean(yMax / d)) || 4;
+  const ticks = Array.from({ length: div + 1 }, (_, i) => yMax / div * i);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Son ${daily.range} günün günlük kupon adedi, ${esc(scopeLabel)}">`;
+  s += '<g class="grid">' + ticks.map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"${v === 0 ? ' class="base"' : ''}/>`).join('') + '</g>';
+  s += ticks.map(v => `<text x="${m.l - 8}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${fmt(v)}</text>`).join('');
+  days.forEach((d, i) => {
+    const x0 = m.l + i * slot, cx = x0 + slot / 2, bx = cx - bw / 2;
+    const n = total(d);
+    // stacked segments, smallest amount at the baseline; 2px surface gap between segments
+    let acc = 0, segs = '';
+    amounts.forEach((a, k) => {
+      const v = byDay[d][a]; if (!v) return;
+      const yTop = y(acc + v), yBot = y(acc); acc += v;
+      const isTop = acc === n;
+      const t = yTop + (isTop ? 0 : 1), b = yBot - (acc - v === 0 ? 0 : 1), h = Math.max(1, b - t);
+      const r = Math.min(4, h, bw / 2);
+      const shape = isTop
+        ? `<path d="M${bx} ${b} V${t + r} a${r} ${r} 0 0 1 ${r} -${r} H${bx + bw - r} a${r} ${r} 0 0 1 ${r} ${r} V${b} Z"`
+        : `<rect x="${bx}" y="${t.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}"`;
+      segs += `${shape} class="seg-rect" fill="${color(a)}"/>`;
+    });
+    const animate = !daily.animated && n > 0 ? ' class="rise-in" style="animation-delay:' + (i * 18) + 'ms"' : '';
+    s += `<g${animate}>${segs}</g>`;
+    if (n > 0 && (d === peakDay || d === today) && slot >= 22) s += `<text class="cap" x="${cx}" y="${(y(n) - 6).toFixed(1)}" text-anchor="middle">${fmt(n)}</text>`;
+    const showLabel = (days.length - 1 - i) % labelEvery === 0;
+    if (showLabel) s += `<text class="${d === today ? 'x-today' : ''}" x="${cx}" y="${H - 8}" text-anchor="middle">${d === today ? 'Bugün' : esc(dayLabelFmt.format(new Date(d + 'T12:00:00Z')))}</text>`;
+    const desc = `${dayLongFmt.format(new Date(d + 'T12:00:00Z'))}: ${n} kupon` + (n ? ' (' + amounts.filter(a => byDay[d][a]).map(a => `${a} TL ${byDay[d][a]}`).join(', ') + ')' : '');
+    s += `<rect class="day-hit" data-day="${d}" x="${x0}" y="${m.t - 6}" width="${slot}" height="${ph + 6}" tabindex="0" role="img" aria-label="${esc(desc)}"/><rect class="hi" x="${x0 + 1}" y="${m.t - 6}" width="${slot - 2}" height="${ph + 6}" rx="6"/>`;
+  });
+  s += '</svg><div class="tip" id="daily-tip" role="tooltip"></div>';
+  if (maxN === 0) s += '<div class="chart-empty">Bu aralıkta henüz kupon gösterilmedi.</div>';
+  box.classList.remove('stale');
+  box.innerHTML = s;
+  daily.animated = true;
+
+  // tooltip: one readout per day, every amount at that X
+  const tip = $('daily-tip');
+  const showTip = (el) => {
+    const d = el.dataset.day, n = total(d);
+    tip.innerHTML = `<div class="t">${esc(dayLongFmt.format(new Date(d + 'T12:00:00Z')))}</div>` +
+      amounts.map(a => `<div class="r"><i style="background:${color(a)}"></i>${fmt(a)} TL<b>${fmt(byDay[d][a])}</b></div>`).join('') +
+      `<div class="sum">Toplam<b>${fmt(n)}</b></div>`;
+    tip.classList.add('show');
+    const r = el.getBoundingClientRect(), br = box.getBoundingClientRect();
+    const cx = r.left - br.left + r.width / 2;
+    // above the column when it fits; otherwise beside it (right, or left near the edge) so it never covers its own bar
+    let top = y(n) - tip.offsetHeight - 10, left;
+    if (top >= 0) left = Math.max(0, Math.min(box.clientWidth - tip.offsetWidth, cx - tip.offsetWidth / 2));
+    else { top = m.t; left = cx + slot / 2 + 4; if (left + tip.offsetWidth > box.clientWidth) left = cx - slot / 2 - tip.offsetWidth - 4; }
+    tip.style.transform = `translate(${left}px, ${top}px)`;
+  };
+  box.querySelectorAll('.day-hit').forEach(el => {
+    el.addEventListener('pointerenter', () => showTip(el));
+    el.addEventListener('focus', () => showTip(el));
+    el.addEventListener('pointerleave', () => tip.classList.remove('show'));
+    el.addEventListener('blur', () => tip.classList.remove('show'));
+  });
+
+  // ── table twin ──
+  if (!resizeOnly) {
+    let t = `<table><thead><tr><th>Gün</th>${amounts.map(a => `<th class="num">${fmt(a)} TL</th>`).join('')}<th class="num">Toplam</th></tr></thead><tbody>`;
+    [...days].reverse().forEach(d => { t += `<tr><td>${esc(dayLongFmt.format(new Date(d + 'T12:00:00Z')))}</td>${amounts.map(a => `<td class="num">${fmt(byDay[d][a])}</td>`).join('')}<td class="num" style="font-weight:800">${fmt(total(d))}</td></tr>`; });
+    t += `</tbody><tfoot><tr><td>Toplam</td>${amounts.map(a => `<td class="num">${fmt(days.reduce((n, d) => n + byDay[d][a], 0))}</td>`).join('')}<td class="num">${fmt(rangeN)}</td></tr></tfoot></table>`;
+    $('daily-table').innerHTML = t;
+  }
 }
 
 // ── global quotas: fleet bar + % per coupon, inline quota editor ──

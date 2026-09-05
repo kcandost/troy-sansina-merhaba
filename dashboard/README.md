@@ -5,6 +5,7 @@ Single self-contained page (`index.html`) — open it locally in a browser or dr
 First run asks for the Supabase project URL + anon key (stored in the browser's localStorage) and the dashboard email login created during [backend setup](../supabase/README.md).
 
 What it does:
+- **Günlük kupon**: stacked daily columns (one segment per coupon amount) with a Filo / Robot toggle and a 7 / 14 / 30-day range, figures for today / range total / top coupon, hover tooltips and a table view. Reads `daily_usage_view` (migration 0009); days are Istanbul calendar days.
 - **Kullanım**: per-robot × per-coupon grant counts (`used / limit`), online badge (last contact < 5 min), fleet totals. Auto-refreshes every 30 s.
 - **Kampanya kotası**: fleet-wide cap per coupon with a live fill bar and % — a full coupon shows "durduruldu" and pauses on every robot within 60 s.
 - **Kupon ayarları**: edit amounts / weights / limits, push to one robot or all (`save_config` bumps the version; tablets pick it up within 60 s and reset their counters).
