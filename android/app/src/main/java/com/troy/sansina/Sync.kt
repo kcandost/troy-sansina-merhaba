@@ -22,6 +22,15 @@ data class GrantEvent(val uuid: String, val amount: Int, val version: Int, val a
 /** fetch_config payload: the robot's config plus the amounts paused by the fleet-wide quota. */
 data class RemoteConfig(val version: Int, val config: PromoConfig, val paused: Set<Int>)
 
+/**
+ * register_device outcomes the setup screen must tell apart: ALREADY_CLAIMED means the
+ * server answered but refuses a token re-issue (the device id is enrolled and claimed —
+ * typically a reinstall); recovery is the dashboard's release action, not a retry.
+ */
+enum class RegisterResult { OK, ALREADY_CLAIMED, FAILED }
+
+data class RegisterResponse(val result: RegisterResult, val robotId: String = "", val token: String = "")
+
 /** Pure JSON encoding/decoding for the sync layer; kept side-effect free for unit tests. */
 object SyncCodec {
     private fun iso(ms: Long): String =
@@ -51,6 +60,17 @@ object SyncCodec {
             GrantEvent(o.getString("u"), o.getInt("a"), o.getInt("v"), o.getLong("t"))
         }
     }.getOrDefault(emptyList())
+
+    /** register_device response: a token means enrolled; claimed-without-token means locked. */
+    fun parseRegister(json: String): RegisterResponse = runCatching {
+        val o = JSONObject(json)
+        val token = o.optString("device_token", "")
+        when {
+            token.isNotBlank() -> RegisterResponse(RegisterResult.OK, o.getString("robot_id"), token)
+            o.optBoolean("claimed", false) -> RegisterResponse(RegisterResult.ALREADY_CLAIMED)
+            else -> RegisterResponse(RegisterResult.FAILED)
+        }
+    }.getOrDefault(RegisterResponse(RegisterResult.FAILED))
 
     /** fetch_config response; null unless the config is present and valid. */
     fun parseConfig(json: String): RemoteConfig? = runCatching {
@@ -132,18 +152,16 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
      * returned token. A device the dashboard already claimed gets no token re-issue —
      * recovery goes through the dashboard's unclaim action.
      */
-    suspend fun register(deviceId: String, model: String, name: String): Boolean {
+    suspend fun register(deviceId: String, model: String, name: String): RegisterResult {
         val body = JSONObject().put("p_device_id", deviceId).put("p_model", model).put("p_name", name)
         return withContext(Dispatchers.IO) {
-            val resp = rpc("register_device", body.toString()) ?: return@withContext false
-            runCatching {
-                val o = JSONObject(resp)
-                val token = o.optString("device_token", "")
-                if (token.isBlank()) return@runCatching false
-                settings.save(settings.url, settings.anonKey, o.getString("robot_id"), token)
+            val resp = rpc("register_device", body.toString()) ?: return@withContext RegisterResult.FAILED
+            val r = SyncCodec.parseRegister(resp)
+            if (r.result == RegisterResult.OK) {
+                settings.save(settings.url, settings.anonKey, r.robotId, r.token)
                 settings.touch()
-                true
-            }.getOrDefault(false)
+            }
+            r.result
         }
     }
 

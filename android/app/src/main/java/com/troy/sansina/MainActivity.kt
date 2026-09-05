@@ -123,7 +123,8 @@ fun SansinaApp() {
     LaunchedEffect(deviceName) {
         if (deviceName.isBlank() || deviceId.isBlank()) return@LaunchedEffect
         while (!syncSettings.configured) {
-            if (sync.register(deviceId, android.os.Build.MODEL, deviceName)) break
+            // ALREADY_CLAIMED also retries: it resolves the moment the dashboard releases the device.
+            if (sync.register(deviceId, android.os.Build.MODEL, deviceName) == RegisterResult.OK) break
             delay(3_600_000)
         }
     }

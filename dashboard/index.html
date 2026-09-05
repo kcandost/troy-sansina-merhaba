@@ -125,6 +125,8 @@
   .grid .h { color: var(--ink-3); font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
   .x { background: none; border: 0; color: var(--warn); font-size: 18px; padding: 2px 6px; border-radius: 8px; }
   .x:hover { background: var(--warn-soft); filter: none; }
+  .linkish { background: none; border: 0; padding: 0; color: var(--ink-3); font-size: 11px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+  .linkish:hover { color: var(--warn); background: none; filter: none; transform: none; }
   #sum { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 13px; }
 
   #login { max-width: 400px; margin: 9vh auto 0; }
@@ -326,6 +328,15 @@ function renderPending(list) {
     </div>`).join('');
 }
 
+// Recovery for a reinstalled tablet ("cihaz zaten kayıtlı" on the setup screen): releasing
+// lets it re-enroll under the same id — history and counters are untouched. Until it does,
+// the device shows in the pending list; don't re-approve it from there, let the tablet register.
+async function unclaim(id) {
+  if (!confirm('Bu cihaz filodan serbest bırakılacak.\n\nYalnızca tablet "Bu cihaz filoda zaten kayıtlı" uyarısı veriyorsa gerekir. Serbest bıraktıktan sonra tabletteki "Kaydet ve başla"ya tekrar basın; geçmiş veriler korunur.\n\nDevam edilsin mi?')) return;
+  const { error } = await sb.from('robots').update({ claimed: false }).eq('id', id);
+  if (!error) refresh();
+}
+
 async function claim(id) {
   const name = $('claim-name-' + id).value.trim();
   if (!name) { $('claim-name-' + id).focus(); return; }
@@ -381,7 +392,7 @@ function renderUsage(usage, lifetime, cfgs) {
   robots.forEach(r => {
     let sum = 0;
     const on = online(r.last_seen_at);
-    h += `<tr><td><div class="robot-name">${esc(r.name)}</div><div class="robot-id">${esc(r.model || r.id)}</div></td>` +
+    h += `<tr><td><div class="robot-name">${esc(r.name)}</div><div class="robot-id">${esc(r.model || r.id)} · <button class="linkish" onclick="unclaim('${esc(r.id)}')" title="Uygulama silinip yeniden kurulduysa cihazın yeniden tanıtılmasına izin verir">serbest bırak</button></div></td>` +
          `<td><span class="badge ${on ? 'on' : 'off'}"><span class="dot"></span>${on ? 'Çevrimiçi' : (r.last_seen_at ? new Date(r.last_seen_at).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Hiç bağlanmadı')}</span></td>`;
     amounts.forEach(a => {
       const t = life(r.id, a), n = used(r.id, a), l = lim(r.id, a); sum += t; totals[a] += t;

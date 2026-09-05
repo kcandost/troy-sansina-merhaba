@@ -38,6 +38,23 @@ class SyncTest {
         assertEquals(emptySet<Int>(), r.paused)
     }
 
+    @Test fun parseRegisterEnrolled() {
+        val r = SyncCodec.parseRegister("""{"robot_id":"abc123","claimed":true,"device_token":"tok"}""")
+        assertEquals(RegisterResult.OK, r.result)
+        assertEquals("abc123", r.robotId)
+        assertEquals("tok", r.token)
+    }
+
+    @Test fun parseRegisterAlreadyClaimedHasNoToken() {
+        val r = SyncCodec.parseRegister("""{"robot_id":"abc123","claimed":true}""")
+        assertEquals(RegisterResult.ALREADY_CLAIMED, r.result)
+    }
+
+    @Test fun parseRegisterGarbageFails() {
+        assertEquals(RegisterResult.FAILED, SyncCodec.parseRegister("not json").result)
+        assertEquals(RegisterResult.FAILED, SyncCodec.parseRegister("""{"robot_id":"x","claimed":false}""").result)
+    }
+
     @Test fun parseConfigRejectsInvalid() {
         assertNull(SyncCodec.parseConfig("""{"version":1,"promos":[{"amount":250,"weight":40,"limit":0}]}"""))
         assertNull(SyncCodec.parseConfig("""{"version":0,"promos":null}"""))

@@ -90,10 +90,11 @@ fun PinGate(onUnlock: () -> Unit, onCancel: () -> Unit) {
  * stored name keeps retrying in the background).
  */
 @Composable
-fun SetupScreen(deviceId: String, onRegister: suspend (String) -> Boolean, onDone: (String) -> Unit) {
+fun SetupScreen(deviceId: String, onRegister: suspend (String) -> RegisterResult, onDone: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
-    var failed by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<RegisterResult?>(null) }
+    val failed = error != null
     val scope = rememberCoroutineScope()
     Box(Modifier.fillMaxSize().background(Ink50), contentAlignment = Alignment.Center) {
         Column(
@@ -118,7 +119,10 @@ fun SetupScreen(deviceId: String, onRegister: suspend (String) -> Boolean, onDon
                 modifier = Modifier.fillMaxWidth()
             )
             if (failed) Text(
-                "Sunucuya ulaşılamadı. Yeniden dene veya çevrimdışı devam et — ad kaydedildi, bağlantı gelince otomatik tanıtılır.",
+                if (error == RegisterResult.ALREADY_CLAIMED)
+                    "Bu cihaz filoda zaten kayıtlı (genellikle uygulama silinip yeniden kurulduğunda görülür). Filo panelinde bu cihazın satırındaki \"Serbest bırak\"a basıldıktan sonra \"Kaydet ve başla\"ya tekrar bas — geçmiş veriler korunur."
+                else
+                    "Sunucuya ulaşılamadı. Yeniden dene veya çevrimdışı devam et — ad kaydedildi, bağlantı gelince otomatik tanıtılır.",
                 color = Red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp)
             )
             Row(Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -128,9 +132,9 @@ fun SetupScreen(deviceId: String, onRegister: suspend (String) -> Boolean, onDon
                 SmallButton(if (saving) "Kaydediliyor…" else "Kaydet ve başla", if (can) Blue else Ink200, if (can) Color.White else Ink600, enabled = can) {
                     scope.launch {
                         saving = true
-                        val ok = onRegister(name.trim())
+                        val r = onRegister(name.trim())
                         saving = false
-                        if (ok) onDone(name.trim()) else failed = true
+                        if (r == RegisterResult.OK) onDone(name.trim()) else error = r
                     }
                 }
             }
