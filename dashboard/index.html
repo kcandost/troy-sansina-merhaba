@@ -25,18 +25,73 @@
   ::selection { background: var(--troy); color: #fff; }
   :focus-visible { outline: 2.5px solid var(--troy); outline-offset: 2px; border-radius: 6px; }
 
-  header { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
-  .head-in { max-width: 1160px; margin: 0 auto; padding: 10px 22px; display: flex; align-items: center; gap: 14px; }
   .wordmark { height: 22px; width: auto; color: var(--ink); flex: none; }
-  .head-div { width: 1px; height: 24px; background: var(--line); }
-  .head-title { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
-  .head-sub { color: var(--ink-2); font-size: 12px; margin-top: -2px; }
-  .head-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-  #refreshed { color: var(--ink-3); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-  main { max-width: 1160px; margin: 0 auto; padding: 18px 22px 30px; }
-  .cols { display: grid; gap: 14px; grid-template-columns: 1fr; }
-  @media (min-width: 960px) { .cols { grid-template-columns: 1fr 1fr; align-items: start; } }
+  /* ── app shell: fixed left rail + fluid content ── */
+  #app { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: 100vh; }
+  .rail {
+    position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+    background: var(--surface); border-right: 1px solid var(--line); padding: 18px 12px 14px;
+  }
+  .rail-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 16px; }
+  .rail-brand .wordmark { height: 20px; }
+  .rail-brand div { min-width: 0; }
+  .rail-title { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+  .rail-sub { color: var(--ink-3); font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rail nav { display: flex; flex-direction: column; gap: 2px; }
+  .rail nav a {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px;
+    color: var(--ink-2); font-weight: 700; font-size: 13px; text-decoration: none; position: relative;
+    transition: background .15s ease-out, color .15s ease-out;
+  }
+  .rail nav a svg { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .rail nav a span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rail nav a:hover { background: #f3f8fb; color: var(--ink); }
+  .rail nav a[aria-current="true"] { background: var(--troy-soft); color: var(--troy-deep); }
+  .rail nav a[aria-current="true"]::before { content: ""; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--troy); }
+  .rail nav a[hidden] { display: none; }
+  .nav-badge { margin-left: auto; background: var(--troy); color: #fff; font-size: 11px; font-weight: 800; border-radius: 999px; min-width: 20px; height: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; }
+  .rail-foot { margin-top: auto; padding: 10px 8px 0; border-top: 1px solid #edf3f7; display: flex; flex-direction: column; gap: 10px; }
+  #refreshed { color: var(--ink-3); font-size: 11.5px; font-variant-numeric: tabular-nums; font-weight: 700; }
+  #logout { align-self: flex-start; padding: 6px 14px; font-size: 12.5px; }
+  .credit { display: flex; align-items: center; gap: 7px; color: var(--ink-3); font-size: 11px; font-weight: 700; }
+  .credit a { color: var(--ink-2); font-weight: 800; text-decoration: none; letter-spacing: .01em; }
+  .credit a:hover { color: var(--troy-deep); }
+  .credit .tick { width: 6px; height: 6px; border-radius: 2px; background: var(--troy); flex: none; }
+
+  main { width: 100%; max-width: 1440px; margin: 0 auto; padding: 22px 28px 36px; min-width: 0; }
+  section.card { scroll-margin-top: 16px; }
+  .two { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; margin-bottom: 14px; }
+  .two > .card { margin-bottom: 0; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  @media (min-width: 1180px) { .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+  /* icon-only rail on narrow desktops / tablets */
+  @media (max-width: 1100px) {
+    #app { grid-template-columns: 64px minmax(0, 1fr); }
+    .rail { padding: 16px 10px 12px; }
+    .rail-brand { justify-content: center; padding: 0 0 14px; }
+    .rail-brand div, .rail nav a span, #refreshed, .credit span { display: none; }
+    .rail nav a { justify-content: center; padding: 10px 0; }
+    .rail nav a[aria-current="true"]::before { left: -10px; }
+    .nav-badge { position: absolute; top: 4px; right: 6px; min-width: 16px; height: 16px; font-size: 9.5px; padding: 0 4px; }
+    .rail-foot { align-items: center; padding: 10px 0 0; }
+    #logout { padding: 6px 8px; font-size: 11px; }
+    main { padding: 18px 20px 30px; }
+  }
+  /* phones: rail becomes a top bar with an icon strip */
+  @media (max-width: 700px) {
+    #app { grid-template-columns: minmax(0, 1fr); }
+    .rail { position: sticky; height: auto; flex-direction: row; align-items: center; gap: 6px; padding: 8px 10px; border-right: 0; border-bottom: 1px solid var(--line); z-index: 5; }
+    .rail-brand { padding: 0 6px 0 0; }
+    .rail nav { flex-direction: row; gap: 0; overflow-x: auto; flex: 1; scrollbar-width: none; }
+    .rail nav a { padding: 8px 9px; }
+    .rail nav a[aria-current="true"]::before { display: none; }
+    .rail-foot { margin: 0; padding: 0; border: 0; }
+    .credit { display: none; }
+    main { padding: 14px 12px 24px; }
+  }
 
   section.card {
     background: var(--surface); border-radius: var(--radius); padding: 16px 18px;
@@ -90,7 +145,7 @@
   .quota-head { display: grid; grid-template-columns: 74px 1fr 96px 84px; gap: 12px; padding-bottom: 4px; }
   .quota-head span { color: var(--ink-3); font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
   .quota-head span:nth-child(3) { text-align: right; }
-  .paused-chip { display: inline-block; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 800; margin-left: 6px; }
+  .paused-chip { display: block; width: max-content; margin: 2px 0 0 auto; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 1px 8px; font-size: 10.5px; font-weight: 800; }
 
   input, select {
     font: inherit; color: var(--ink); padding: 7px 10px; width: 100%;
@@ -202,23 +257,15 @@
   summary { cursor: pointer; color: var(--ink-2); font-size: 12.5px; font-weight: 700; }
   summary:hover { color: var(--troy-deep); }
 
-  footer { max-width: 1160px; margin: 0 auto; padding: 2px 22px 26px; display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 12px; }
-  footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; letter-spacing: .01em; }
-  footer a:hover { color: var(--troy-deep); }
-  footer .tick { width: 7px; height: 7px; border-radius: 2px; background: var(--troy); flex: none; }
-
   @media (max-width: 600px) {
-    .head-in { gap: 10px; padding: 10px 14px; }
-    .head-title { white-space: nowrap; }
-    .head-sub, #refreshed { display: none; }
-    main { padding: 14px 12px 24px; }
     section.card { padding: 14px; }
     .quota-row, .quota-head { grid-template-columns: 64px 1fr 84px 70px; gap: 8px; }
   }
 
-  #app > main > *, #app footer { animation: rise .5s cubic-bezier(.16,1,.3,1) backwards; }
+  #app > main > * { animation: rise .5s cubic-bezier(.16,1,.3,1) backwards; }
   #app > main > *:nth-child(2) { animation-delay: .06s; }
   #app > main > *:nth-child(3) { animation-delay: .12s; }
+  #app > main > *:nth-child(4) { animation-delay: .18s; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
@@ -246,20 +293,42 @@
 </div>
 
 <div id="app" hidden>
-  <header>
-    <div class="head-in">
+  <aside class="rail">
+    <div class="rail-brand">
       <svg class="wordmark" viewBox="0 0.891 60.17 29.61" role="img" aria-label="TROY"><use href="#troy-wm"/></svg>
-      <div class="head-div"></div>
       <div>
-        <div class="head-title">Filo Paneli</div>
-        <div class="head-sub">Şansına Merhaba kampanyası</div>
-      </div>
-      <div class="head-right">
-        <span id="refreshed"></span>
-        <button class="ghost" id="logout">Çıkış</button>
+        <div class="rail-title">Filo Paneli</div>
+        <div class="rail-sub">Şansına Merhaba</div>
       </div>
     </div>
-  </header>
+    <nav aria-label="Bölümler">
+      <a href="#pending" id="nav-pending" title="Onay bekleyen cihazlar" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13l2.5-7h11L20 13"/><path d="M4 13v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/><path d="M4 13h4l1.5 2.5h5L16 13h4"/></svg>
+        <span>Onay bekleyen</span><b class="nav-badge" id="nav-pending-n">0</b>
+      </a>
+      <a href="#daily" title="Günlük kupon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><rect x="6" y="11" width="3.5" height="9" rx="1"/><rect x="12.5" y="6" width="3.5" height="14" rx="1"/><path d="M19 20V15"/></svg>
+        <span>Günlük kupon</span>
+      </a>
+      <a href="#quota" title="Kampanya kotası">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17.5a8 8 0 1 1 14 0"/><path d="M12 14l3.5-4.5"/><circle cx="12" cy="14" r="1.2"/></svg>
+        <span>Kampanya kotası</span>
+      </a>
+      <a href="#robots" title="Robot bazında kullanım">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M10 17.5h4"/><path d="M9 7.5h6"/></svg>
+        <span>Robotlar</span>
+      </a>
+      <a href="#config" title="Kupon ayarları">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 12h2M10 12h10"/><circle cx="8" cy="12" r="2"/><path d="M4 17h8M16 17h4"/><circle cx="14" cy="17" r="2"/></svg>
+        <span>Kupon ayarları</span>
+      </a>
+    </nav>
+    <div class="rail-foot">
+      <span id="refreshed"></span>
+      <button class="ghost" id="logout">Çıkış</button>
+      <div class="credit"><span class="tick"></span><span><a href="https://rozylabs.com" rel="noopener">ROZYLABS</a> tarafından</span></div>
+    </div>
+  </aside>
 
   <main>
     <section class="card" id="pending" hidden>
@@ -296,7 +365,8 @@
       </details>
     </section>
 
-    <section class="card">
+    <div class="two">
+    <section class="card" id="quota">
       <h2>Kampanya kotası</h2>
       <p class="sub">Kupon başına filo geneli tavan. Dolan kupon tüm robotlarda 60 saniye içinde duraklatılır; kota 0 = tavansız.</p>
       <div class="quota-head"><span>Kupon</span><span>Filo kullanımı</span><span>Kullanılan</span><span>Kota</span></div>
@@ -307,13 +377,7 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>Robot bazında kullanım</h2>
-      <p class="sub">Kayıt anından bu yana gösterilen toplam kupon adedi. Çubuk, geçerli ayar dönemindeki robot limiti doluluğunu gösterir.</p>
-      <div class="tablewrap"><div id="usage" class="skeleton">Yükleniyor…</div></div>
-    </section>
-
-    <section class="card">
+    <section class="card" id="config">
       <h2>Kupon ayarları</h2>
       <p class="sub">Tutar, çıkma yüzdesi (toplam %100) ve robot başına limit (0 = sınırsız). Kaydet: robotlar 60 saniye içinde alır; limit sayaçları sıfırlanır, toplam gösterim sayıları korunur.</p>
       <div class="row" style="margin-bottom:12px">
@@ -330,12 +394,14 @@
       </div>
       <div id="cfg-msg" class="msg" role="status"></div>
     </section>
-  </main>
+    </div>
 
-  <footer>
-    <span class="tick"></span>
-    <span>TROY Şansına Merhaba · <a href="https://rozylabs.com" rel="noopener">ROZYLABS</a> tarafından geliştirildi</span>
-  </footer>
+    <section class="card" id="robots">
+      <h2>Robot bazında kullanım</h2>
+      <p class="sub">Kayıt anından bu yana gösterilen toplam kupon adedi. Çubuk, geçerli ayar dönemindeki robot limiti doluluğunu gösterir.</p>
+      <div class="tablewrap"><div id="usage" class="skeleton">Yükleniyor…</div></div>
+    </section>
+  </main>
 </div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="troy-wm" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 1.5V5.6562H4.01766V30.5H9.98417V5.6562H14V1.5H0Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M20.6253 13.338H21.3207C22.217 13.338 22.6675 12.7341 22.6675 11.5337V7.33366C22.6675 6.13322 22.217 5.53496 21.3207 5.53496H20.6253V13.338ZM14.877 29.9415V1.45453H21.644C26.159 1.45453 28.4177 3.37409 28.4177 7.21366V9.73627C28.4177 12.8315 26.9342 14.3784 23.9687 14.3784C25.6827 14.4028 26.8562 14.7889 27.4806 15.5354C28.1032 16.2854 28.4177 17.5258 28.4177 19.2606V24.8993C28.4177 26.2302 28.5117 27.2741 28.7037 28.0224C28.8647 28.5284 29.0585 29.1689 29.2714 29.9415H23.4432C22.927 28.9811 22.6675 27.7545 22.6675 26.2597V19.7789C22.6675 18.6584 22.5846 17.9241 22.4174 17.5763C22.1802 16.9397 21.5784 16.6176 20.6253 16.6176V29.9415H14.877Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M38.4363 7.0137C38.4363 5.75892 38.0988 5.13283 37.4176 5.13283C36.7377 5.13283 36.3985 5.75892 36.3985 7.0137V24.3807C36.3985 25.6337 36.7377 26.2598 37.4176 26.2598C38.0988 26.2598 38.4363 25.6337 38.4363 24.3807V7.0137ZM30.6475 6.095C30.6475 4.30457 31.3535 2.95979 32.7682 2.05326C33.939 1.27718 35.4867 0.890656 37.4176 0.890656C41.9322 0.890656 44.1877 2.62587 44.1877 6.095V25.2994C44.1877 27.088 43.4795 28.435 42.0688 29.3428C40.8976 30.1154 39.3485 30.5002 37.4176 30.5002C32.9012 30.5002 30.6475 28.7672 30.6475 25.2994V6.095Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.6691 17.1256L44.8809 1.39557H50.0456L52.3716 12.1843L55.2627 1.39557H60.1698L55.4472 17.1256V30.0095H49.6691V17.1256Z"/></g></defs></svg>
@@ -413,8 +479,23 @@ async function refresh() {
 const online = t => t && (Date.now() - new Date(t).getTime() < 5 * 60_000);
 const allAmounts = cfgs => [...new Set(cfgs.flatMap(x => x.promos.map(p => p.amount)))].sort((a, b) => a - b);
 
+// ── rail: scroll-spy marks the section nearest the top of the viewport ──
+const navLinks = [...document.querySelectorAll('.rail nav a')];
+function spy() {
+  const probe = window.scrollY + 120;
+  let cur = null;
+  navLinks.forEach(a => { const s = document.querySelector(a.getAttribute('href')); if (s && !s.hidden && s.offsetTop <= probe) cur = a; });
+  if (!cur) cur = navLinks.find(a => !a.hidden);
+  navLinks.forEach(a => a.setAttribute('aria-current', a === cur));
+}
+let spyQueued = false;
+window.addEventListener('scroll', () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(() => { spyQueued = false; spy(); }); } }, { passive: true });
+
 function renderPending(list) {
   $('pending').hidden = list.length === 0;
+  $('nav-pending').hidden = list.length === 0;
+  $('nav-pending-n').textContent = list.length;
+  spy();
   $('pending-list').innerHTML = list.map(d => `
     <div class="pending-row">
       <div class="pending-meta">
