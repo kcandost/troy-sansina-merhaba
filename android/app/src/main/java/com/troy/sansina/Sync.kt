@@ -165,11 +165,16 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
         }
     }
 
-    /** Liveness ping so the dashboard can tell a powered-off tablet from an idle one. */
-    suspend fun heartbeat(): Boolean {
+    /**
+     * Screen presence: "on" when the game comes on screen, "ping" every 5 minutes while it
+     * stays there, "off" the moment it leaves. The dashboard's "online" is derived from
+     * these, so it means "visibly running", not merely "process alive".
+     */
+    suspend fun presence(state: String): Boolean {
         if (!settings.configured) return false
-        val body = JSONObject().put("p_token", settings.deviceToken)
-        return withContext(Dispatchers.IO) { rpc("device_heartbeat", body.toString()) != null }
+        val body = JSONObject().put("p_token", settings.deviceToken).put("p_state", state)
+            .put("p_client_ms", System.currentTimeMillis())
+        return withContext(Dispatchers.IO) { rpc("device_presence", body.toString()) != null }
     }
 
     /** Latest remote config, or null (not configured / offline / invalid payload). */

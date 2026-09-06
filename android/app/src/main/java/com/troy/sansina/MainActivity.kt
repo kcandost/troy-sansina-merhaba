@@ -26,8 +26,16 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,15 +137,34 @@ fun SansinaApp() {
         }
     }
 
-    // Liveness heartbeat: every 5 minutes, in every phase — the sync loop below stops
-    // during gameplay/settings, so without this a busy tablet looks offline on the
-    // dashboard (whose online window is exactly 5 minutes of last_seen_at).
+    // Screen presence. The panel's "online" must mean "the game is on this screen", so:
+    //  - "on" the moment the activity becomes visible (STARTED), then "ping" every 5 min
+    //    in every phase (the sync loop below stops during gameplay/settings);
+    //  - "off" the moment it leaves the screen (Home, another app on top, screen off,
+    //    shutdown when the OS gets the chance). A backgrounded process keeps running its
+    //    coroutines, hence gating on lifecycle rather than on process liveness.
+    // The "off" pulse is sent from a scope that outlives the composition, with a short
+    // timeout, because the activity may be torn down right after ON_STOP.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val offScope = remember { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
     LaunchedEffect(syncSettings.configured) {
         if (!syncSettings.configured) return@LaunchedEffect
-        while (true) {
-            sync.heartbeat()
-            delay(300_000)
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            sync.presence("on")
+            while (true) {
+                delay(300_000)
+                sync.presence("ping")
+            }
         }
+    }
+    DisposableEffect(lifecycle, syncSettings.configured) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP && syncSettings.configured) {
+                offScope.launch { withTimeoutOrNull(8_000) { sync.presence("off") } }
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     // Remote sync: while idling on the invite screen, flush any queued grants and poll
@@ -145,24 +172,26 @@ fun SansinaApp() {
     // the local counters (same contract as an on-device config edit).
     LaunchedEffect(phase, settingsOpen, syncSettings.configured) {
         if (phase != Phase.INVITE || settingsOpen || !syncSettings.configured) return@LaunchedEffect
-        while (true) {
-            sync.flush()
-            val remote = sync.fetchConfig()
-            if (remote != null) {
-                // Fleet-quota pauses apply on every poll, without touching local counters.
-                pausedAmounts = remote.paused
-                prefs.edit().putString(KEY_PAUSED, remote.paused.joinToString(",")).apply()
-                if (remote.version > configVersion) {
-                    val firstConfig = configVersion == 0
-                    configVersion = remote.version
-                    config = remote.config
-                    prefs.edit().putInt(KEY_CONFIG_VERSION, remote.version).putString(KEY_PROMOS, remote.config.serialize()).apply()
-                    // The first delivery adopts (keeps pre-config plays); later versions reset.
-                    if (firstConfig) stats.adopt(remote.config) else stats.reset(remote.config)
-                    state.applyConfig(remote.config)
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                sync.flush()
+                val remote = sync.fetchConfig()
+                if (remote != null) {
+                    // Fleet-quota pauses apply on every poll, without touching local counters.
+                    pausedAmounts = remote.paused
+                    prefs.edit().putString(KEY_PAUSED, remote.paused.joinToString(",")).apply()
+                    if (remote.version > configVersion) {
+                        val firstConfig = configVersion == 0
+                        configVersion = remote.version
+                        config = remote.config
+                        prefs.edit().putInt(KEY_CONFIG_VERSION, remote.version).putString(KEY_PROMOS, remote.config.serialize()).apply()
+                        // The first delivery adopts (keeps pre-config plays); later versions reset.
+                        if (firstConfig) stats.adopt(remote.config) else stats.reset(remote.config)
+                        state.applyConfig(remote.config)
+                    }
                 }
+                delay(60_000)
             }
-            delay(60_000)
         }
     }
 
