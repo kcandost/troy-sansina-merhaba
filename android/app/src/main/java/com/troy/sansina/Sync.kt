@@ -120,6 +120,10 @@ class SyncSettings(ctx: Context) {
  * config is pulled on demand. Every failure is silent — the game must never notice.
  */
 class Sync(ctx: Context, private val settings: SyncSettings) {
+    /** APK versionName, reported with every presence event so the panel can flag stale robots. */
+    private val appVersion: String = runCatching {
+        ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "?"
+    }.getOrDefault("?")
     private val prefs = ctx.getSharedPreferences("sansina_queue", Context.MODE_PRIVATE)
     var pending by mutableStateOf(SyncCodec.parseQueue(prefs.getString("q", null)).size)
         private set
@@ -173,7 +177,7 @@ class Sync(ctx: Context, private val settings: SyncSettings) {
     suspend fun presence(state: String): Boolean {
         if (!settings.configured) return false
         val body = JSONObject().put("p_token", settings.deviceToken).put("p_state", state)
-            .put("p_client_ms", System.currentTimeMillis())
+            .put("p_client_ms", System.currentTimeMillis()).put("p_app_version", appVersion)
         return withContext(Dispatchers.IO) { rpc("device_presence", body.toString()) != null }
     }
 

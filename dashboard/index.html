@@ -134,6 +134,14 @@
   .num { text-align: right; }
   .robot-name { font-weight: 800; }
   .robot-id { color: var(--ink-3); font-size: 12px; font-weight: 600; }
+  .ver { display: inline-block; border-radius: 6px; padding: 1px 6px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #eef2f6; color: var(--ink-2); white-space: nowrap; }
+  .ver.stale { background: var(--warn-soft); color: var(--warn); }
+  .apk-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -4px 0 10px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .apk-line .ver { font-size: 11.5px; }
+  .apk-line .sep { color: var(--line); }
+  .apk-line .warn-t { color: var(--warn); }
+  td.dim { color: var(--ink-3); }
+  th.x-today { color: var(--troy-deep); }
 
   .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12px; font-weight: 800; }
   .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -209,6 +217,9 @@
   #daily .card-head .sub { margin-bottom: 0; }
   #daily .controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: #e6eef3; }
+  .seg-mode { background: var(--troy-soft); }
+  .seg-mode button[aria-pressed="true"] { color: var(--troy-deep); }
+  .tip .r.dim { color: #b9c8d6; }
   .seg button {
     padding: 5px 12px; border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 12.5px;
     transition: background .15s ease-out, color .15s ease-out, box-shadow .15s ease-out;
@@ -330,9 +341,9 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13l2.5-7h11L20 13"/><path d="M4 13v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/><path d="M4 13h4l1.5 2.5h5L16 13h4"/></svg>
         <span>Onay bekleyen</span><b class="nav-badge" id="nav-pending-n">0</b>
       </a>
-      <a href="#daily" title="Günlük kupon">
+      <a href="#daily" title="Günlük grafik: kupon ve ekran süresi">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><rect x="6" y="11" width="3.5" height="9" rx="1"/><rect x="12.5" y="6" width="3.5" height="14" rx="1"/><path d="M19 20V15"/></svg>
-        <span>Günlük kupon</span>
+        <span>Günlük grafik</span>
       </a>
       <a href="#quota" title="Kampanya kotası">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17.5a8 8 0 1 1 14 0"/><path d="M12 14l3.5-4.5"/><circle cx="12" cy="14" r="1.2"/></svg>
@@ -365,10 +376,14 @@
     <section class="card" id="daily">
       <div class="card-head">
         <div>
-          <h2>Günlük kupon</h2>
-          <p class="sub">Gün gün gösterilen kupon adedi, tutara göre kırılımlı. Günler İstanbul saatine göre.</p>
+          <h2 id="daily-title">Günlük kupon</h2>
+          <p class="sub" id="daily-sub">Gün gün gösterilen kupon adedi, tutara göre kırılımlı. Günler İstanbul saatine göre.</p>
         </div>
         <div class="controls">
+          <div class="seg seg-mode" role="tablist" aria-label="Grafik">
+            <button type="button" role="tab" data-mode="coupons" aria-pressed="true">Kupon</button>
+            <button type="button" role="tab" data-mode="screen" aria-pressed="false">Ekran süresi</button>
+          </div>
           <div class="seg" role="group" aria-label="Kapsam">
             <button type="button" data-scope="fleet" aria-pressed="true">Filo</button>
             <button type="button" data-scope="robot" aria-pressed="false">Robot</button>
@@ -425,6 +440,7 @@
     <section class="card" id="robots">
       <h2>Robot bazında kullanım</h2>
       <p class="sub">Kayıt anından bu yana gösterilen toplam kupon adedi. Çubuk, geçerli ayar dönemindeki robot limiti doluluğunu gösterir.</p>
+      <div class="apk-line" id="apk-line" hidden></div>
       <div class="tablewrap"><div id="usage" class="skeleton">Yükleniyor…</div></div>
     </section>
   </main>
@@ -437,7 +453,7 @@
 // Project defaults (anon key is public by design; access is gated by auth + RLS).
 const DEFAULT_URL = 'https://pvgzgmhqwffytrnjebkg.supabase.co';
 const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2Z3pnbWhxd2ZmeXRybmplYmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NzMwNjAsImV4cCI6MjEwNDA0OTA2MH0.5Ya86a5XL7-SnCyqt52a_UXyWLx1A0y6pGojFB1FGgU';
-let sb = null, robots = [], rows = [], gq = {};
+let sb = null, robots = [], rows = [], gq = {}, screenToday = {}, screenRows = [];
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('tr-TR');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -477,7 +493,7 @@ async function show() {
 
 async function refresh() {
   $('daily-chart').classList.add('stale');
-  const [r, u, lt, c, g, q, d] = await Promise.all([
+  const [r, u, lt, c, g, q, d, stv] = await Promise.all([
     sb.from('robots').select('*').order('id'),
     sb.from('usage_view').select('*'),
     sb.from('lifetime_usage_view').select('*'),
@@ -485,10 +501,13 @@ async function refresh() {
     sb.from('global_usage_view').select('*'),
     sb.from('global_quotas').select('*'),
     sb.from('daily_usage_view').select('*').gte('day', [CAMPAIGN_START, dayKey(-(DAILY_MAX - 1))].sort()[0]),
+    sb.from('screen_time_view').select('*').gte('day', [CAMPAIGN_START, dayKey(-(DAILY_MAX - 1))].sort()[0]),
   ]);
   if (r.error) { $('usage').innerHTML = '<div class="msg err">Veriye ulaşılamadı. Bağlantıyı kontrol edip sayfayı yenile.</div>'; return; }
   const all = r.data;
   robots = all.filter(x => x.claimed);
+  screenRows = stv.data || [];
+  screenToday = Object.fromEntries(screenRows.filter(x => x.day === dayKey(0)).map(x => [x.robot_id, x.seconds]));
   renderPending(all.filter(x => !x.claimed));
   const cfgs = c.data || [];
   daily.rows = d.data || []; daily.cfgAmounts = allAmounts(cfgs); daily.loaded = true;
@@ -502,7 +521,12 @@ async function refresh() {
   if ([...t.options].some(o => o.value === cur)) t.value = cur;
 }
 
-const online = t => t && (Date.now() - new Date(t).getTime() < 5 * 60_000);
+// Online = the game is on the tablet's screen: last on/ping within 5 minutes and no
+// later "off". Legacy APKs (no screen_state) fall back to the plain 5-minute window.
+const online = r => !!r?.last_seen_at && r.screen_state !== 'off' && (Date.now() - new Date(r.last_seen_at).getTime() < 5 * 60_000);
+const fmtDur = sec => { const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60); return h ? `${h} sa ${m} dk` : `${m} dk`; };
+const cmpVer = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
+
 const allAmounts = cfgs => [...new Set(cfgs.flatMap(x => x.promos.map(p => p.amount)))].sort((a, b) => a - b);
 
 // ── rail: scroll-spy marks the section nearest the top of the viewport ──
@@ -526,7 +550,7 @@ function renderPending(list) {
     <div class="pending-row">
       <div class="pending-meta">
         <div class="robot-name">${esc(d.model || 'Bilinmeyen model')}</div>
-        <div class="robot-id">${esc(d.id)} · ${online(d.last_seen_at) ? 'şu an çevrimiçi' : 'son görülme: ' + new Date(d.last_seen_at).toLocaleString('tr-TR')}</div>
+        <div class="robot-id">${esc(d.id)} · ${online(d) ? 'şu an çevrimiçi' : 'son görülme: ' + new Date(d.last_seen_at).toLocaleString('tr-TR')}</div>
       </div>
       <input placeholder="Mağaza adı (ör. Kadıköy)" id="claim-name-${esc(d.id)}" aria-label="Cihaz adı">
       <button onclick="claim('${esc(d.id)}')">Adlandır ve onayla</button>
@@ -549,7 +573,7 @@ async function claim(id) {
   if (!error) refresh();
 }
 
-// ── daily chart: stacked columns per Istanbul day, one segment per coupon amount ──
+// ── daily card: one column chart, two modes — coupons per day (stacked by amount) or on-screen hours per day ──
 // Ordinal teal ramp (250 TL lightest → largest amount darkest), validated with the dataviz
 // palette checker (ordinal mode, light surface): monotone lightness, ≥0.06 L steps, light end
 // 2.12:1 on white. Amount → step is fixed by rank across the whole dataset, so a robot that
@@ -564,11 +588,13 @@ const dayLongFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, weekday: 'lo
 const dayKey = offset => dayFmt.format(new Date(Date.now() + offset * 86_400_000));
 const daily = {
   rows: [], cfgAmounts: [], animated: false, loaded: false,
+  mode: localStorage.getItem('daily_mode') === 'screen' ? 'screen' : 'coupons',
   scope: localStorage.getItem('daily_scope') === 'robot' ? 'robot' : 'fleet',
   range: ['7', '14', '30'].includes(localStorage.getItem('daily_range')) ? +localStorage.getItem('daily_range') : 'campaign',
   robot: localStorage.getItem('daily_robot') || '',
 };
 
+document.querySelectorAll('#daily [data-mode]').forEach(b => b.onclick = () => { daily.mode = b.dataset.mode; localStorage.setItem('daily_mode', daily.mode); daily.animated = false; renderDaily(); });
 document.querySelectorAll('#daily [data-scope]').forEach(b => b.onclick = () => { daily.scope = b.dataset.scope; localStorage.setItem('daily_scope', daily.scope); renderDaily(); });
 document.querySelectorAll('#daily [data-range]').forEach(b => b.onclick = () => { daily.range = b.dataset.range === 'campaign' ? 'campaign' : +b.dataset.range; localStorage.setItem('daily_range', daily.range); renderDaily(); });
 
@@ -591,59 +617,18 @@ function niceMax(v) {
   for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p;
   return 10 * p;
 }
+const dayLong = d => dayLongFmt.format(new Date(d + 'T12:00:00Z'));
+const dayShort = d => dayLabelFmt.format(new Date(d + 'T12:00:00Z'));
 
-function renderDaily(resizeOnly = false) {
-  document.querySelectorAll('#daily [data-scope]').forEach(b => b.setAttribute('aria-pressed', b.dataset.scope === daily.scope));
-  document.querySelectorAll('#daily [data-range]').forEach(b => b.setAttribute('aria-pressed', b.dataset.range === String(daily.range)));
-
-  // robot picker: keep the chosen robot if it still exists, else the first claimed one
-  const sel = $('daily-robot');
-  sel.hidden = daily.scope !== 'robot';
-  if (!robots.some(r => r.id === daily.robot)) daily.robot = robots[0]?.id || '';
-  sel.innerHTML = robots.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
-  sel.value = daily.robot;
-
-  const rows = daily.scope === 'robot' ? daily.rows.filter(x => x.robot_id === daily.robot) : daily.rows;
-  const amounts = [...new Set([...daily.cfgAmounts, ...daily.rows.map(x => x.amount)])].sort((a, b) => a - b);
-  const color = a => RAMP[Math.min(RAMP.length - 1, amounts.indexOf(a))];
-  // campaign range: every Istanbul day from CAMPAIGN_START through today (at least one day, even before launch)
-  const span = daily.range === 'campaign'
-    ? Math.max(1, Math.round((Date.parse(dayKey(0)) - Date.parse(CAMPAIGN_START)) / 86_400_000) + 1)
-    : daily.range;
-  const days = Array.from({ length: span }, (_, i) => dayKey(i - span + 1));
-  const rangeLabel = daily.range === 'campaign' ? 'Kampanya' : `Son ${daily.range} gün`;
-  const rangeIn = daily.range === 'campaign' ? 'kampanya boyunca' : `son ${daily.range} günde`;
-  const byDay = Object.fromEntries(days.map(d => [d, Object.fromEntries(amounts.map(a => [a, 0]))]));
-  rows.forEach(x => { if (byDay[x.day]) byDay[x.day][x.amount] += x.used; });
-  const total = d => amounts.reduce((n, a) => n + byDay[d][a], 0);
-  const today = days[days.length - 1], yday = dayKey(-1);
-  const todayN = total(today), ydayN = byDay[yday] ? total(yday) : 0;
-  const rangeN = days.reduce((n, d) => n + total(d), 0);
-  const activeDays = days.filter(d => total(d) > 0).length;
-  const scopeLabel = daily.scope === 'robot' ? (robots.find(r => r.id === daily.robot)?.name || 'robot') : 'filo';
-
-  // ── figures ──
-  if (!resizeOnly) {
-    // No day-over-day % here: today is always a partial day, so it would read as a drop until evening.
-    const deltaHtml = `<div class="d">dün ${fmt(ydayN)}</div>`;
-    const robotsToday = daily.scope === 'fleet' ? new Set(daily.rows.filter(x => x.day === today && x.used > 0).map(x => x.robot_id)).size : null;
-    const top = amounts.map(a => [a, days.reduce((n, d) => n + byDay[d][a], 0)]).sort((p, q) => q[1] - p[1])[0];
-    $('daily-figs').innerHTML = `
-      <div class="fig"><div class="k">Bugün</div><div class="v">${fmt(todayN)}</div>${deltaHtml}</div>
-      <div class="fig"><div class="k">${rangeLabel}</div><div class="v">${fmt(rangeN)}</div><div class="d">${activeDays ? 'günde ort. ' + fmt(Math.round(rangeN / activeDays)) : 'henüz kupon yok'}</div></div>
-      <div class="fig"><div class="k">En çok çıkan</div><div class="v">${top && top[1] ? fmt(top[0]) + '<small>TL</small>' : '—'}</div><div class="d">${top && top[1] && rangeN ? '%' + Math.round(top[1] / rangeN * 100) + ' pay' : ''}</div></div>
-      ${daily.scope === 'fleet'
-        ? `<div class="fig"><div class="k">Bugün aktif robot</div><div class="v">${fmt(robotsToday)}<small>/ ${fmt(robots.length)}</small></div><div class="d">${robots.filter(r => online(r.last_seen_at)).length} çevrimiçi</div></div>`
-        : `<div class="fig"><div class="k">Bu robotun payı</div><div class="v">${(() => { const f = days.reduce((n, d) => n + daily.rows.filter(x => x.day === d).reduce((m, x) => m + x.used, 0), 0); return f ? '%' + Math.round(rangeN / f * 100) : '—'; })()}</div><div class="d">${rangeIn} filo içinde</div></div>`}`;
-    $('daily-legend').innerHTML = amounts.map(a => `<span><i style="background:${color(a)}"></i>${fmt(a)} TL</span>`).join('');
-  }
-
-  // ── svg ──
-  const box = $('daily-chart');
+// Stacked column chart shared by both modes. series: [{ color, values: {day → number} }] stacked
+// bottom-up in order. o: { fmtTick(v), cap(d), aria(d), tip(d) → html, empty }.
+function drawColumns(box, days, series, o) {
+  const today = days[days.length - 1];
+  const total = d => series.reduce((n, s) => n + (s.values[d] || 0), 0);
   const maxN = Math.max(0, ...days.map(total));
   const yMax = niceMax(maxN);
   const W = Math.max(280, box.clientWidth), H = 250;
-  const m = { t: 22, r: 6, b: 26, l: 12 + 7 * fmt(yMax).length };
+  const m = { t: 22, r: 6, b: 26, l: 12 + 7 * o.fmtTick(yMax).length };
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
   const y = v => m.t + ph - v / yMax * ph;
   const slot = pw / days.length, bw = Math.min(24, Math.round(slot * 0.62));
@@ -653,16 +638,16 @@ function renderDaily(resizeOnly = false) {
   const clean = v => { const q = v / Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 2.5, 5].some(k => Math.abs(q - k) < 1e-9); };
   const div = [4, 5, 3, 6, 2].find(d => clean(yMax / d)) || 4;
   const ticks = Array.from({ length: div + 1 }, (_, i) => yMax / div * i);
-  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${rangeLabel}: günlük kupon adedi, ${esc(scopeLabel)}">`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label)}">`;
   s += '<g class="grid">' + ticks.map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"${v === 0 ? ' class="base"' : ''}/>`).join('') + '</g>';
-  s += ticks.map(v => `<text x="${m.l - 8}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${fmt(v)}</text>`).join('');
+  s += ticks.map(v => `<text x="${m.l - 8}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${esc(o.fmtTick(v))}</text>`).join('');
   days.forEach((d, i) => {
     const x0 = m.l + i * slot, cx = x0 + slot / 2, bx = cx - bw / 2;
     const n = total(d);
-    // stacked segments, smallest amount at the baseline; 2px surface gap between segments
+    // stacked segments, first series at the baseline; 2px surface gap between segments
     let acc = 0, segs = '';
-    amounts.forEach((a, k) => {
-      const v = byDay[d][a]; if (!v) return;
+    series.forEach(sr => {
+      const v = sr.values[d] || 0; if (!v) return;
       const yTop = y(acc + v), yBot = y(acc); acc += v;
       const isTop = acc === n;
       const t = yTop + (isTop ? 0 : 1), b = yBot - (acc - v === 0 ? 0 : 1), h = Math.max(1, b - t);
@@ -670,29 +655,26 @@ function renderDaily(resizeOnly = false) {
       const shape = isTop
         ? `<path d="M${bx} ${b} V${t + r} a${r} ${r} 0 0 1 ${r} -${r} H${bx + bw - r} a${r} ${r} 0 0 1 ${r} ${r} V${b} Z"`
         : `<rect x="${bx}" y="${t.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}"`;
-      segs += `${shape} class="seg-rect" fill="${color(a)}"/>`;
+      segs += `${shape} class="seg-rect" fill="${sr.color}"/>`;
     });
     const animate = !daily.animated && n > 0 ? ' class="rise-in" style="animation-delay:' + (i * 18) + 'ms"' : '';
     s += `<g${animate}>${segs}</g>`;
-    if (n > 0 && (d === peakDay || d === today) && slot >= 22) s += `<text class="cap" x="${cx}" y="${(y(n) - 6).toFixed(1)}" text-anchor="middle">${fmt(n)}</text>`;
+    if (n > 0 && (d === peakDay || d === today) && slot >= 22) s += `<text class="cap" x="${cx}" y="${(y(n) - 6).toFixed(1)}" text-anchor="middle">${esc(o.cap(d))}</text>`;
     const showLabel = (days.length - 1 - i) % labelEvery === 0;
-    if (showLabel) s += `<text class="${d === today ? 'x-today' : ''}" x="${cx}" y="${H - 8}" text-anchor="middle">${d === today ? 'Bugün' : esc(dayLabelFmt.format(new Date(d + 'T12:00:00Z')))}</text>`;
-    const desc = `${dayLongFmt.format(new Date(d + 'T12:00:00Z'))}: ${n} kupon` + (n ? ' (' + amounts.filter(a => byDay[d][a]).map(a => `${a} TL ${byDay[d][a]}`).join(', ') + ')' : '');
-    s += `<rect class="day-hit" data-day="${d}" x="${x0}" y="${m.t - 6}" width="${slot}" height="${ph + 6}" tabindex="0" role="img" aria-label="${esc(desc)}"/><rect class="hi" x="${x0 + 1}" y="${m.t - 6}" width="${slot - 2}" height="${ph + 6}" rx="6"/>`;
+    if (showLabel) s += `<text class="${d === today ? 'x-today' : ''}" x="${cx}" y="${H - 8}" text-anchor="middle">${d === today ? 'Bugün' : esc(dayShort(d))}</text>`;
+    s += `<rect class="day-hit" data-day="${d}" x="${x0}" y="${m.t - 6}" width="${slot}" height="${ph + 6}" tabindex="0" role="img" aria-label="${esc(o.aria(d))}"/><rect class="hi" x="${x0 + 1}" y="${m.t - 6}" width="${slot - 2}" height="${ph + 6}" rx="6"/>`;
   });
   s += '</svg><div class="tip" id="daily-tip" role="tooltip"></div>';
-  if (maxN === 0) s += '<div class="chart-empty">Bu aralıkta henüz kupon gösterilmedi.</div>';
+  if (maxN === 0) s += `<div class="chart-empty">${esc(o.empty)}</div>`;
   box.classList.remove('stale');
   box.innerHTML = s;
   daily.animated = true;
 
-  // tooltip: one readout per day, every amount at that X
+  // tooltip: one readout per day
   const tip = $('daily-tip');
   const showTip = (el) => {
     const d = el.dataset.day, n = total(d);
-    tip.innerHTML = `<div class="t">${esc(dayLongFmt.format(new Date(d + 'T12:00:00Z')))}</div>` +
-      amounts.map(a => `<div class="r"><i style="background:${color(a)}"></i>${fmt(a)} TL<b>${fmt(byDay[d][a])}</b></div>`).join('') +
-      `<div class="sum">Toplam<b>${fmt(n)}</b></div>`;
+    tip.innerHTML = o.tip(d);
     tip.classList.add('show');
     const r = el.getBoundingClientRect(), br = box.getBoundingClientRect();
     const cx = r.left - br.left + r.width / 2;
@@ -708,12 +690,140 @@ function renderDaily(resizeOnly = false) {
     el.addEventListener('pointerleave', () => tip.classList.remove('show'));
     el.addEventListener('blur', () => tip.classList.remove('show'));
   });
+}
 
-  // ── table twin ──
+function renderDaily(resizeOnly = false) {
+  document.querySelectorAll('#daily [data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === daily.mode));
+  document.querySelectorAll('#daily [data-scope]').forEach(b => b.setAttribute('aria-pressed', b.dataset.scope === daily.scope));
+  document.querySelectorAll('#daily [data-range]').forEach(b => b.setAttribute('aria-pressed', b.dataset.range === String(daily.range)));
+
+  // robot picker: keep the chosen robot if it still exists, else the first claimed one
+  const sel = $('daily-robot');
+  sel.hidden = daily.scope !== 'robot';
+  if (!robots.some(r => r.id === daily.robot)) daily.robot = robots[0]?.id || '';
+  sel.innerHTML = robots.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+  sel.value = daily.robot;
+
+  // campaign range: every Istanbul day from CAMPAIGN_START through today (at least one day, even before launch)
+  const span = daily.range === 'campaign'
+    ? Math.max(1, Math.round((Date.parse(dayKey(0)) - Date.parse(CAMPAIGN_START)) / 86_400_000) + 1)
+    : daily.range;
+  const days = Array.from({ length: span }, (_, i) => dayKey(i - span + 1));
+  const ctx = {
+    days, today: days[days.length - 1], yday: dayKey(-1),
+    rangeLabel: daily.range === 'campaign' ? 'Kampanya' : `Son ${daily.range} gün`,
+    rangeIn: daily.range === 'campaign' ? 'kampanya boyunca' : `son ${daily.range} günde`,
+    scopeLabel: daily.scope === 'robot' ? (robots.find(r => r.id === daily.robot)?.name || 'robot') : 'filo',
+  };
+  if (daily.mode === 'screen') renderScreenMode(ctx, resizeOnly); else renderCouponMode(ctx, resizeOnly);
+}
+
+// ── mode 1: coupons per day, one segment per amount ──
+function renderCouponMode({ days, today, yday, rangeLabel, rangeIn, scopeLabel }, resizeOnly) {
+  const rows = daily.scope === 'robot' ? daily.rows.filter(x => x.robot_id === daily.robot) : daily.rows;
+  const amounts = [...new Set([...daily.cfgAmounts, ...daily.rows.map(x => x.amount)])].sort((a, b) => a - b);
+  const color = a => RAMP[Math.min(RAMP.length - 1, amounts.indexOf(a))];
+  const byDay = Object.fromEntries(days.map(d => [d, Object.fromEntries(amounts.map(a => [a, 0]))]));
+  rows.forEach(x => { if (byDay[x.day]) byDay[x.day][x.amount] += x.used; });
+  const total = d => amounts.reduce((n, a) => n + byDay[d][a], 0);
+  const todayN = total(today), ydayN = byDay[yday] ? total(yday) : 0;
+  const rangeN = days.reduce((n, d) => n + total(d), 0);
+  const activeDays = days.filter(d => total(d) > 0).length;
+
+  if (!resizeOnly) {
+    $('daily-title').textContent = 'Günlük kupon';
+    $('daily-sub').textContent = 'Gün gün gösterilen kupon adedi, tutara göre kırılımlı. Günler İstanbul saatine göre.';
+    // No day-over-day % here: today is always a partial day, so it would read as a drop until evening.
+    const robotsToday = daily.scope === 'fleet' ? new Set(daily.rows.filter(x => x.day === today && x.used > 0).map(x => x.robot_id)).size : null;
+    const top = amounts.map(a => [a, days.reduce((n, d) => n + byDay[d][a], 0)]).sort((p, q) => q[1] - p[1])[0];
+    $('daily-figs').innerHTML = `
+      <div class="fig"><div class="k">Bugün</div><div class="v">${fmt(todayN)}</div><div class="d">dün ${fmt(ydayN)}</div></div>
+      <div class="fig"><div class="k">${rangeLabel}</div><div class="v">${fmt(rangeN)}</div><div class="d">${activeDays ? 'günde ort. ' + fmt(Math.round(rangeN / activeDays)) : 'henüz kupon yok'}</div></div>
+      <div class="fig"><div class="k">En çok çıkan</div><div class="v">${top && top[1] ? fmt(top[0]) + '<small>TL</small>' : '—'}</div><div class="d">${top && top[1] && rangeN ? '%' + Math.round(top[1] / rangeN * 100) + ' pay' : ''}</div></div>
+      ${daily.scope === 'fleet'
+        ? `<div class="fig"><div class="k">Bugün aktif robot</div><div class="v">${fmt(robotsToday)}<small>/ ${fmt(robots.length)}</small></div><div class="d">${robots.filter(r => online(r)).length} çevrimiçi</div></div>`
+        : `<div class="fig"><div class="k">Bu robotun payı</div><div class="v">${(() => { const f = days.reduce((n, d) => n + daily.rows.filter(x => x.day === d).reduce((m, x) => m + x.used, 0), 0); return f ? '%' + Math.round(rangeN / f * 100) : '—'; })()}</div><div class="d">${rangeIn} filo içinde</div></div>`}`;
+    $('daily-legend').innerHTML = amounts.map(a => `<span><i style="background:${color(a)}"></i>${fmt(a)} TL</span>`).join('');
+  }
+
+  drawColumns($('daily-chart'), days, amounts.map(a => ({ color: color(a), values: Object.fromEntries(days.map(d => [d, byDay[d][a]])) })), {
+    label: `${rangeLabel}: günlük kupon adedi, ${scopeLabel}`,
+    fmtTick: fmt,
+    cap: d => fmt(total(d)),
+    aria: d => `${dayLong(d)}: ${total(d)} kupon` + (total(d) ? ' (' + amounts.filter(a => byDay[d][a]).map(a => `${a} TL ${byDay[d][a]}`).join(', ') + ')' : ''),
+    tip: d => `<div class="t">${esc(dayLong(d))}</div>` +
+      amounts.map(a => `<div class="r"><i style="background:${color(a)}"></i>${fmt(a)} TL<b>${fmt(byDay[d][a])}</b></div>`).join('') +
+      `<div class="sum">Toplam<b>${fmt(total(d))}</b></div>`,
+    empty: 'Bu aralıkta henüz kupon gösterilmedi.',
+  });
+
   if (!resizeOnly) {
     let t = `<table><thead><tr><th>Gün</th>${amounts.map(a => `<th class="num">${fmt(a)} TL</th>`).join('')}<th class="num">Toplam</th></tr></thead><tbody>`;
-    [...days].reverse().forEach(d => { t += `<tr><td>${esc(dayLongFmt.format(new Date(d + 'T12:00:00Z')))}</td>${amounts.map(a => `<td class="num">${fmt(byDay[d][a])}</td>`).join('')}<td class="num" style="font-weight:800">${fmt(total(d))}</td></tr>`; });
+    [...days].reverse().forEach(d => { t += `<tr><td>${esc(dayLong(d))}</td>${amounts.map(a => `<td class="num">${fmt(byDay[d][a])}</td>`).join('')}<td class="num" style="font-weight:800">${fmt(total(d))}</td></tr>`; });
     t += `</tbody><tfoot><tr><td>Toplam</td>${amounts.map(a => `<td class="num">${fmt(days.reduce((n, d) => n + byDay[d][a], 0))}</td>`).join('')}<td class="num">${fmt(rangeN)}</td></tr></tfoot></table>`;
+    $('daily-table').innerHTML = t;
+  }
+}
+
+// ── mode 2: on-screen hours per day (fleet sum, or one robot) ──
+function renderScreenMode({ days, today, yday, rangeLabel, rangeIn, scopeLabel }, resizeOnly) {
+  const rows = daily.scope === 'robot' ? screenRows.filter(x => x.robot_id === daily.robot) : screenRows;
+  const byDay = Object.fromEntries(days.map(d => [d, {}]));                       // day → robot → seconds
+  rows.forEach(x => { if (byDay[x.day]) byDay[x.day][x.robot_id] = (byDay[x.day][x.robot_id] || 0) + x.seconds; });
+  const secs = d => Object.values(byDay[d] || {}).reduce((a, b) => a + b, 0);
+  const hours = d => secs(d) / 3600;
+  const rangeS = days.reduce((n, d) => n + secs(d), 0);
+  const activeDays = days.filter(d => secs(d) > 0).length;
+  const name = id => robots.find(r => r.id === id)?.name || id;
+  const fmtH = v => (Number.isInteger(v) ? v : +v.toFixed(1)) + ' sa';
+
+  if (!resizeOnly) {
+    $('daily-title').textContent = 'Ekran süresi';
+    $('daily-sub').textContent = 'Oyunun her gün tablet ekranında kaldığı toplam süre. Tablet ekrana geldiğinde, 5 dakikada bir ve ekrandan çıktığı anda panele haber verir; günler İstanbul saatine göre.';
+    const perRobot = {};                                                           // robot → seconds over the range
+    days.forEach(d => Object.entries(byDay[d]).forEach(([id, v]) => perRobot[id] = (perRobot[id] || 0) + v));
+    const top = Object.entries(perRobot).sort((p, q) => q[1] - p[1])[0];
+    const robotsToday = Object.keys(byDay[today] || {}).length;
+    const fleetRange = days.reduce((n, d) => n + screenRows.filter(x => x.day === d).reduce((m, x) => m + x.seconds, 0), 0);
+    $('daily-figs').innerHTML = `
+      <div class="fig"><div class="k">Bugün</div><div class="v">${secs(today) ? fmtDur(secs(today)) : '—'}</div><div class="d">dün ${byDay[yday] && secs(yday) ? fmtDur(secs(yday)) : '—'}</div></div>
+      <div class="fig"><div class="k">${rangeLabel}</div><div class="v">${rangeS ? fmtDur(rangeS) : '—'}</div><div class="d">${activeDays ? 'günde ort. ' + fmtDur(rangeS / activeDays) : 'henüz ekran verisi yok'}</div></div>
+      ${daily.scope === 'fleet'
+        ? `<div class="fig"><div class="k">En uzun süre</div><div class="v" style="font-size:20px">${top ? esc(name(top[0])) : '—'}</div><div class="d">${top ? fmtDur(top[1]) + ' ' + rangeIn : ''}</div></div>
+           <div class="fig"><div class="k">Bugün ekranda</div><div class="v">${fmt(robotsToday)}<small>/ ${fmt(robots.length)}</small></div><div class="d">${robots.filter(r => online(r)).length} şu an çevrimiçi</div></div>`
+        : `<div class="fig"><div class="k">Bu robotun payı</div><div class="v">${fleetRange ? '%' + Math.round(rangeS / fleetRange * 100) : '—'}</div><div class="d">${rangeIn} filo içinde</div></div>
+           <div class="fig"><div class="k">En uzun gün</div><div class="v" style="font-size:20px">${top || activeDays ? esc(dayShort([...days].sort((a, b) => secs(b) - secs(a))[0])) : '—'}</div><div class="d">${activeDays ? fmtDur(Math.max(...days.map(secs))) : ''}</div></div>`}`;
+    $('daily-legend').innerHTML = '';
+  }
+
+  drawColumns($('daily-chart'), days, [{ color: RAMP[1], values: Object.fromEntries(days.map(d => [d, hours(d)])) }], {
+    label: `${rangeLabel}: günlük ekran süresi, ${scopeLabel}`,
+    fmtTick: fmtH,
+    cap: d => fmtDur(secs(d)),
+    aria: d => `${dayLong(d)}: ekranda ${secs(d) ? fmtDur(secs(d)) : '0 dk'}`,
+    tip: d => {
+      const list = Object.entries(byDay[d]).sort((p, q) => q[1] - p[1]);
+      const shown = daily.scope === 'fleet' ? list.slice(0, 6) : [];
+      return `<div class="t">${esc(dayLong(d))}</div>` +
+        shown.map(([id, v]) => `<div class="r"><i style="background:${RAMP[1]}"></i>${esc(name(id))}<b>${fmtDur(v)}</b></div>`).join('') +
+        (list.length > shown.length && daily.scope === 'fleet' ? `<div class="r dim">+${list.length - shown.length} robot</div>` : '') +
+        `<div class="sum">Toplam<b>${secs(d) ? fmtDur(secs(d)) : '—'}</b></div>`;
+    },
+    empty: 'Bu aralıkta ekran verisi yok: robotlar yeni APK ile bildirmeye başlar.',
+  });
+
+  if (!resizeOnly) {
+    // table twin: days × robots that reported anything in the range (fleet) or the one robot
+    const ids = daily.scope === 'fleet'
+      ? robots.map(r => r.id).filter(id => days.some(d => byDay[d][id]))
+      : [daily.robot];
+    let t = `<table><thead><tr><th>Gün</th>${ids.map(id => `<th class="num">${esc(name(id))}</th>`).join('')}${ids.length > 1 ? '<th class="num">Toplam</th>' : ''}</tr></thead><tbody>`;
+    [...days].reverse().forEach(d => {
+      t += `<tr><td>${esc(dayLong(d))}</td>${ids.map(id => `<td class="num ${byDay[d][id] ? '' : 'dim'}">${byDay[d][id] ? fmtDur(byDay[d][id]) : '—'}</td>`).join('')}`;
+      if (ids.length > 1) t += `<td class="num" style="font-weight:800">${secs(d) ? fmtDur(secs(d)) : '—'}</td>`;
+      t += '</tr>';
+    });
+    t += `</tbody><tfoot><tr><td>Toplam</td>${ids.map(id => { const v = days.reduce((n, d) => n + (byDay[d][id] || 0), 0); return `<td class="num">${v ? fmtDur(v) : '—'}</td>`; }).join('')}${ids.length > 1 ? `<td class="num">${rangeS ? fmtDur(rangeS) : '—'}</td>` : ''}</tr></tfoot></table>`;
     $('daily-table').innerHTML = t;
   }
 }
@@ -759,15 +869,32 @@ function renderUsage(usage, lifetime, cfgs) {
   const life = (rid, a) => lifetime.find(x => x.robot_id === rid && x.amount === a)?.used || 0;
   const lim = (rid, a) => cfgs.find(x => x.robot_id === rid)?.promos.find(p => p.amount === a)?.limit ?? null;
 
-  let h = '<table><thead><tr><th>Robot</th><th>Durum</th>';
+  // "Latest" = the highest version any robot reports (semver-ish compare); older or silent robots get a flag.
+  const latestVersion = robots.map(r => r.app_version).filter(Boolean).sort(cmpVer).pop() || null;
+  // Fleet APK summary: newest version, how many robots run it, how many are behind (older or silent).
+  const behind = robots.filter(r => r.app_version !== latestVersion);
+  const apk = $('apk-line');
+  apk.hidden = !latestVersion;
+  if (latestVersion) apk.innerHTML = `<span>Güncel APK</span><span class="ver">v${esc(latestVersion)}</span><span class="sep">·</span><span>${robots.length - behind.length}/${robots.length} robot güncel</span>` +
+    (behind.length ? `<span class="sep">·</span><span class="warn-t">${behind.length} robotta güncelleme bekliyor</span>` : '');
+  let h = '<table><thead><tr><th>Robot</th><th>Durum</th><th title="Tabletteki uygulama sürümü; kırmızı = filodaki en yeni sürümün gerisinde ya da sürüm bildirmeyen eski APK">APK</th>';
   amounts.forEach(a => h += `<th class="num">${fmt(a)} TL</th>`);
   h += '<th class="num">Toplam</th></tr></thead><tbody>';
   const totals = Object.fromEntries(amounts.map(a => [a, 0]));
   robots.forEach(r => {
     let sum = 0;
-    const on = online(r.last_seen_at);
+    const on = online(r);
+    const st = screenToday[r.id];
+    const since = on && r.screen_on_since ? fmtDur((Date.now() - new Date(r.screen_on_since).getTime()) / 1000) + "'dır ekranda" : null;
+    const stale = r.app_version !== latestVersion;
+    const ver = r.app_version
+      ? `<span class="ver ${stale ? 'stale' : ''}" title="${stale ? 'Güncelleme bekliyor (güncel: v' + esc(latestVersion) + ')' : 'Güncel sürüm'}">v${esc(r.app_version)}${stale ? ' ↑' : ''}</span>`
+      : `<span class="ver stale" title="Sürüm bildirmiyor: eski APK, güncelleme bekliyor">eski ↑</span>`;
     h += `<tr><td><div class="robot-name">${esc(r.name)}</div><div class="robot-id">${esc(r.model || r.id)} · <button class="linkish" onclick="unclaim('${esc(r.id)}')" title="Uygulama silinip yeniden kurulduysa cihazın yeniden tanıtılmasına izin verir">serbest bırak</button></div></td>` +
-         `<td><span class="badge ${on ? 'on' : 'off'}"><span class="dot"></span>${on ? 'Çevrimiçi' : (r.last_seen_at ? new Date(r.last_seen_at).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Hiç bağlanmadı')}</span></td>`;
+         `<td><span class="badge ${on ? 'on' : 'off'}"><span class="dot"></span>${on ? 'Çevrimiçi' : (r.last_seen_at ? new Date(r.last_seen_at).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Hiç bağlanmadı')}</span>` +
+         (since ? `<div class="robot-id">${since}</div>` : '') +
+         (st != null ? `<div class="robot-id" title="Oyunun bugün tablet ekranında kaldığı toplam süre">bugün ekranda ${fmtDur(st)}</div>` : '') + `</td>` +
+         `<td>${ver}</td>`;
     amounts.forEach(a => {
       const t = life(r.id, a), n = used(r.id, a), l = lim(r.id, a); sum += t; totals[a] += t;
       if (l) {
@@ -779,7 +906,7 @@ function renderUsage(usage, lifetime, cfgs) {
     });
     h += `<td class="num" style="font-weight:800">${sum}</td></tr>`;
   });
-  h += '</tbody><tfoot><tr><td colspan="2">Filo toplamı</td>';
+  h += '</tbody><tfoot><tr><td colspan="3">Filo toplamı</td>';
   let g = 0; amounts.forEach(a => { g += totals[a]; h += `<td class="num">${totals[a]}</td>`; });
   h += `<td class="num">${g}</td></tr></tfoot></table>`;
   $('usage').classList.remove('skeleton');
