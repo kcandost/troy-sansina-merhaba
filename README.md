@@ -8,7 +8,7 @@ An interactive in-store campaign game for TROY (Apple Premium Partner, Türkiye)
 |---|---|
 | 📱 Android APK (latest) | [Troy_Sansina_Merhaba.apk](https://github.com/kcandost/troy-sansina-merhaba/releases/latest/download/Troy_Sansina_Merhaba.apk) |
 | 📄 Store Operations Guide (Turkish, PDF) | [Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf](docs/Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf) |
-| 📝 Changelog (Turkish) | [CHANGELOG.md](CHANGELOG.md) |
+| 📝 Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
 ---
 

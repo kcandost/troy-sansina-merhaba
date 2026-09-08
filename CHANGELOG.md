@@ -1,53 +1,53 @@
-# Değişiklik Günlüğü
+# Changelog
 
-TROY "Şansına Merhaba" tablet uygulaması. Sürüm adı GitHub yayın etiketiyle aynıdır; APK'lar [Releases](https://github.com/kcandost/troy-sansina-merhaba/releases) sayfasındadır. Her sürüm mevcut uygulamanın üzerine kurulur; ayarlar ve sayaçlar korunur.
+TROY "Şansına Merhaba" tablet app. The version name matches the GitHub release tag; APKs are on the [Releases](https://github.com/kcandost/troy-sansina-merhaba/releases) page. Every release installs over the previous one; settings and counters are preserved.
 
 ## v1.3.1 — 2026-09-08
 
-- Ayarlar panelinde **"Uygulamadan çık"** düğmesi: uygulamayı kapatır, tablet ana ekranına döner (güncelleme kurarken veya başka uygulamaya geçerken). Simgeden yeniden başlatılır.
-- Bu dosya (CHANGELOG.md) eklendi.
+- **"Uygulamadan çık" (Exit app) button** in the settings panel: closes the app and returns the tablet to its home screen (for installing updates or switching apps). Relaunch from the app icon.
+- Added this changelog.
 
 ## v1.3.0 — 2026-09-08
 
-Ajansın güncellediği TROY_ROZYLABS Figma dosyasına göre metin ve düzen güncellemeleri:
+Copy and layout updates from the agency's revised TROY_ROZYLABS Figma file:
 
-- **Kart seçimi (kare 6):** "Kartlardan birini seç, Troy'dan kazanacağın indirimi öğren."
-- **Çevirme (kare 7):** "Hemen çevir, indirimi gör!"
-- **Sonuç (kare 8–11):** yeni düzen — "Troy mağazalarında kullanabileceğin" / tutar / "indirim kazandın." / "Hemen QR'ı okut, indirim kodunu al." / QR.
-- Davet ekranı (kare 5) ve arka plan değişmedi.
+- **Card selection (frame 6):** "Kartlardan birini seç, Troy'dan kazanacağın indirimi öğren."
+- **Flip (frame 7):** "Hemen çevir, indirimi gör!"
+- **Result (frames 8–11):** new layout — "Troy mağazalarında kullanabileceğin" / amount / "indirim kazandın." / "Hemen QR'ı okut, indirim kodunu al." / QR.
+- Invite screen (frame 5) and backgrounds unchanged.
 
 ## v1.2.0 — 2026-09-07
 
-- Panelde "Çevrimiçi" artık oyunun tablet ekranında olduğunu gösterir; tablet ana ekrana dönünce veya ekran kapanınca anında çevrimdışı görünür.
-- Panel, robotun ne zamandır ekranda olduğunu ve bugün toplam ekran süresini gösterir; yeni "Ekran süresi" kartı (robot × 14 gün).
-- Tablet uygulama sürümünü bildirir; panelde eski sürümdeki robotlar kırmızı sürüm çipiyle işaretlenir.
-- Telegram bildirimleri (TROY Sansina grubu) çevrimdışı/çevrimiçi ve eski sürüm uyarıları için bu sürümü kullanır.
+- "Online" in the dashboard now means the game is on the tablet screen; the device shows offline the moment it goes to the home screen or the screen turns off.
+- Dashboard shows how long each robot has been on screen and today's total screen time; new "Screen time" card (robot × 14 days).
+- Tablets report their app version; robots on an outdated version are flagged with a red version chip.
+- Telegram alerts (TROY Sansina group) use this version for offline/online and outdated-version notices.
 
 ## v1.1.1 — 2026-09-05
 
-- Uygulama silinip yeniden kurulduğunda görülen yanıltıcı "Sunucuya ulaşılamadı" mesajı düzeltildi: tablet artık "Bu cihaz filoda zaten kayıtlı" der ve panelden "serbest bırak" adımına yönlendirir.
-- Filo panelinde her cihaz için "serbest bırak" eylemi; serbest bırakılan tablet aynı kimlikle ve geçmiş verileri korunarak yeniden tanıtılır.
+- Fixed the misleading "Sunucuya ulaşılamadı" (server unreachable) message after uninstall/reinstall: the tablet now says the device is already registered in the fleet and points to the dashboard's "release" action.
+- Dashboard "release" action per device; a released tablet re-enrolls with the same identity and keeps its history.
 
 ## v1.1.0 — 2026-09-04
 
-- Cihazlar 5 dakikada bir sinyal gönderir: panel çevrimiçi/çevrimdışı durumu cihazın gerçekten açık olup olmadığını gösterir (oyun sırasında da).
-- Toplam gösterim sayıları kupon ayarı değişince sıfırlanmaz; panel kayıttan bu yana toplamları gösterir, limit sayaçları dönem bazında çalışmaya devam eder.
+- Devices send a heartbeat every 5 minutes: the dashboard's online/offline state reflects whether the device is actually up (during gameplay too).
+- Lifetime play counts no longer reset when the coupon config changes; the dashboard shows totals since enrollment while limit counters keep working per period.
 
 ## v1.0.0 — 2026-09-04
 
-- Filo paneli sürümü: kurulumda cihaz adlandırma, robot başına limit ve kampanya geneli kota, uzaktan kupon yönetimi.
-- Supabase arka ucu: kupon kayıtları, uzaktan yapılandırma, çevrimdışı kuyruk.
+- Fleet dashboard release: device naming at setup, per-robot limits plus campaign-wide quotas, remote coupon management.
+- Supabase backend: coupon grants, remote config, offline queue.
 
 ## v0.3.0 — 2026-09-01
 
-- Topluluk PR #1 (@menesnas): sabit robot adresi (sahada ayar gerekmez), basılı/sürüklenen dokunuşlarda da duraklatma penceresi canlı kalır, ASGI 400 hatasını önleyen boş POST gövdesi, durum geçişi günlükleri, zengin durum sorgusu (acil stop, engellenen navigasyon, şarj).
-- Kullanım kılavuzu PDF güncellendi.
+- Community PR #1 (@menesnas): fixed robot address (no field configuration), pause window kept alive on held/dragged touches, explicit empty POST body to avoid ASGI 400 rejections, state-transition logging, richer status probe (e-stop, blocked navigation, charging).
+- Store guide PDF updated.
 
 ## v0.2.0 — 2026-08-31
 
-- Robot dokunmatik duraklatma: ekrana her dokunuş eşleşen Saha temizlik robotunu durdurur; son dokunuştan 60 sn sonra devam eder, çökme sonrası güvenli kurtarma.
+- Robot pause-on-touch: any screen touch halts the paired Saha cleaning robot; it resumes 60 s after the last touch, with crash-safe recovery.
 
 ## v0.1.0 — 2026-08-31
 
-- Kampanya açılış sürümü: TROY_ROZYLABS Figma tasarımlarına birebir uygulama (kare 5–11), 1920×1200 yatay tablet, Android 8.0+.
-- Mağaza kullanım kılavuzu: docs/Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf
+- Campaign launch build: faithful implementation of the TROY_ROZYLABS Figma designs (frames 5–11), 1920×1200 landscape tablet, Android 8.0+.
+- Store operations guide: docs/Troy_Sansina_Merhaba_Kullanim_Kilavuzu.pdf
