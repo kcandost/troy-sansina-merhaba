@@ -267,6 +267,12 @@
   .tip .r b { margin-left: auto; font-weight: 800; }
   .tip .sum { border-top: 1px solid rgba(255,255,255,.18); margin-top: 5px; padding-top: 5px; font-weight: 800; display: flex; }
   .tip .sum b { margin-left: auto; }
+  .chart .tile { transition: opacity .12s ease-out; outline: none; }
+  .chart .tile:hover, .chart .tile:focus-visible { stroke: var(--ink); stroke-width: 1.5; }
+  .chart .hbar { fill: #1f9dc0; }
+  .chart .hbar.peak { fill: #0a465c; }
+  .legend .scale { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; }
+  .legend .scale i { border-radius: 2px; }
   .chart-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-size: 13px; pointer-events: none; }
 
   #daily details { margin-top: 10px; }
@@ -383,6 +389,7 @@
           <div class="seg seg-mode" role="tablist" aria-label="Grafik">
             <button type="button" role="tab" data-mode="coupons" aria-pressed="true">Kupon</button>
             <button type="button" role="tab" data-mode="screen" aria-pressed="false">Ekran süresi</button>
+            <button type="button" role="tab" data-mode="hours" aria-pressed="false">Saatlik</button>
           </div>
           <div class="seg" role="group" aria-label="Kapsam">
             <button type="button" data-scope="fleet" aria-pressed="true">Filo</button>
@@ -453,7 +460,7 @@
 // Project defaults (anon key is public by design; access is gated by auth + RLS).
 const DEFAULT_URL = 'https://pvgzgmhqwffytrnjebkg.supabase.co';
 const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2Z3pnbWhxd2ZmeXRybmplYmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NzMwNjAsImV4cCI6MjEwNDA0OTA2MH0.5Ya86a5XL7-SnCyqt52a_UXyWLx1A0y6pGojFB1FGgU';
-let sb = null, robots = [], rows = [], gq = {}, screenToday = {}, screenRows = [];
+let sb = null, robots = [], rows = [], gq = {}, screenToday = {}, screenRows = [], hourlyRows = [];
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('tr-TR');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -493,7 +500,7 @@ async function show() {
 
 async function refresh() {
   $('daily-chart').classList.add('stale');
-  const [r, u, lt, c, g, q, d, stv] = await Promise.all([
+  const [r, u, lt, c, g, q, d, stv, hv] = await Promise.all([
     sb.from('robots').select('*').order('id'),
     sb.from('usage_view').select('*'),
     sb.from('lifetime_usage_view').select('*'),
@@ -502,11 +509,13 @@ async function refresh() {
     sb.from('global_quotas').select('*'),
     sb.from('daily_usage_view').select('*').gte('day', [CAMPAIGN_START, dayKey(-(DAILY_MAX - 1))].sort()[0]),
     sb.from('screen_time_view').select('*').gte('day', [CAMPAIGN_START, dayKey(-(DAILY_MAX - 1))].sort()[0]),
+    sb.from('hourly_usage_view').select('*').gte('day', [CAMPAIGN_START, dayKey(-(DAILY_MAX - 1))].sort()[0]),
   ]);
   if (r.error) { $('usage').innerHTML = '<div class="msg err">Veriye ulaşılamadı. Bağlantıyı kontrol edip sayfayı yenile.</div>'; return; }
   const all = r.data;
   robots = all.filter(x => x.claimed);
   screenRows = stv.data || [];
+  hourlyRows = hv.data || [];
   screenToday = Object.fromEntries(screenRows.filter(x => x.day === dayKey(0)).map(x => [x.robot_id, x.seconds]));
   renderPending(all.filter(x => !x.claimed));
   const cfgs = c.data || [];
@@ -579,6 +588,9 @@ async function claim(id) {
 // 2.12:1 on white. Amount → step is fixed by rank across the whole dataset, so a robot that
 // never showed 1000 TL still uses the same colors as the fleet view.
 const RAMP = ['#4dc0df', '#27abd0', '#1a93b8', '#11799a', '#0d5f7b', '#0a465c'];
+// Heat-map tiles: sequential, same teal hue, 4 magnitude steps (validated: monotone L, ≥0.06 steps,
+// light end 2.06:1 on white). Empty hours are a neutral surface tint, not a ramp step.
+const TILES = ['#4dc0df', '#1f9dc0', '#0e6f8f', '#0a465c'], TILE_EMPTY = '#e9f0f4';
 const DAILY_MAX = 30;
 const CAMPAIGN_START = '2026-09-03';   // "Kampanya" range: first day of the Şansına Merhaba rollout → today
 const TZ = 'Europe/Istanbul';
@@ -588,7 +600,7 @@ const dayLongFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, weekday: 'lo
 const dayKey = offset => dayFmt.format(new Date(Date.now() + offset * 86_400_000));
 const daily = {
   rows: [], cfgAmounts: [], animated: false, loaded: false,
-  mode: localStorage.getItem('daily_mode') === 'screen' ? 'screen' : 'coupons',
+  mode: ['screen', 'hours'].includes(localStorage.getItem('daily_mode')) ? localStorage.getItem('daily_mode') : 'coupons',
   scope: localStorage.getItem('daily_scope') === 'robot' ? 'robot' : 'fleet',
   range: ['7', '14', '30'].includes(localStorage.getItem('daily_range')) ? +localStorage.getItem('daily_range') : 'campaign',
   robot: localStorage.getItem('daily_robot') || '',
@@ -715,7 +727,9 @@ function renderDaily(resizeOnly = false) {
     rangeIn: daily.range === 'campaign' ? 'kampanya boyunca' : `son ${daily.range} günde`,
     scopeLabel: daily.scope === 'robot' ? (robots.find(r => r.id === daily.robot)?.name || 'robot') : 'filo',
   };
-  if (daily.mode === 'screen') renderScreenMode(ctx, resizeOnly); else renderCouponMode(ctx, resizeOnly);
+  if (daily.mode === 'screen') renderScreenMode(ctx, resizeOnly);
+  else if (daily.mode === 'hours') renderHourMode(ctx, resizeOnly);
+  else renderCouponMode(ctx, resizeOnly);
 }
 
 // ── mode 1: coupons per day, one segment per amount ──
@@ -824,6 +838,131 @@ function renderScreenMode({ days, today, yday, rangeLabel, rangeIn, scopeLabel }
       t += '</tr>';
     });
     t += `</tbody><tfoot><tr><td>Toplam</td>${ids.map(id => { const v = days.reduce((n, d) => n + (byDay[d][id] || 0), 0); return `<td class="num">${v ? fmtDur(v) : '—'}</td>`; }).join('')}${ids.length > 1 ? `<td class="num">${rangeS ? fmtDur(rangeS) : '—'}</td>` : ''}</tr></tfoot></table>`;
+    $('daily-table').innerHTML = t;
+  }
+}
+
+// ── mode 3: hour-of-day heat-map — one row per Istanbul day in the range, 24 hour columns, a
+// totals strip on top answering "which hour of the day" across the whole range ──
+function renderHourMode({ days, today, yday, rangeLabel, rangeIn, scopeLabel }, resizeOnly) {
+  const rows = daily.scope === 'robot' ? hourlyRows.filter(x => x.robot_id === daily.robot) : hourlyRows;
+  const H24 = Array.from({ length: 24 }, (_, i) => i);
+  const grid = Object.fromEntries(days.map(d => [d, new Array(24).fill(0)]));
+  const who = {};                                                                 // "day|hour" → robot → n
+  rows.forEach(x => {
+    if (!grid[x.day]) return;
+    grid[x.day][x.hour] += x.used;
+    const k = x.day + '|' + x.hour; (who[k] = who[k] || {})[x.robot_id] = (who[k][x.robot_id] || 0) + x.used;
+  });
+  const hourTotal = h => days.reduce((n, d) => n + grid[d][h], 0);
+  const dayTotal = d => grid[d].reduce((a, b) => a + b, 0);
+  const rangeN = days.reduce((n, d) => n + dayTotal(d), 0);
+  const maxCell = Math.max(0, ...days.flatMap(d => grid[d]));
+  const hh = h => String(h).padStart(2, '0') + ':00';
+  const spanLabel = h => `${hh(h)}–${hh((h + 1) % 24)}`;
+  const peakOf = arr => arr.some(v => v > 0) ? arr.indexOf(Math.max(...arr)) : null;
+  const peakHour = peakOf(H24.map(hourTotal));
+  const name = id => robots.find(r => r.id === id)?.name || id;
+  // magnitude step: 1..4 by share of the busiest tile
+  const step = v => v <= 0 ? 0 : Math.min(4, Math.ceil(v / maxCell * 4));
+  const thr = i => Math.max(1, Math.ceil(maxCell * i / 4));
+
+  if (!resizeOnly) {
+    $('daily-title').textContent = 'Saatlik yoğunluk';
+    $('daily-sub').textContent = 'Kuponların günün hangi saatinde çıktığı: her satır bir gün, her kare bir saat; koyu kare = o saatte daha çok kupon. Üstteki çubuklar tüm günlerin saat toplamı. İstanbul saati.';
+    const todayPeak = peakOf(grid[today]);
+    const active = days.filter(d => dayTotal(d) > 0);
+    // core window per day: the hours holding the middle 90 % of that day's coupons (a stray
+    // coupon at 03:00 must not stretch it); the figure shows the median window across days
+    const core = d => { const n = dayTotal(d); let acc = 0, a = 0, b = 23; for (let h = 0; h < 24; h++) { acc += grid[d][h]; if (acc > n * 0.05) { a = h; break; } } acc = 0; for (let h = 23; h >= 0; h--) { acc += grid[d][h]; if (acc > n * 0.05) { b = h; break; } } return [a, b]; };
+    const firsts = active.map(d => core(d)[0]).sort((a, b) => a - b);
+    const lasts = active.map(d => core(d)[1]).sort((a, b) => a - b);
+    const med = a => a.length ? a[Math.floor(a.length / 2)] : null;
+    const avgActiveHours = active.length ? active.reduce((n, d) => n + grid[d].filter(v => v > 0).length, 0) / active.length : 0;
+    const robotsToday = daily.scope === 'fleet' ? new Set(hourlyRows.filter(x => x.day === today && x.used > 0).map(x => x.robot_id)).size : null;
+    const fleetRange = days.reduce((n, d) => n + hourlyRows.filter(x => x.day === d).reduce((m, x) => m + x.used, 0), 0);
+    $('daily-figs').innerHTML = `
+      <div class="fig"><div class="k">En yoğun saat</div><div class="v">${peakHour === null ? '—' : hh(peakHour)}</div><div class="d">${peakHour === null ? 'henüz kupon yok' : fmt(hourTotal(peakHour)) + ' kupon ' + rangeIn}</div></div>
+      <div class="fig"><div class="k">Bugün en yoğun</div><div class="v">${todayPeak === null ? '—' : hh(todayPeak)}</div><div class="d">${todayPeak === null ? 'bugün henüz kupon yok' : fmt(grid[today][todayPeak]) + ' kupon, gün toplamı ' + fmt(dayTotal(today))}</div></div>
+      <div class="fig"><div class="k">Kuponların %90'ı</div><div class="v" style="font-size:20px">${active.length ? hh(med(firsts)) + ' – ' + hh(med(lasts) + 1) : '—'}</div><div class="d">${active.length ? 'bu saatler arasında; günde ort. ' + (Math.round(avgActiveHours * 10) / 10) + ' saat kupon çıkıyor' : ''}</div></div>
+      ${daily.scope === 'fleet'
+        ? `<div class="fig"><div class="k">Bugün aktif robot</div><div class="v">${fmt(robotsToday)}<small>/ ${fmt(robots.length)}</small></div><div class="d">${robots.filter(r => online(r)).length} çevrimiçi</div></div>`
+        : `<div class="fig"><div class="k">Bu robotun payı</div><div class="v">${fleetRange ? '%' + Math.round(rangeN / fleetRange * 100) : '—'}</div><div class="d">${rangeIn} filo içinde</div></div>`}`;
+    $('daily-legend').innerHTML = maxCell
+      ? `<span><i style="background:${TILE_EMPTY}"></i>Kupon yok</span>` +
+        `<span>Az <span class="scale">${TILES.map(c => `<i style="background:${c}"></i>`).join('')}</span> Çok</span>` +
+        `<span style="color:var(--ink-3)">${[1, 2, 3, 4].map(i => (i === 1 ? '1' : thr(i - 1) + 1) + '–' + thr(i)).filter((r, i, a) => a.indexOf(r) === i).join(' · ')} kupon/saat</span>`
+      : '';
+  }
+
+  // ── draw ──
+  const box = $('daily-chart');
+  const W = Math.max(280, box.clientWidth);
+  const m = { l: 60, r: 6, strip: 34, gap: 12, b: 22 };
+  // tiles fill the card width; rows stay compact so 30 days still fit on one screen
+  const cell = Math.min(52, (W - m.l - m.r) / 24);
+  const rowH = Math.min(cell, days.length > 14 ? 16 : 22);
+  const top = m.strip + m.gap;
+  const H = top + days.length * rowH + m.b;
+  const x = h => m.l + h * cell, y = i => top + i * rowH;
+  const hmax = Math.max(0, ...H24.map(hourTotal));
+  let sv = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${rangeLabel}: saatlik kupon yoğunluğu, ${scopeLabel}`)}">`;
+  // totals strip: 24 thin bars, peak labelled
+  H24.forEach(h => {
+    const v = hourTotal(h); if (!v) return;
+    const bh = Math.max(2, v / hmax * (m.strip - 12));
+    const bw = Math.max(2, cell - 3), bx = x(h) + (cell - bw) / 2, by = m.strip - bh;
+    const r = Math.min(3, bh, bw / 2);
+    sv += `<path class="hbar${h === peakHour ? ' peak' : ''}" d="M${bx.toFixed(1)} ${m.strip} V${(by + r).toFixed(1)} a${r} ${r} 0 0 1 ${r} -${r} H${(bx + bw - r).toFixed(1)} a${r} ${r} 0 0 1 ${r} ${r} V${m.strip} Z"/>`;
+    if (h === peakHour) sv += `<text class="cap" x="${(x(h) + cell / 2).toFixed(1)}" y="${(by - 4).toFixed(1)}" text-anchor="middle">${fmt(v)}</text>`;
+  });
+  sv += `<line class="base" x1="${m.l}" x2="${W - m.r}" y1="${m.strip + 0.5}" y2="${m.strip + 0.5}"/>`;
+  sv += `<text x="${m.l - 8}" y="${m.strip - 2}" text-anchor="end">Toplam</text>`;
+  // tiles
+  const labelEvery = rowH >= 14 ? 1 : rowH >= 9 ? 2 : 5;
+  days.forEach((d, i) => {
+    const ty = y(i);
+    if ((days.length - 1 - i) % labelEvery === 0) sv += `<text class="${d === today ? 'x-today' : ''}" x="${m.l - 8}" y="${(ty + rowH / 2 + 3.5).toFixed(1)}" text-anchor="end">${d === today ? 'Bugün' : esc(dayShort(d))}</text>`;
+    H24.forEach(h => {
+      const v = grid[d][h], k = step(v);
+      sv += `<rect class="tile" data-day="${d}" data-hour="${h}" x="${(x(h) + 1).toFixed(1)}" y="${(ty + 1).toFixed(1)}" width="${(cell - 2).toFixed(1)}" height="${(rowH - 2).toFixed(1)}" rx="3" fill="${k ? TILES[k - 1] : TILE_EMPTY}" tabindex="0" role="img" aria-label="${esc(`${dayLong(d)} ${spanLabel(h)}: ${v} kupon`)}"/>`;
+    });
+  });
+  // hour axis
+  H24.filter(h => h % 3 === 0).forEach(h => sv += `<text x="${(x(h) + 1).toFixed(1)}" y="${H - 6}">${hh(h).slice(0, 2)}</text>`);
+  sv += '</svg><div class="tip" id="daily-tip" role="tooltip"></div>';
+  if (maxCell === 0) sv += `<div class="chart-empty">Bu aralıkta henüz kupon gösterilmedi.</div>`;
+  box.classList.remove('stale');
+  box.innerHTML = sv;
+  daily.animated = true;
+
+  const tip = $('daily-tip');
+  const showTip = el => {
+    const d = el.dataset.day, h = +el.dataset.hour, v = grid[d][h];
+    const list = Object.entries(who[d + '|' + h] || {}).sort((p, q) => q[1] - p[1]);
+    const shown = daily.scope === 'fleet' ? list.slice(0, 5) : [];
+    tip.innerHTML = `<div class="t">${esc(dayLong(d))} · ${spanLabel(h)}</div>` +
+      shown.map(([id, n]) => `<div class="r"><i style="background:${TILES[Math.max(0, step(n) - 1)]}"></i>${esc(name(id))}<b>${fmt(n)}</b></div>`).join('') +
+      (list.length > shown.length && daily.scope === 'fleet' ? `<div class="r dim">+${list.length - shown.length} robot</div>` : '') +
+      `<div class="sum">${v ? 'Kupon' : 'Kupon yok'}<b>${v ? fmt(v) : ''}</b></div>`;
+    tip.classList.add('show');
+    const r = el.getBoundingClientRect(), br = box.getBoundingClientRect();
+    const cx = r.left - br.left + r.width / 2, ty = r.top - br.top;
+    let left = Math.max(0, Math.min(box.clientWidth - tip.offsetWidth, cx - tip.offsetWidth / 2));
+    let t = ty - tip.offsetHeight - 8; if (t < 0) t = ty + r.height + 8;
+    tip.style.transform = `translate(${left}px, ${t}px)`;
+  };
+  box.querySelectorAll('.tile').forEach(el => {
+    el.addEventListener('pointerenter', () => showTip(el));
+    el.addEventListener('focus', () => showTip(el));
+    el.addEventListener('pointerleave', () => tip.classList.remove('show'));
+    el.addEventListener('blur', () => tip.classList.remove('show'));
+  });
+
+  if (!resizeOnly) {
+    let t = `<table><thead><tr><th>Gün</th>${H24.map(h => `<th class="num">${hh(h).slice(0, 2)}</th>`).join('')}<th class="num">Toplam</th></tr></thead><tbody>`;
+    [...days].reverse().forEach(d => { t += `<tr><td style="white-space:nowrap">${esc(dayShort(d))}</td>${H24.map(h => `<td class="num${grid[d][h] ? '' : ' dim'}">${grid[d][h] || '·'}</td>`).join('')}<td class="num" style="font-weight:800">${fmt(dayTotal(d))}</td></tr>`; });
+    t += `</tbody><tfoot><tr><td>Toplam</td>${H24.map(h => `<td class="num">${fmt(hourTotal(h))}</td>`).join('')}<td class="num">${fmt(rangeN)}</td></tr></tfoot></table>`;
     $('daily-table').innerHTML = t;
   }
 }
