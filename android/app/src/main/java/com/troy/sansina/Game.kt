@@ -17,9 +17,9 @@ import kotlin.random.Random
  * INVITE   idle: "merhaba" + CTA breathe, waiting for a touch
  * SELECT   four cards slide in one by one; the user picks one
  * SHUFFLE  cards swap places for ~2.5 s, then the picked card comes to the centre, the rest fade out
- * READY    one card in the centre, glowing; "Hemen çevir, avantajını gör!"
+ * READY    one card in the centre, glowing; "Hemen çevir, indirimi gör!"
  * REVEAL   the card flips (0.6 s) with a light burst
- * RESULT   amount scales up, "avantajına merhaba", confetti; QR + instruction fade in after 0.5 s;
+ * RESULT   amount scales up, "indirim kazandın.", confetti; QR + instruction fade in after 0.5 s;
  *          the screen then stays still until the idle timer returns to INVITE
  */
 enum class Phase { INVITE, SELECT, SHUFFLE, READY, REVEAL, RESULT }

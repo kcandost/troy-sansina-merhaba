@@ -41,7 +41,7 @@ Every robot serves this API at the same fixed address on its own local network, 
 
 ## Design
 
-The UI is a faithful implementation of the agency's final campaign designs (`TROY_ROZYLABS` Figma file, frames 5–11): the TROY-blue diagonal light-beam wash, the SEKIL wave pattern, ARTI plus marks, the framed idle screen, and the exact type ramp. Vector assets are exported straight from the Figma source and shipped as Android vector drawables.
+The UI is a faithful implementation of the agency's final campaign designs (`TROY_ROZYLABS` Figma file, frames 5–11, September 2026 revision): the TROY-blue diagonal light-beam wash, the SEKIL wave pattern, ARTI plus marks, the framed idle screen, and the exact type ramp. Vector assets are exported straight from the Figma source and shipped as Android vector drawables.
 
 The agency typeface (BR Candor) is licensed; the app bundles [Nunito](https://fonts.google.com/specimen/Nunito) as the closest open substitute. Drop the licensed TTFs into `android/app/src/main/res/font/` to swap it in.
 

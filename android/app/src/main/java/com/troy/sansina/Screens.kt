@@ -333,16 +333,16 @@ fun StageScreen(state: GameState, theme: SansinaTheme, cardBack: CardBack, onSta
                         if (f) {
                             Headline(theme, phase, "Bir dokunuşla şansını keşfet!", "", "", size)
                             Spacer(Modifier.height(10.dp))
-                            Caption("Kartlardan birini seç, Troy’dan kazanacağın avantajı öğren.", Color.Black, 30, FontWeight.Medium, fontFamily = theme.fontFamily)
+                            Caption("Kartlardan birini seç, Troy’dan kazanacağın indirimi öğren.", Color.Black, 30, FontWeight.Medium, fontFamily = theme.fontFamily)
                         } else {
                             Headline(theme, phase, "Bir dokunuşla ", "şansını", " keşfet!", size)
                             Spacer(Modifier.height(8.dp))
-                            Caption("Kartlardan birini seç, Troy'dan kazanacağın avantajı öğren.", theme.secondary(phase), 19)
+                            Caption("Kartlardan birini seç, Troy'dan kazanacağın indirimi öğren.", theme.secondary(phase), 19)
                         }
                     }
-                    2 -> Caption("Avantajın seçiliyor…", if (f) Color.Black else theme.secondary(phase), if (f) 30 else 24, if (f) FontWeight.Medium else FontWeight.Normal, fontFamily = theme.fontFamily)
+                    2 -> Caption("İndirimin seçiliyor…", if (f) Color.Black else theme.secondary(phase), if (f) 30 else 24, if (f) FontWeight.Medium else FontWeight.Normal, fontFamily = theme.fontFamily)
                     3 -> Box(Modifier.offset(y = if (f) h * (84f / 1200f) else 0.dp)) {
-                        Headline(theme, phase, "Hemen çevir, ", "avantajını", " gör!", size, accentOn = !f)
+                        Headline(theme, phase, "Hemen çevir, ", "indirimi", " gör!", size, accentOn = !f)
                     }
                     else -> Spacer(Modifier.height(1.dp))
                 }
@@ -363,7 +363,7 @@ fun StageScreen(state: GameState, theme: SansinaTheme, cardBack: CardBack, onSta
 }
 
 /**
- * 5 + 6. Reward result: amount scales up, "avantajına merhaba" follows, a short confetti burst,
+ * 5 + 6. Reward result: amount scales up, "indirim kazandın." follows, a short confetti burst,
  * then the QR and its instruction fade in 0.5 s later and the screen holds still.
  */
 @Composable
@@ -385,13 +385,20 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
     }
 
     if (f) {
-        // Frames 8–11, laid out by frame fractions: 200px amount at y199, 90px "Avantajına merhaba"
-        // at y442, 45px bold copy at y652, 320px QR plate at y804. All centred, all black-on-wash.
+        // Frames 8–11 (Eylül 2026 revizyonu), laid out by frame fractions: 90px "Troy mağazalarında
+        // kullanabileceğin" at y135, 200px amount at y229, 90px "indirim kazandın." at y472, 45px bold
+        // "Hemen QR'ı okut, indirim kodunu al." at y702, 320px QR plate at y804. All centred, black on wash.
         val density = LocalDensity.current.density
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val h = maxHeight
+            Text(
+                "Troy mağazalarında kullanabileceğin", color = Color.Black, fontSize = 54.sp, lineHeight = 57.sp,
+                fontWeight = FontWeight.ExtraBold, fontFamily = theme.fontFamily, softWrap = false,
+                modifier = Modifier.align(Alignment.TopCenter).offset(y = h * (133f / 1200f))
+                    .graphicsLayer { alpha = hello.value; translationY = (1 - hello.value) * 18f * density }
+            )
             Box(
-                Modifier.align(Alignment.TopCenter).offset(y = h * (186f / 1200f))
+                Modifier.align(Alignment.TopCenter).offset(y = h * (216f / 1200f))
                     .graphicsLayer { scaleX = amount.value; scaleY = amount.value; alpha = ((amount.value - 0.6f) / 0.3f).coerceIn(0f, 1f) }
             ) {
                 val label = "${prize.amount} TL"
@@ -410,22 +417,22 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
                 )
             }
             Text(
-                "Avantajına merhaba", color = Color.Black, fontSize = 54.sp, lineHeight = 57.sp,
+                "indirim kazandın.", color = Color.Black, fontSize = 54.sp, lineHeight = 57.sp,
                 fontWeight = FontWeight.ExtraBold, fontFamily = theme.fontFamily, softWrap = false,
-                modifier = Modifier.align(Alignment.TopCenter).offset(y = h * (440f / 1200f))
+                modifier = Modifier.align(Alignment.TopCenter).offset(y = h * (470f / 1200f))
                     .graphicsLayer { alpha = hello.value; translationY = (1 - hello.value) * 18f * density }
             )
             Column(
-                Modifier.align(Alignment.TopCenter).offset(y = h * (648f / 1200f))
+                Modifier.align(Alignment.TopCenter).offset(y = h * (698f / 1200f))
                     .graphicsLayer { alpha = qr.value; translationY = (1 - qr.value) * 14f * density },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Troy mağazalarında kullanabileceğin avantajı kazandın.\nQR’ı okut ve avantajın tadını çıkar.",
+                    "Hemen QR’ı okut, indirim kodunu al.",
                     color = Color.Black, fontSize = 27.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = theme.fontFamily, textAlign = TextAlign.Center
+                    fontFamily = theme.fontFamily, textAlign = TextAlign.Center, softWrap = false
                 )
-                Spacer(Modifier.height(h * (44f / 1200f)))
+                Spacer(Modifier.height(h * (48f / 1200f)))
                 QrPlate(theme)
             }
             // Kept out of the Figma composition's centre column: restart lives in the corner.
@@ -452,12 +459,12 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
             }
             Spacer(Modifier.height(6.dp))
             Box(Modifier.graphicsLayer { alpha = hello.value; translationY = (1 - hello.value) * 18f * density }) {
-                Headline(theme, p, "Avantajına ", "merhaba", "", if (theme.id == "C" || theme.id == "E") 44 else 38, accentOn = theme.id != "E")
+                Headline(theme, p, "İndirime ", "merhaba", "", if (theme.id == "C" || theme.id == "E") 44 else 38, accentOn = theme.id != "E")
             }
             Spacer(Modifier.height(18.dp))
             Column(Modifier.graphicsLayer { alpha = qr.value; translationY = (1 - qr.value) * 14f * density }, horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Troy mağazalarında kullanabileceğin avantajı kazandın.\nQR'ı okut ve avantajın tadını çıkar.",
+                    "Troy mağazalarında kullanabileceğin indirimi kazandın.\nHemen QR'ı okut, indirim kodunu al.",
                     color = theme.secondary(p), fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 520.dp)
                 )
                 Spacer(Modifier.height(20.dp))
