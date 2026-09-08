@@ -170,8 +170,12 @@ fun SettingsScreen(
     var category by remember { mutableStateOf(Category.THEME) }
 
     Column(Modifier.fillMaxSize().background(Ink50)) {
-        Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 32.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 32.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Ayarlar", color = Ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            // Staff exit: closes the whole task so the tablet lands on its launcher (home screen),
+            // e.g. to install an update or use another app. Relaunch from the app icon.
+            val activity = LocalContext.current as? android.app.Activity
+            SmallButton("Uygulamadan çık", Color(0xFFFFE9E7), Color(0xFFB3261E)) { activity?.finishAndRemoveTask() }
             SmallButton("Kapat", Ink50, Ink, onClick = onClose)
         }
         Row(Modifier.fillMaxSize()) {
