@@ -57,47 +57,15 @@ fun DrawScope.sparkle(center: Offset, r: Float, color: Color) {
     drawPath(p, color)
 }
 
-// Client QR (brand/reference/figma-assets/qr-plate.svg) — encodes https://appy.to/troy1000.
-private val QrRows = arrayOf(
-    "11111110101011000010101111111",
-    "10000010001011101011001000001",
-    "10111010000010100011101011101",
-    "10111010011001001101101011101",
-    "10111010101110100001101011101",
-    "10000010101101111010001000001",
-    "11111110101010101010101111111",
-    "00000000000001000000000000000",
-    "01111111011001001010100110001",
-    "10111001000110100100001010001",
-    "11100010100001010010111010100",
-    "11001100101001001000011011010",
-    "11001111110110111110110100111",
-    "01010001101100000111111011001",
-    "00110110001011001100110100000",
-    "01011101001001100110010011010",
-    "01101010001100101000010101100",
-    "11000100001111010110101011111",
-    "10111011100010011101001111100",
-    "10001000100101110011101011010",
-    "10111011100101110101111111111",
-    "00000000111010100000100011001",
-    "11111110111000111011101010000",
-    "10000010100011101001100011001",
-    "10111010100100100010111111101",
-    "10111010100110111001110100100",
-    "10111010100010100001111111010",
-    "10000010111110001010010010010",
-    "11111110011000100100010011100",
-)
-
-/** The client's redemption QR, drawn module-for-module from their Figma asset. */
+/** The client's redemption QR for one amount, drawn module-for-module from their Figma asset (see [QrCodes]). */
 @Composable
-fun QrGrid(dark: Color, light: Color, modifier: Modifier = Modifier) {
+fun QrGrid(code: QrCode, dark: Color, light: Color, modifier: Modifier = Modifier) {
     Canvas(modifier.background(light, RoundedCornerShape(12.dp)).padding(10.dp)) {
-        val n = QrRows.size
+        val rows = code.rows
+        val n = rows.size
         val m = size.minDimension / n
         for (y in 0 until n) for (x in 0 until n) {
-            if (QrRows[y][x] == '1') drawRect(dark, Offset(x * m, y * m), Size(m + 0.5f, m + 0.5f))
+            if (rows[y][x] == '1') drawRect(dark, Offset(x * m, y * m), Size(m + 0.5f, m + 0.5f))
         }
     }
 }

@@ -433,7 +433,7 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
                     fontFamily = theme.fontFamily, textAlign = TextAlign.Center, softWrap = false
                 )
                 Spacer(Modifier.height(h * (48f / 1200f)))
-                QrPlate(theme)
+                QrPlate(theme, QrCodes.forAmount(prize.amount))
             }
             // Kept out of the Figma composition's centre column: restart lives in the corner.
             Box(Modifier.align(Alignment.BottomEnd).padding(end = 28.dp, bottom = 20.dp).graphicsLayer { alpha = qr.value }) {
@@ -468,7 +468,7 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
                     color = theme.secondary(p), fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 520.dp)
                 )
                 Spacer(Modifier.height(20.dp))
-                QrPlate(theme)
+                QrPlate(theme, QrCodes.forAmount(prize.amount))
             }
         }
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 36.dp).graphicsLayer { alpha = qr.value }) {
@@ -485,7 +485,7 @@ fun ResultScreen(state: GameState, theme: SansinaTheme, onRestart: () -> Unit) {
 
 /** The QR itself never moves; a soft frame around it pulses to draw the eye. */
 @Composable
-private fun QrPlate(theme: SansinaTheme) {
+private fun QrPlate(theme: SansinaTheme, code: QrCode) {
     val pulse = rememberInfiniteTransition(label = "qrf").animateFloat(0f, 1f, infiniteRepeatable(tween(1600, easing = EaseInOut), RepeatMode.Reverse), label = "qp")
     if (theme.id == "F") {
         // Figma "QR": 320px white plate, r29 (9.1%), 5px TROY BLUE stroke inset, soft drop shadow.
@@ -498,7 +498,7 @@ private fun QrPlate(theme: SansinaTheme) {
                 .border(3.dp, TroyBlue, RoundedCornerShape(radius))
                 .padding(14.dp),
             contentAlignment = Alignment.Center
-        ) { QrGrid(Color.Black, Color.White, Modifier.fillMaxSize()) }
+        ) { QrGrid(code, Color.Black, Color.White, Modifier.fillMaxSize()) }
         return
     }
     val radius = 22.dp
@@ -514,7 +514,7 @@ private fun QrPlate(theme: SansinaTheme) {
             QrStyle.BOARDING_PASS -> Modifier.shadow(24.dp, RoundedCornerShape(radius), ambientColor = Color(0x66171614), spotColor = Color(0x66171614)).background(Color.White, RoundedCornerShape(radius)).border(1.dp, Color(0xFFE4C79C), RoundedCornerShape(radius)).padding(22.dp)
             else -> Modifier.shadow(24.dp, RoundedCornerShape(radius), ambientColor = Color(0x4D060A12), spotColor = Color(0x4D060A12)).background(Color.White, RoundedCornerShape(radius)).padding(22.dp)
         }
-        Box(Modifier.padding(10.dp).then(plate)) { QrGrid(theme.qrModule, Color.White, Modifier.size(164.dp)) }
+        Box(Modifier.padding(10.dp).then(plate)) { QrGrid(code, theme.qrModule, Color.White, Modifier.size(164.dp)) }
     }
 }
 

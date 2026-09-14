@@ -2,6 +2,12 @@
 
 TROY "Şansına Merhaba" tablet app. The version name matches the GitHub release tag; APKs are on the [Releases](https://github.com/kcandost/troy-sansina-merhaba/releases) page. Every release installs over the previous one; settings and counters are preserved.
 
+## v1.4.0 — 2026-09-14
+
+- **One QR per discount amount.** The result screen now shows the code for the amount won (250 / 500 / 750 / 1000 TL → appy.to/troy250 … troy1000), traced from the agency's Figma result frames. Previously every amount showed the troy1000 code.
+- **Settings → "QR kodları":** every configured amount with the exact QR it will render and the URL it encodes, so staff can scan and verify with a phone. Amounts with no client-supplied code are flagged in red (they fall back to the nearest lower code).
+- Note for the agency: in the 8 Sept Figma the QR plates sit on the reversed frames (troy1000 on the 250 TL screen etc.). The app maps by the URL's amount, not by the frame.
+
 ## v1.3.1 — 2026-09-08
 
 - **"Uygulamadan çık" (Exit app) button** in the settings panel: closes the app and returns the tablet to its home screen (for installing updates or switching apps). Relaunch from the app icon.

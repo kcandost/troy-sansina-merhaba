@@ -147,6 +147,7 @@ fun SetupScreen(deviceId: String, onRegister: suspend (String) -> RegisterResult
 private enum class Category(val label: String, val hint: String) {
     THEME("Tema", "Görünüm ve davranış"),
     PROMO("Promo", "Kollar ve pano"),
+    QR("QR kodları", "Tutar başına kod"),
     ROBOT("Robot", "Duraklatma ve bağlantı"),
     SYNC("Bağlantı", "Uzak takip ve yönetim"),
 }
@@ -196,6 +197,7 @@ fun SettingsScreen(
                 when (category) {
                     Category.THEME -> ThemeCategory(theme, config, idleSeconds, cardBack, onIdleSeconds, onCardBack, onTheme)
                     Category.PROMO -> PromoCategory(config, stats, onConfig)
+                    Category.QR -> QrCategory(config)
                     Category.ROBOT -> RobotCategory()
                     Category.SYNC -> SyncCategory(syncSettings, sync)
                 }
@@ -373,6 +375,52 @@ private fun PromoCategory(config: PromoConfig, stats: PromoStats, onConfig: (Pro
                 Text("Mavi: gerçekleşen · Gri: hedef", color = Ink600, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.End) {
                     SmallButton("Panoyu sıfırla", Color(0xFFFBE3E0), Red) { stats.reset(config) }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Staff check: every configured amount with the exact QR the result screen will show, plus the
+ * URL it encodes so a phone scan can be compared line by line. Amounts without a client-supplied
+ * code are flagged (they fall back to the nearest lower code — see [QrCodes.forAmount]).
+ */
+@Composable
+private fun QrCategory(config: PromoConfig) {
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Section("Promosyon başına QR", "Sonuç ekranında gösterilecek kodlar. Telefonla okutup adresi tutarla karşılaştır.") {
+            val amounts = config.promos.map { it.amount }.sorted()
+            amounts.chunked(4).forEach { rowAmounts ->
+                Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    rowAmounts.forEach { amount ->
+                        val exact = QrCodes.exact(amount)
+                        val shown = QrCodes.forAmount(amount)
+                        Column(
+                            Modifier.weight(1f).background(Ink50, RoundedCornerShape(16.dp))
+                                .border(1.dp, if (exact == null) Red else Ink200, RoundedCornerShape(16.dp)).padding(14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(Promo(amount, 0).label, color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Box(Modifier.padding(vertical = 10.dp).size(190.dp).background(Color.White, RoundedCornerShape(14.dp)).border(2.dp, Blue, RoundedCornerShape(14.dp)).padding(8.dp)) {
+                                QrGrid(shown, Color.Black, Color.White, Modifier.fillMaxSize())
+                            }
+                            Text(shown.url, color = Ink600, fontSize = 12.sp, textAlign = TextAlign.Center)
+                            if (exact == null) Text(
+                                "Bu tutar için kod yok — ${Promo(shown.amount, 0).label} kodu gösteriliyor.",
+                                color = Red, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                    }
+                    repeat(4 - rowAmounts.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+        Section("Eldeki kodlar", "Ajansın Figma dosyasından alınan tüm kodlar (adres → tutar).") {
+            QrCodes.all.forEach { c ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+                    Text(Promo(c.amount, 0).label, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(110.dp))
+                    Text(c.url, color = Ink600, fontSize = 14.sp)
                 }
             }
         }
