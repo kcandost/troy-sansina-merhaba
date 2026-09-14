@@ -23,7 +23,7 @@ The experience is a six-step loop that runs unattended all day:
 5. **Reward** — the winning amount, confetti, and the campaign message
 6. **QR & reset** — a QR code holds for a configurable interval, then the screen returns to the invite
 
-Prize amounts and their odds are fully configurable from a hidden, PIN-protected settings panel (amounts, weighted probabilities, per-coupon count limits, QR dwell time, card-back art, and per-amount win statistics).
+Prize amounts and their odds are fully configurable from a hidden, PIN-protected settings panel (amounts, weighted probabilities, per-coupon count limits, QR dwell time, card-back art, and per-amount win statistics). Each amount has its own redemption QR (appy.to/troy250 … troy1000, taken from the agency's Figma result screens); the panel's "QR kodları" page shows every configured amount with the code it renders and the URL it encodes so staff can verify by scanning.
 
 ## Backend (fleet tracking & remote control)
 
